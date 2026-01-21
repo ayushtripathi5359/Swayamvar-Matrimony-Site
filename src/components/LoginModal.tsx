@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface LoginModalProps {
   isVisible: boolean;
@@ -10,6 +11,7 @@ interface LoginModalProps {
 type LoginRole = "self" | "parent" | "guardian";
 
 const LoginModal = ({ isVisible, onClose }: LoginModalProps) => {
+  const navigate = useNavigate();
   const [role, setRole] = useState<LoginRole>("self");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +21,8 @@ const LoginModal = ({ isVisible, onClose }: LoginModalProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log({ role, email, password, rememberMe });
+    // Navigate to profile page after successful login
+    navigate("/profile");
   };
 
   return (
