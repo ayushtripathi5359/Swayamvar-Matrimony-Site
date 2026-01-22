@@ -21,8 +21,8 @@ const LoginModal = ({ isVisible, onClose }: LoginModalProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log({ role, email, password, rememberMe });
-    // Navigate to profile page after successful login
-    navigate("/profile");
+    // Navigate to registration page after successful login
+    navigate("/registration");
   };
 
   return (
