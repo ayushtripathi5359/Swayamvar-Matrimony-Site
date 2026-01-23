@@ -19,6 +19,7 @@ import {
   BadgeIndianRupee,
   Music
 } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 export default function ProfilePage() {
   // Custom soft glowing shadow effect
@@ -28,7 +29,9 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#FDF8FB]  md:px-4 mb-20 lg:mb-0 py-6 text-[14px] text-slate-700 font-['Plus_Jakarta_Sans',_sans-serif]">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <Navbar />
+      <div className="max-w-5xl  mt-14 sm:mt-20 mx-auto space-y-6">
+        
 
         {/* ================= HERO SECTION ================= */}
         <div 

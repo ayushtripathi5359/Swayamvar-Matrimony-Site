@@ -97,62 +97,63 @@ export default function LoginPage() {
           </div>
         </div>
       {/* RIGHT SECTION - SIGN IN FORM */}
-      <div className="w-full lg:w-[40%] bg-white flex items-center justify-center p-8 lg:p-0">
-        <div className="w-full max-w-[328px] flex flex-col gap-10">
+      <div className="w-full lg:w-[40%] bg-white flex items-center justify-center px-4 py-6 lg:p-0">
+  <div className="w-full max-w-[280px] lg:max-w-[328px] flex flex-col gap-4 lg:gap-10">
 
-          {/* Header */}
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-[30px] font-bold text-black font-jakarta">
-                Sign In
-              </h1>
-              <p className="text-black/60 font-urbanist">
-                Sign in with your account
-              </p>
-            </div>
-
-            {/* Social Buttons */}
-            <div className="flex gap-4">
-              <button className="flex-1 py-4 rounded-[40px] border border-black/10">
-                Google
-              </button>
-              <button className="flex-1 py-4 rounded-[40px] border border-black/10">
-                Apple
-              </button>
-            </div>
-          </div>
-
-          <div className="h-px bg-black/10" />
-
-          {/* Form */}
-          <div className="flex flex-col gap-4">
-            <input
-              type="email"
-              placeholder="helloshivani24@gmail.com"
-              className="px-5 py-4 rounded-[32px] border border-black/10"
-            />
-            <input
-              type="password"
-              placeholder="**********"
-              className="px-5 py-4 rounded-[32px] border border-black/10"
-            />
-            <button 
-              onClick={() => navigate("/registration")}
-              className="py-3 rounded-[24px] bg-blue-600 text-white font-semibold"
-            >
-              Get Started
-            </button>
-          </div>
-
-          <p className="text-center text-black/60">
-            Don’t have an account?{" "}
-            <Link to="/signup" className="text-black font-medium">
-              Sign up
-            </Link>
-          </p>
-
-        </div>
+    {/* Header */}
+    <div className="flex flex-col gap-4 lg:gap-6">
+      <div className="flex flex-col gap-1 lg:gap-2">
+        <h1 className="text-[22px] lg:text-[30px] font-bold text-black font-jakarta">
+          Sign In
+        </h1>
+        <p className="text-sm lg:text-base text-black/60 font-urbanist">
+          Sign in with your account
+        </p>
       </div>
+
+      {/* Social Buttons */}
+      <div className="flex gap-3 lg:gap-4">
+        <button className="flex-1 py-3 lg:py-4 rounded-[32px] lg:rounded-[40px] border border-black/10 text-sm">
+          Google
+        </button>
+        <button className="flex-1 py-3 lg:py-4 rounded-[32px] lg:rounded-[40px] border border-black/10 text-sm">
+          Apple
+        </button>
+      </div>
+    </div>
+
+    <div className="h-px bg-black/10" />
+
+    {/* Form */}
+    <div className="flex flex-col gap-3 lg:gap-4">
+      <input
+        type="email"
+        placeholder="helloshivani24@gmail.com"
+        className="px-4 py-3 lg:px-5 lg:py-4 rounded-[24px] lg:rounded-[32px] border border-black/10 text-sm"
+      />
+      <input
+        type="password"
+        placeholder="**********"
+        className="px-4 py-3 lg:px-5 lg:py-4 rounded-[24px] lg:rounded-[32px] border border-black/10 text-sm"
+      />
+      <button
+        onClick={() => navigate("/registration")}
+        className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] bg-blue-600 text-white font-semibold text-sm"
+      >
+        Get Started
+      </button>
+    </div>
+
+    <p className="text-center text-xs lg:text-sm text-black/60">
+      Don’t have an account?{" "}
+      <Link to="/signup" className="text-black font-medium">
+        Sign up
+      </Link>
+    </p>
+
+  </div>
+</div>
+
     </div>
 
       
