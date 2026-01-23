@@ -112,6 +112,28 @@
   }
 }
 
+/* Prevent zoom on iOS */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Prevent text size adjustment */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Better scroll behavior */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+  overscroll-behavior-y: contain;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -124,6 +146,13 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
   }
 }
 

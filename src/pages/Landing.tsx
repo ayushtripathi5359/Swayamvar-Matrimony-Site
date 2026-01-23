@@ -26,7 +26,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white font-jakarta selection:bg-pink-100 antialiased relative">
-      <SplashScreen isVisible={isLoading} />
+      {/* <SplashScreen isVisible={isLoading} /> */}
 
       {/* Background Pattern Layer */}
       <div className="fixed inset-0 pointer-events-none z-0">

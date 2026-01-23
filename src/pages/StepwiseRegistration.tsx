@@ -24,14 +24,27 @@ import {
   ChevronDown,
   Clock,
   X,
-  Plus
+  Plus,
+  AlertCircle,
+  ChevronUp
 } from "lucide-react";
+
+// Validation Functions
+const validateEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePhoneNumber = (phone: string) => {
+  const phoneRegex = /^[0-9]{10}$/;
+  return phoneRegex.test(phone.replace(/\D/g, ''));
+};
 
 // Custom Dropdown Component with smart positioning
 const CustomSelect = ({ 
   label, 
   value, 
-  icon, 
+   
   options = [], 
   onChange, 
   placeholder = "Select option",
@@ -76,23 +89,23 @@ const CustomSelect = ({
   };
 
   return (
-    <div className={`group relative ${className}`} ref={dropdownRef}>
+    <div className={`group relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
       <div className="flex items-center gap-2 ml-1">
-        <span className="text-[#9181EE] group-focus-within:scale-110 transition-transform">{icon}</span>
         <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">{label}</label>
       </div>
       
       <div 
         ref={triggerRef}
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`bg-white mt-4 border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
+        className={`bg-white mt-2 border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
           isOpen 
             ? "border-[#9181EE] shadow-[0_0_0_3px_rgba(145,129,238,0.1)]" 
             : "border-slate-100 hover:border-[#9181EE]/30"
         } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+        style={{ position: 'relative', zIndex: isOpen ? 10000 : 0 }}
       >
         <div className="flex items-center gap-2">
-          <span className={`font-bold ${value ? "text-black" : "text-slate-400"} text-sm md:text-base truncate`}>
+          <span className={`font-bold ${value ? "text-black" : "text-slate-400"} text-base truncate`}>
             {value || placeholder}
           </span>
         </div>
@@ -103,24 +116,325 @@ const CustomSelect = ({
       </div>
 
       {isOpen && options.length > 0 && (
-        <div 
-          className={`fixed md:absolute z-50 left-2 right-2 md:left-0 md:right-0 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 ${
-            position === "top" ? "bottom-full mb-1" : "top-full mt-1"
+  <div 
+    className={`absolute z-[9999] w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 ${
+      position === "top" ? "bottom-full mb-1" : "top-full mt-1"
+    }`}
+    style={{
+      maxHeight: 'min(240px, 50vh)',
+      minWidth: '200px'
+    }}
+  >
+    <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: 'inherit' }}>
+      {options.map((option, index) => (
+        <div
+          key={index}
+          onClick={() => handleSelect(option)}
+          className={`px-4 lg:px-5 py-3 font-bold text-black hover:bg-[#F8F7FF] hover:text-[#9181EE] transition-colors cursor-pointer border-b border-slate-50 last:border-0 text-base ${
+            value === option ? "bg-[#F8F7FF] text-[#9181EE]" : ""
           }`}
         >
-          <div className="overflow-y-auto no-scrollbar" style={{ maxHeight: '240px' }}>
-            {options.map((option, index) => (
-              <div
-                key={index}
-                onClick={() => handleSelect(option)}
-                className={`px-4 lg:px-5 py-3 font-bold text-black hover:bg-[#F8F7FF] hover:text-[#9181EE] transition-colors cursor-pointer border-b border-slate-50 last:border-0 text-sm md:text-base ${
-                  value === option ? "bg-[#F8F7FF] text-[#9181EE]" : ""
-                }`}
-              >
-                {option}
+          {option}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+    </div>
+  );
+};
+
+// Custom Calendar Picker Component (iOS-friendly)
+const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    if (value) {
+      const parts = value.split('-');
+      return new Date(parts[2], parseInt(parts[1]) - 1, 1);
+    }
+    return new Date();
+  });
+  const calendarRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target) && 
+          triggerRef.current && !triggerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const handleDateSelect = (day) => {
+    const year = currentMonth.getFullYear();
+    const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    onChange(`${dayStr}-${month}-${year}`);
+    setIsOpen(false);
+  };
+
+  const previousMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  };
+
+  const daysInMonth = getDaysInMonth(currentMonth);
+  const firstDay = getFirstDayOfMonth(currentMonth);
+  const days = [];
+  
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+
+  const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const [selectedDay, selectedMonth, selectedYear] = value ? value.split('-') : [];
+
+  return (
+    <div className="space-y-2 relative">
+      <div className="flex items-center gap-2 ml-1">
+        <label className="text-[12px] font-bold text-slate-500 uppercase">{label}</label>
+      </div>
+
+      <div
+        ref={triggerRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all active:scale-95"
+        style={{ minHeight: '44px' }}
+      >
+        <span className={`font-bold ${value ? "text-black" : "text-slate-400"} text-sm lg:text-base`}>
+          {value || "DD-MM-YYYY"}
+        </span>
+        <Calendar size={16} className="text-[#9181EE] opacity-60" />
+      </div>
+
+      {isOpen && (
+        <div
+          ref={calendarRef}
+          className="absolute z-[9999] top-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 w-full max-w-sm md:max-w-sm animate-in fade-in zoom-in-95"
+          style={{ minHeight: 'fit-content' }}
+        >
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onTouchStart={previousMonth}
+              onClick={previousMonth}
+              className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+              style={{ minWidth: '44px', minHeight: '44px' }}
+            >
+              <ChevronLeft size={18} className="text-[#9181EE]" />
+            </button>
+            <span className="font-bold text-slate-700 text-sm">{monthName}</span>
+            <button
+              onTouchStart={nextMonth}
+              onClick={nextMonth}
+              className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+              style={{ minWidth: '44px', minHeight: '44px' }}
+            >
+              <ChevronRight size={18} className="text-[#9181EE]" />
+            </button>
+          </div>
+
+          {/* Weekday Headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+              <div key={day} className="text-center text-xs font-bold text-slate-400 py-2">
+                {day}
               </div>
             ))}
           </div>
+
+          {/* Calendar Days */}
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((day, idx) => (
+              <button
+                key={idx}
+                onClick={() => day && handleDateSelect(day)}
+                onTouchStart={() => day && handleDateSelect(day)}
+                disabled={!day}
+                className={`py-2 text-sm font-semibold rounded-lg transition-all active:scale-95 ${
+                  !day
+                    ? 'text-slate-200 cursor-default'
+                    : value && selectedDay === String(day).padStart(2, '0') && selectedMonth === String(currentMonth.getMonth() + 1).padStart(2, '0') && selectedYear === String(currentMonth.getFullYear())
+                    ? 'bg-[#9181EE] text-white'
+                    : 'text-slate-700 hover:bg-[#F8F7FF] hover:text-[#9181EE]'
+                }`}
+                style={{
+                  minHeight: '44px',
+                  cursor: day ? 'pointer' : 'default'
+                }}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom Time Picker Component (iOS-friendly)
+const CustomTimePicker = ({ value, onChange, label }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [hours, setHours] = useState(() => value ? parseInt(value.split(':')[0]) : 0);
+  const [minutes, setMinutes] = useState(() => value ? parseInt(value.split(':')[1]) : 0);
+  const timeRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (timeRef.current && !timeRef.current.contains(event.target) && 
+          triggerRef.current && !triggerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleTimeChange = React.useCallback(() => {
+    const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    onChange(timeStr);
+  }, [hours, minutes, onChange]);
+
+  useEffect(() => {
+    handleTimeChange();
+  }, [handleTimeChange]);
+
+  return (
+    <div className="space-y-2 relative">
+      <div className="flex items-center gap-2 ml-1">
+        <label className="text-[12px] font-bold text-slate-500 uppercase">{label}</label>
+      </div>
+
+      <div
+        ref={triggerRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all active:scale-95"
+        style={{ minHeight: '44px' }}
+      >
+        <span className={`font-bold ${value ? "text-black" : "text-slate-400"} text-sm lg:text-base`}>
+          {value || "HH:MM"}
+        </span>
+        <Clock size={16} className="text-[#9181EE] opacity-60" />
+      </div>
+
+      {isOpen && (
+        <div
+          ref={timeRef}
+          className="absolute z-[9999] top-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl p-6 w-full max-w-xs animate-in fade-in zoom-in-95"
+        >
+          <div className="flex items-center justify-center gap-4">
+            {/* Hours */}
+            <div className="flex flex-col items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">Hours</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onTouchStart={() => setHours(hours === 0 ? 23 : hours - 1)}
+                  onClick={() => setHours(hours === 0 ? 23 : hours - 1)}
+                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                >
+                  <ChevronUp size={18} className="text-[#9181EE]" />
+                </button>
+              </div>
+              <input
+                type="number"
+                min="0"
+                max="23"
+                value={String(hours).padStart(2, '0')}
+                onChange={(e) => setHours(Math.min(23, Math.max(0, parseInt(e.target.value) || 0)))}
+                className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg"
+                style={{ fontSize: '16px' }}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onTouchStart={() => setHours(hours === 23 ? 0 : hours + 1)}
+                  onClick={() => setHours(hours === 23 ? 0 : hours + 1)}
+                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                >
+                  <ChevronDown size={18} className="text-[#9181EE]" />
+                </button>
+              </div>
+            </div>
+
+            {/* Separator */}
+            <div className="text-2xl font-bold text-slate-400 mt-6">:</div>
+
+            {/* Minutes */}
+            <div className="flex flex-col items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">Minutes</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onTouchStart={() => setMinutes(minutes === 0 ? 59 : minutes - 1)}
+                  onClick={() => setMinutes(minutes === 0 ? 59 : minutes - 1)}
+                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                >
+                  <ChevronUp size={18} className="text-[#9181EE]" />
+                </button>
+              </div>
+              <input
+                type="number"
+                min="0"
+                max="59"
+                value={String(minutes).padStart(2, '0')}
+                onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg"
+                style={{ fontSize: '16px' }}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onTouchStart={() => setMinutes(minutes === 59 ? 0 : minutes + 1)}
+                  onClick={() => setMinutes(minutes === 59 ? 0 : minutes + 1)}
+                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                >
+                  <ChevronDown size={18} className="text-[#9181EE]" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsOpen(false)}
+            className="mt-4 w-full bg-[#9181EE] text-white py-3 rounded-lg font-bold text-sm uppercase transition-all active:scale-95"
+            style={{ minHeight: '44px' }}
+          >
+            Done
+          </button>
         </div>
       )}
     </div>
@@ -167,7 +481,7 @@ const SiblingField = ({
 
   useEffect(() => {
     onChange(index, siblingData);
-  }, [siblingData]);
+  }, [siblingData, index, onChange]);
 
   const handleChange = (field, value) => {
     setSiblingData(prev => ({
@@ -183,7 +497,6 @@ const SiblingField = ({
     <div className="space-y-4 p-4 bg-slate-50 rounded-2xl">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <User size={16} className="text-[#9181EE]" />
           <h4 className="text-sm font-bold text-slate-700">
             {type === 'brother' ? 'Brother' : 'Sister'} {index + 1}
           </h4>
@@ -317,11 +630,91 @@ const SiblingField = ({
   );
 };
 
+interface FormData {
+  fullName: string;
+  gender: string;
+  dateOfBirth: string;
+  age: string;
+  maritalStatus: string;
+  motherTongue: string;
+  height: string;
+  complexion: string;
+  bloodGroup: string;
+  highestEducation: string;
+  collegeUniversity: string;
+  occupation: string;
+  organization: string;
+  annualIncome: string;
+  jobLocation: string;
+  fathersFullName: string;
+  fathersOccupation:string;
+  mothersFullName: string;
+  mothersOccupation:string;
+  brothers: Record<string, string>[];
+  sisters: Record<string, string>[];
+  whatsappNumber: string;
+  emailId: string;
+  birthName: string;
+  birthTime: string;
+  birthPlace: string;
+  firstGotra: string;
+  secondGotra: string;
+  partnerAgeFrom: string;
+  partnerAgeTo: string;
+  partnerEducation: string;
+  preferredLocation: string;
+  minAnnualIncome: string;
+}
+
+const validateStep1 = (formData: FormData) => {
+  const errors: Record<string, string> = {};
+  if (!formData.fullName?.trim()) errors.fullName = "Full name is required";
+  if (!formData.gender) errors.gender = "Gender is required";
+  if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required";
+  if (!formData.maritalStatus) errors.maritalStatus = "Marital status is required";
+  if (!formData.motherTongue) errors.motherTongue = "Mother tongue is required";
+  if (!formData.height) errors.height = "Height is required";
+  if (!formData.complexion) errors.complexion = "Complexion is required";
+  if (!formData.bloodGroup) errors.bloodGroup = "Blood group is required";
+  if (formData.whatsappNumber && !validatePhoneNumber(formData.whatsappNumber)) {
+    errors.whatsappNumber = "Enter a valid 10-digit phone number";
+  }
+  if (formData.emailId && !validateEmail(formData.emailId)) {
+    errors.emailId = "Enter a valid email address";
+  }
+  return errors;
+};
+
+const validateStep2 = (formData: FormData) => {
+  const errors: Record<string, string> = {};
+  if (!formData.highestEducation) errors.highestEducation = "Education is required";
+  if (!formData.occupation) errors.occupation = "Occupation is required";
+  if (!formData.annualIncome) errors.annualIncome = "Annual income is required";
+  return errors;
+};
+
+const validateStep3 = (formData: FormData) => {
+  const errors: Record<string, string> = {};
+  if (!formData.fathersFullName?.trim()) errors.fathersFullName = "Father's name is required";
+  if (!formData.mothersFullName?.trim()) errors.mothersFullName = "Mother's name is required";
+  return errors;
+};
+
+const validateStep4 = (formData: FormData) => {
+  const errors: Record<string, string> = {};
+  if (!formData.partnerAgeFrom) errors.partnerAgeFrom = "Partner age range is required";
+  if (!formData.partnerAgeTo) errors.partnerAgeTo = "Partner age range is required";
+  if (!formData.partnerEducation) errors.partnerEducation = "Partner education is required";
+  if (!formData.preferredLocation) errors.preferredLocation = "Preferred location is required";
+  if (!formData.minAnnualIncome) errors.minAnnualIncome = "Minimum income is required";
+  return errors;
+};
+
 export default function UnifiedMatrimonialForm() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [photo, setPhoto] = useState(null);
-  
+  const [errors, setErrors] = useState<Record<string, string>>({});
   // Date picker state
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
@@ -348,7 +741,9 @@ export default function UnifiedMatrimonialForm() {
     
     // Family Details
     fathersFullName: "",
+    fathersOccupation:"",
     mothersFullName: "",
+    mothersOccupation:"",
     brothers: [],
     sisters: [],
     
@@ -360,7 +755,9 @@ export default function UnifiedMatrimonialForm() {
     birthName: "",
     birthTime: "",
     birthPlace: "",
-    
+    firstGotra: "",
+    secondGotra: "",
+
     // Partner Preference
     partnerAgeFrom: "",
     partnerAgeTo: "",
@@ -488,8 +885,31 @@ export default function UnifiedMatrimonialForm() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const next = () => setCurrentStep((s) => Math.min(s + 1, steps.length));
-  const back = () => setCurrentStep((s) => Math.max(s - 1, 1));
+  const next = () => {
+    let stepErrors = {};
+    
+    if (currentStep === 1) {
+      stepErrors = validateStep1(formData);
+    } else if (currentStep === 2) {
+      stepErrors = validateStep2(formData);
+    } else if (currentStep === 3) {
+      stepErrors = validateStep3(formData);
+    } else if (currentStep === 4) {
+      stepErrors = validateStep4(formData);
+    }
+
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
+      return;
+    }
+
+    setErrors({});
+    setCurrentStep((s) => Math.min(s + 1, steps.length));
+  };
+  const back = () => {
+    setErrors({});
+    setCurrentStep((s) => Math.max(s - 1, 1));
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -566,7 +986,15 @@ export default function UnifiedMatrimonialForm() {
   };
 
   const handleSubmit = () => {
-    // Navigate to profile page after submission
+    // Final validation before submission
+    const finalErrors = validateStep4(formData);
+    if (Object.keys(finalErrors).length > 0) {
+      setErrors(finalErrors);
+      return;
+    }
+    
+    // Navigate to profile page after successful validation
+    setErrors({});
     navigate("/profile");
     console.log("Form Data:", formData);
   };
@@ -725,71 +1153,68 @@ export default function UnifiedMatrimonialForm() {
                 {/* Full Name */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <User size={16} className="text-[#9181EE]" />
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Full Name</label>
                   </div>
-                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.fullName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                  }`}>
                     <input
                       type="text"
                       value={formData.fullName}
                       onChange={(e) => handleInputChange('fullName', e.target.value)}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                       placeholder="Enter your full name"
+                      style={{ fontSize: '16px' }} 
                     />
                   </div>
+                  {errors.fullName && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.fullName}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Gender */}
-                <CustomSelect
-                  label="Gender"
-                  icon={<ShieldCheck size={16} />}
-                  value={formData.gender}
-                  options={dropdownOptions.gender}
-                  onChange={(val) => handleInputChange('gender', val)}
-                  placeholder="Select gender"
-                />
+                <div>
+                  <CustomSelect
+                    label="Gender"
+                    value={formData.gender}
+                    options={dropdownOptions.gender}
+                    onChange={(val) => handleInputChange('gender', val)}
+                    placeholder="Select gender"
+                  />
+                  {errors.gender && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.gender}</span>
+                    </div>
+                  )}
+                </div>
                 
-                {/* Date of Birth with Custom Calendar */}
-                {/* Date of Birth – One Click Calendar */}
-<div className="space-y-2 relative">
-  <div className="flex items-center gap-2 ml-1">
-    <Calendar size={16} className="text-[#9181EE]" />
-    <label className="text-[12px] font-bold text-slate-500 uppercase">
-      Date of Birth
-    </label>
-  </div>
-
-  {/* Visible UI */}
-  <div
-    onClick={() => document.getElementById("dob-input").showPicker()}
-    className="bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all"
-  >
-    <span className={`font-bold ${formData.dateOfBirth ? "text-black" : "text-slate-400"} text-sm lg:text-base`}>
-      {formData.dateOfBirth || "DD-MM-YYYY"}
-    </span>
-    <Calendar size={16} className="text-[#9181EE] opacity-60" />
-  </div>
-
-  {/* Hidden Native Input */}
-  <input
-    id="dob-input"
-    type="date"
-    className="absolute inset-0 opacity-0 pointer-events-none"
-    max={new Date().toISOString().split("T")[0]}
-    onChange={(e) => {
-      const [year, month, day] = e.target.value.split("-");
-      const formattedDate = `${day}-${month}-${year}`;
-      handleInputChange("dateOfBirth", formattedDate);
-      handleInputChange("age", calculateAge(formattedDate));
-    }}
-  />
-</div>
+                {/* Date of Birth - Custom Calendar */}
+                <div>
+                  <CustomCalendarPicker
+                    value={formData.dateOfBirth}
+                    onChange={(val) => {
+                      handleInputChange('dateOfBirth', val);
+                      handleInputChange('age', calculateAge(val));
+                    }}
+                    label="Date of Birth"
+                    maxDate={new Date()}
+                  />
+                  {errors.dateOfBirth && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.dateOfBirth}</span>
+                    </div>
+                  )}
+                </div>
 
 
                 {/* Age (Auto-calculated) */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <Heart size={16} className="text-[#9181EE]" />
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Age</label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm opacity-70">
@@ -802,7 +1227,6 @@ export default function UnifiedMatrimonialForm() {
                 {/* WhatsApp Number */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <Phone size={16} className="text-[#9181EE]" />
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">WhatsApp Number</label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
@@ -819,7 +1243,6 @@ export default function UnifiedMatrimonialForm() {
                 {/* Email Address */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <Mail size={16} className="text-[#9181EE]" />
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Email Address</label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
@@ -834,54 +1257,89 @@ export default function UnifiedMatrimonialForm() {
                 </div>
 
                 {/* Marital Status */}
-                <CustomSelect
-                  label="Marital Status"
-                  icon={<Heart size={16} />}
-                  value={formData.maritalStatus}
-                  options={dropdownOptions.maritalStatus}
-                  onChange={(val) => handleInputChange('maritalStatus', val)}
-                  placeholder="Select status"
-                />
+                <div>
+                  <CustomSelect
+                    label="Marital Status"
+                    value={formData.maritalStatus}
+                    options={dropdownOptions.maritalStatus}
+                    onChange={(val) => handleInputChange('maritalStatus', val)}
+                    placeholder="Select status"
+                  />
+                  {errors.maritalStatus && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.maritalStatus}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Mother Tongue */}
-                <CustomSelect
-                  label="Mother Tongue"
-                  icon={<Languages size={16} />}
-                  value={formData.motherTongue}
-                  options={dropdownOptions.motherTongue}
-                  onChange={(val) => handleInputChange('motherTongue', val)}
-                  placeholder="Select language"
-                />
+                <div>
+                  <CustomSelect
+                    label="Mother Tongue"
+                    value={formData.motherTongue}
+                    options={dropdownOptions.motherTongue}
+                    onChange={(val) => handleInputChange('motherTongue', val)}
+                    placeholder="Select language"
+                  />
+                  {errors.motherTongue && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.motherTongue}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Height */}
-                <CustomSelect
-                  label="Height"
-                  icon={<Ruler size={16} />}
-                  value={formData.height}
-                  options={dropdownOptions.height}
-                  onChange={(val) => handleInputChange('height', val)}
-                  placeholder="Select height"
-                />
+                <div>
+                  <CustomSelect
+                    label="Height"
+                    value={formData.height}
+                    options={dropdownOptions.height}
+                    onChange={(val) => handleInputChange('height', val)}
+                    placeholder="Select height"
+                  />
+                  {errors.height && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.height}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Complexion */}
-                <CustomSelect
-                  label="Complexion"
-                  icon={<User size={16} />}
-                  value={formData.complexion}
-                  options={dropdownOptions.complexion}
-                  onChange={(val) => handleInputChange('complexion', val)}
-                  placeholder="Select complexion"
-                />
+                <div>
+                  <CustomSelect
+                    label="Complexion"
+                    value={formData.complexion}
+                    options={dropdownOptions.complexion}
+                    onChange={(val) => handleInputChange('complexion', val)}
+                    placeholder="Select complexion"
+                  />
+                  {errors.complexion && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.complexion}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Blood Group */}
-                <CustomSelect
-                  label="Blood Group"
-                  icon={<Droplet size={16} />}
-                  value={formData.bloodGroup}
-                  options={dropdownOptions.bloodGroup}
-                  onChange={(val) => handleInputChange('bloodGroup', val)}
-                  placeholder="Select blood group"
-                />
+                <div>
+                  <CustomSelect
+                    label="Blood Group"
+                    value={formData.bloodGroup}
+                    options={dropdownOptions.bloodGroup}
+                    onChange={(val) => handleInputChange('bloodGroup', val)}
+                    placeholder="Select blood group"
+                  />
+                  {errors.bloodGroup && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.bloodGroup}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -890,19 +1348,25 @@ export default function UnifiedMatrimonialForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
                 
                 {/* Highest Education */}
-                <CustomSelect
-                  label="Highest Education"
-                  icon={<GraduationCap size={16} />}
-                  value={formData.highestEducation}
-                  options={dropdownOptions.highestEducation}
-                  onChange={(val) => handleInputChange('highestEducation', val)}
-                  placeholder="Select highest education"
-                />
+                <div>
+                  <CustomSelect
+                    label="Highest Education"
+                    value={formData.highestEducation}
+                    options={dropdownOptions.highestEducation}
+                    onChange={(val) => handleInputChange('highestEducation', val)}
+                    placeholder="Select highest education"
+                  />
+                  {errors.highestEducation && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.highestEducation}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* College/University */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <GraduationCap size={16} className="text-[#9181EE]" />
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">College/University</label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
@@ -917,19 +1381,25 @@ export default function UnifiedMatrimonialForm() {
                 </div>
 
                 {/* Occupation */}
-                <CustomSelect
-                  label="Occupation"
-                  icon={<Briefcase size={16} />}
-                  value={formData.occupation}
-                  options={dropdownOptions.occupation}
-                  onChange={(val) => handleInputChange('occupation', val)}
-                  placeholder="Select occupation"
-                />
+                <div>
+                  <CustomSelect
+                    label="Occupation"
+                    value={formData.occupation}
+                    options={dropdownOptions.occupation}
+                    onChange={(val) => handleInputChange('occupation', val)}
+                    placeholder="Select occupation"
+                  />
+                  {errors.occupation && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.occupation}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Organization */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <Briefcase size={16} className="text-[#9181EE]" />
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Organization</label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
@@ -944,19 +1414,25 @@ export default function UnifiedMatrimonialForm() {
                 </div>
 
                 {/* Annual Income */}
-                <CustomSelect
-                  label="Annual Income"
-                  icon={<BadgeIndianRupee size={16} />}
-                  value={formData.annualIncome}
-                  options={dropdownOptions.annualIncome}
-                  onChange={(val) => handleInputChange('annualIncome', val)}
-                  placeholder="Select income range"
-                />
+                <div>
+                  <CustomSelect
+                    label="Annual Income"
+                    value={formData.annualIncome}
+                    options={dropdownOptions.annualIncome}
+                    onChange={(val) => handleInputChange('annualIncome', val)}
+                    placeholder="Select income range"
+                  />
+                  {errors.annualIncome && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.annualIncome}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Job Location */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <MapPin size={16} className="text-[#9181EE]" />
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Job Location</label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
@@ -979,16 +1455,42 @@ export default function UnifiedMatrimonialForm() {
                   {/* Father's Full Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <Users size={16} className="text-[#9181EE]" />
                       <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Father's Full Name</label>
                     </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.fathersFullName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
                       <input
                         type="text"
                         value={formData.fathersFullName}
                         onChange={(e) => handleInputChange('fathersFullName', e.target.value)}
                         className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                         placeholder="Enter father's full name"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    {errors.fathersFullName && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.fathersFullName}</span>
+                      </div>
+                    )}
+                  </div>
+
+
+                  {/* Father's Occupation */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Father's Occupation</label>
+                    </div>
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm border-slate-100`}>
+                      <input
+                        type="text"
+                        value={formData.fathersOccupation}
+                        onChange={(e) => handleInputChange('fathersOccupation', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter father's occupation"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                   </div>
@@ -996,18 +1498,44 @@ export default function UnifiedMatrimonialForm() {
                   {/* Mother's Full Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <Users size={16} className="text-[#9181EE]" />
                       <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Mother's Full Name</label>
                     </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.mothersFullName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
                       <input
                         type="text"
                         value={formData.mothersFullName}
                         onChange={(e) => handleInputChange('mothersFullName', e.target.value)}
                         className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                         placeholder="Enter mother's full name"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
+                    {errors.mothersFullName && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.mothersFullName}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mother's Full Name */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Mother's Occupation</label>
+                    </div>
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm border-slate-100`}>
+                      <input
+                        type="text"
+                        value={formData.mothersOccupation}
+                        onChange={(e) => handleInputChange('mothersOccupation', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter mother's occupation"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    
                   </div>
                 </div>
 
@@ -1015,7 +1543,6 @@ export default function UnifiedMatrimonialForm() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Users size={20} className="text-[#9181EE]" />
                       <h3 className="text-sm font-black text-slate-700 uppercase">Brother Details</h3>
                     </div>
                     <button
@@ -1053,7 +1580,6 @@ export default function UnifiedMatrimonialForm() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Users size={20} className="text-[#9181EE]" />
                       <h3 className="text-sm font-black text-slate-700 uppercase">Sister Details</h3>
                     </div>
                     <button
@@ -1097,7 +1623,6 @@ export default function UnifiedMatrimonialForm() {
                   {/* Birth Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <User size={16} className="text-[#9181EE]" />
                       <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Birth Name</label>
                     </div>
                     <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
@@ -1111,10 +1636,11 @@ export default function UnifiedMatrimonialForm() {
                     </div>
                   </div>
 
+                  
+
                   {/* Birth Place */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <MapPin size={16} className="text-[#9181EE]" />
                       <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Birth Place</label>
                     </div>
                     <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
@@ -1128,21 +1654,49 @@ export default function UnifiedMatrimonialForm() {
                     </div>
                   </div>
 
-                  {/* Birth Time */}
+                  {/* First Gotra */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <Clock size={16} className="text-[#9181EE]" />
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Birth Time</label>
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">First Gotra</label>
                     </div>
                     <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
                       <input
-                        type="time"
-                        value={formData.birthTime}
-                        onChange={(e) => handleInputChange('birthTime', e.target.value)}
+                        type="text"
+                        value={formData.firstGotra}
+                        onChange={(e) => handleInputChange('firstGotra', e.target.value)}
                         className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter birth place"
                       />
                     </div>
                   </div>
+
+                  {/* Second Gotra */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Second Gotra</label>
+                    </div>
+                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                      <input
+                        type="text"
+                        value={formData.secondGotra}
+                        onChange={(e) => handleInputChange('secondGotra', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter birth name"
+                      />
+                    </div>
+                  </div>
+
+                  
+
+                  
+
+
+                  {/* Birth Time - Custom Time Picker */}
+                  <CustomTimePicker
+                    value={formData.birthTime}
+                    onChange={(val) => handleInputChange('birthTime', val)}
+                    label="Birth Time"
+                  />
                 </div>
 
                 {/* Partner Preferences */}
@@ -1156,60 +1710,96 @@ export default function UnifiedMatrimonialForm() {
                     {/* Partner Age Range */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 ml-1">
-                        <Heart size={16} className="text-[#9181EE]" />
                         <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Partner's Age Range</label>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <CustomSelect
-                          label=""
-                          value={formData.partnerAgeFrom}
-                          options={ageOptions.map(age => `${age} years`)}
-                          onChange={(val) => handleInputChange('partnerAgeFrom', val)}
-                          placeholder="From"
-                          showIcon={false}
-                          className="-mt-5"
-                        />
-                        <CustomSelect
-                          label=""
-                          value={formData.partnerAgeTo}
-                          options={ageOptions.map(age => `${age} years`)}
-                          onChange={(val) => handleInputChange('partnerAgeTo', val)}
-                          placeholder="To"
-                          showIcon={false}
-                          className="-mt-5"
-                        />
+                        <div>
+                          <CustomSelect
+                            label=""
+                            value={formData.partnerAgeFrom}
+                            options={ageOptions.map(age => `${age} years`)}
+                            onChange={(val) => handleInputChange('partnerAgeFrom', val)}
+                            placeholder="From"
+                            showIcon={false}
+                            className="-mt-5"
+                          />
+                          {errors.partnerAgeFrom && (
+                            <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                              <AlertCircle size={14} />
+                              <span>{errors.partnerAgeFrom}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <CustomSelect
+                            label=""
+                            value={formData.partnerAgeTo}
+                            options={ageOptions.map(age => `${age} years`)}
+                            onChange={(val) => handleInputChange('partnerAgeTo', val)}
+                            placeholder="To"
+                            showIcon={false}
+                            className="-mt-5"
+                          />
+                          {errors.partnerAgeTo && (
+                            <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                              <AlertCircle size={14} />
+                              <span>{errors.partnerAgeTo}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
                     {/* Partner Education */}
-                    <CustomSelect
-                      label="Partner's Education"
-                      icon={<GraduationCap size={16} />}
-                      value={formData.partnerEducation}
-                      options={dropdownOptions.partnerEducation}
-                      onChange={(val) => handleInputChange('partnerEducation', val)}
-                      placeholder="Select education"
-                    />
+                    <div>
+                      <CustomSelect
+                        label="Partner's Education"
+                        value={formData.partnerEducation}
+                        options={dropdownOptions.partnerEducation}
+                        onChange={(val) => handleInputChange('partnerEducation', val)}
+                        placeholder="Select education"
+                      />
+                      {errors.partnerEducation && (
+                        <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                          <AlertCircle size={14} />
+                          <span>{errors.partnerEducation}</span>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Preferred Location */}
-                    <CustomSelect
-                      label="Preferred Location"
-                      icon={<MapPin size={16} />}
-                      value={formData.preferredLocation}
-                      options={dropdownOptions.preferredLocation}
-                      onChange={(val) => handleInputChange('preferredLocation', val)}
-                      placeholder="Select location"
-                    />
+                    <div>
+                      <CustomSelect
+                        label="Preferred Location"
+                        value={formData.preferredLocation}
+                        options={dropdownOptions.preferredLocation}
+                        onChange={(val) => handleInputChange('preferredLocation', val)}
+                        placeholder="Select location"
+                      />
+                      {errors.preferredLocation && (
+                        <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                          <AlertCircle size={14} />
+                          <span>{errors.preferredLocation}</span>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Minimum Annual Income */}
-                    <CustomSelect
-                      label="Minimum Annual Income"
-                      icon={<BadgeIndianRupee size={16} />}
-                      value={formData.minAnnualIncome}
-                      options={dropdownOptions.minAnnualIncome}
-                      onChange={(val) => handleInputChange('minAnnualIncome', val)}
-                      placeholder="Select income"
-                    />
+                    <div>
+                      <CustomSelect
+                        label="Minimum Annual Income"
+                        value={formData.minAnnualIncome}
+                        options={dropdownOptions.minAnnualIncome}
+                        onChange={(val) => handleInputChange('minAnnualIncome', val)}
+                        placeholder="Select income"
+                      />
+                      {errors.minAnnualIncome && (
+                        <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                          <AlertCircle size={14} />
+                          <span>{errors.minAnnualIncome}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
