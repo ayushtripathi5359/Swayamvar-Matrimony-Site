@@ -1229,7 +1229,7 @@ export default function UnifiedMatrimonialForm() {
 
             <button 
               onClick={currentStep === steps.length ? handleSubmit : next}
-              className="flex items-center gap-3 bg-[#9181EE] text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_-5px_rgba(145,129,238,0.5)] hover:bg-[#7b6fd6] active:scale-95 transition-all"
+              className="flex items-center gap-3 bg-[#9181EE] text-white px-4 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_-5px_rgba(145,129,238,0.5)] hover:bg-[#7b6fd6] active:scale-95 transition-all"
             >
               {currentStep === steps.length ? "Submit" : "Next Step"} <ChevronRight size={18} />
             </button>
