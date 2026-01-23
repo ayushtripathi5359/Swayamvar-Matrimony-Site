@@ -4,7 +4,7 @@ export default function FindPerfectBride() {
   const profiles = Array.from({ length: 8 });
 
   return (
-    <section className="bg-white pb-12 sm:py-16">
+    <section className="bg-white pt-8 pb-12 sm:py-16">
       <div className="max-w-[1200px] mx-auto px-4">
 
         {/* Header */}

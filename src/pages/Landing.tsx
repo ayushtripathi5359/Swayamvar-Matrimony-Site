@@ -108,7 +108,7 @@ export default function Landing() {
     />
 
     {/* Statistics */}
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-12 text-center -mt-10 lg:mt-10">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-12 text-center -mt-10 lg:mt-10">
       <StatItem
         label="Dates and matches made everyday"
         value="15k+"
@@ -121,7 +121,7 @@ export default function Landing() {
       />
 
       {/* Full width on mobile */}
-      <div className="col-span-2 sm:col-span-1">
+      <div className="col-span-2 sm:col-span-1 lg:col-span-2 xl:col-span-1 ">
         <StatItem
           label="Members from around the world"
           value="1M+"
