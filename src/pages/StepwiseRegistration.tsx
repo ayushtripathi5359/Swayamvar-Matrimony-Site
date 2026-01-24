@@ -2152,7 +2152,7 @@ export default function UnifiedMatrimonialForm() {
           
           {/* Photos Section - Western and Traditional */}
           <div className="flex flex-col items-center mb-6 lg:mb-10">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-4">
+            <div className="flex flex-row items-center justify-center gap-10 mb-4">
               {/* Western Photo */}
               <div className="relative">
                 <div className="w-24 h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
