@@ -18,10 +18,10 @@ import {
   BadgeIndianRupee,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Camera,
   Check,
   Edit3,
-  ChevronDown,
   Clock,
   X,
   Plus,
@@ -150,12 +150,17 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) 
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
       const parts = value.split('-');
-      return new Date(parts[2], parseInt(parts[1]) - 1, 1);
+      return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, 1);
     }
     return new Date();
   });
+  const [showYearMonth, setShowYearMonth] = useState(false);
   const calendarRef = useRef(null);
   const triggerRef = useRef(null);
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const yearRange = Array.from({ length: 100 }, (_, i) => currentYear - 80 + i);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -183,12 +188,28 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) 
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
+  const isDateDisabled = (day) => {
+    const selectedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    return selectedDate > today;
+  };
+
   const handleDateSelect = (day) => {
+    if (isDateDisabled(day)) return;
     const year = currentMonth.getFullYear();
     const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
     const dayStr = String(day).padStart(2, '0');
     onChange(`${dayStr}-${month}-${year}`);
     setIsOpen(false);
+    setShowYearMonth(false);
+  };
+
+  const handleYearChange = (year) => {
+    setCurrentMonth(new Date(year, currentMonth.getMonth(), 1));
+  };
+
+  const handleMonthChange = (month) => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), month, 1));
+    setShowYearMonth(false);
   };
 
   const previousMonth = () => {
@@ -196,7 +217,10 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) 
   };
 
   const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+    const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+    if (newMonth <= today) {
+      setCurrentMonth(newMonth);
+    }
   };
 
   const daysInMonth = getDaysInMonth(currentMonth);
@@ -210,7 +234,9 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) 
     days.push(i);
   }
 
-  const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const monthName = currentMonth.toLocaleString('default', { month: 'long' });
+  const year = currentMonth.getFullYear();
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const [selectedDay, selectedMonth, selectedYear] = value ? value.split('-') : [];
 
   return (
@@ -234,76 +260,152 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) 
       {isOpen && (
         <div
           ref={calendarRef}
-          className="absolute z-[9999] top-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 w-full max-w-sm md:max-w-sm animate-in fade-in zoom-in-95"
+          className="absolute z-[9999] top-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 w-full max-w-sm animate-in fade-in zoom-in-95"
           style={{ minHeight: 'fit-content' }}
         >
-          {/* Month Navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onTouchStart={previousMonth}
-              onClick={previousMonth}
-              className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
-              style={{ minWidth: '44px', minHeight: '44px' }}
-            >
-              <ChevronLeft size={18} className="text-[#9181EE]" />
-            </button>
-            <span className="font-bold text-slate-700 text-sm">{monthName}</span>
-            <button
-              onTouchStart={nextMonth}
-              onClick={nextMonth}
-              className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
-              style={{ minWidth: '44px', minHeight: '44px' }}
-            >
-              <ChevronRight size={18} className="text-[#9181EE]" />
-            </button>
-          </div>
-
-          {/* Weekday Headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="text-center text-xs font-bold text-slate-400 py-2">
-                {day}
+          {!showYearMonth ? (
+            <>
+              {/* Month/Year Navigation */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onTouchStart={previousMonth}
+                  onClick={previousMonth}
+                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                >
+                  <ChevronLeft size={18} className="text-[#9181EE]" />
+                </button>
+                <button
+                  onClick={() => setShowYearMonth(true)}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 rounded-lg transition-colors font-bold text-slate-700"
+                >
+                  <span>{monthName} {year}</span>
+                  <ChevronDown size={16} className="text-[#9181EE]" />
+                </button>
+                <button
+                  onTouchStart={nextMonth}
+                  onClick={nextMonth}
+                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  disabled={new Date(year, currentMonth.getMonth() + 1) > today}
+                >
+                  <ChevronRight size={18} className={`${new Date(year, currentMonth.getMonth() + 1) > today ? 'text-slate-300' : 'text-[#9181EE]'}`} />
+                </button>
               </div>
-            ))}
-          </div>
 
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7 gap-1">
-            {days.map((day, idx) => (
-              <button
-                key={idx}
-                onClick={() => day && handleDateSelect(day)}
-                onTouchStart={() => day && handleDateSelect(day)}
-                disabled={!day}
-                className={`py-2 text-sm font-semibold rounded-lg transition-all active:scale-95 ${
-                  !day
-                    ? 'text-slate-200 cursor-default'
-                    : value && selectedDay === String(day).padStart(2, '0') && selectedMonth === String(currentMonth.getMonth() + 1).padStart(2, '0') && selectedYear === String(currentMonth.getFullYear())
-                    ? 'bg-[#9181EE] text-white'
-                    : 'text-slate-700 hover:bg-[#F8F7FF] hover:text-[#9181EE]'
-                }`}
-                style={{
-                  minHeight: '44px',
-                  cursor: day ? 'pointer' : 'default'
-                }}
-              >
-                {day}
-              </button>
-            ))}
-          </div>
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="text-center text-xs font-bold text-slate-400 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-1">
+                {days.map((day, idx) => {
+                  const disabled = day ? isDateDisabled(day) : true;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => !disabled && day && handleDateSelect(day)}
+                      onTouchStart={() => !disabled && day && handleDateSelect(day)}
+                      disabled={disabled}
+                      className={`py-2 text-sm font-semibold rounded-lg transition-all active:scale-95 ${
+                        !day
+                          ? 'text-slate-200 cursor-default'
+                          : disabled
+                          ? 'text-slate-300 cursor-not-allowed bg-slate-50'
+                          : value && selectedDay === String(day).padStart(2, '0') && selectedMonth === String(currentMonth.getMonth() + 1).padStart(2, '0') && selectedYear === String(year)
+                          ? 'bg-[#9181EE] text-white'
+                          : 'text-slate-700 hover:bg-[#F8F7FF] hover:text-[#9181EE] cursor-pointer'
+                      }`}
+                      style={{
+                        minHeight: '44px',
+                        cursor: disabled ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Year/Month Selector */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Select Year</label>
+                  <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
+                    {yearRange.map((y) => (
+                      <button
+                        key={y}
+                        onClick={() => handleYearChange(y)}
+                        className={`py-2 px-2 rounded-lg text-sm font-semibold transition-all ${
+                          y === year
+                            ? 'bg-[#9181EE] text-white'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Select Month</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {months.map((m, idx) => (
+                      <button
+                        key={m}
+                        onClick={() => handleMonthChange(idx)}
+                        className={`py-2 px-2 rounded-lg text-sm font-semibold transition-all ${
+                          idx === currentMonth.getMonth()
+                            ? 'bg-[#9181EE] text-white'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {m.slice(0, 3)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowYearMonth(false)}
+                  className="w-full bg-[#9181EE] text-white py-2 rounded-lg font-bold text-sm uppercase transition-all active:scale-95"
+                  style={{ minHeight: '44px' }}
+                >
+                  Done
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
   );
 };
 
-// Custom Time Picker Component (iOS-friendly)
+// Custom Time Picker Component (iOS-friendly with 12-hour AM/PM format)
 const CustomTimePicker = ({ value, onChange, label }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [hours, setHours] = useState(() => value ? parseInt(value.split(':')[0]) : 0);
-  const [minutes, setMinutes] = useState(() => value ? parseInt(value.split(':')[1]) : 0);
   const timeRef = useRef(null);
   const triggerRef = useRef(null);
+
+  // Parse time from 24-hour format to 12-hour
+  const parseTime = (timeStr) => {
+    if (!timeStr) return { hours: 12, minutes: 0, isPM: false };
+    const [h, m] = timeStr.split(':').map(Number);
+    const isPM = h >= 12;
+    const hours = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return { hours, minutes: m, isPM };
+  };
+
+  const [time, setTime] = useState(parseTime(value));
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -323,14 +425,20 @@ const CustomTimePicker = ({ value, onChange, label }) => {
     };
   }, [isOpen]);
 
-  const handleTimeChange = React.useCallback(() => {
-    const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    onChange(timeStr);
-  }, [hours, minutes, onChange]);
+  // Convert 12-hour time to 24-hour format for storage
+  const convert12to24 = (h, isPM) => {
+    if (h === 12) return isPM ? 12 : 0;
+    return isPM ? h + 12 : h;
+  };
 
-  useEffect(() => {
-    handleTimeChange();
-  }, [handleTimeChange]);
+  const handleTimeChange = (newTime) => {
+    setTime(newTime);
+    const hours24 = convert12to24(newTime.hours, newTime.isPM);
+    const timeStr = `${String(hours24).padStart(2, '0')}:${String(newTime.minutes).padStart(2, '0')}`;
+    onChange(timeStr);
+  };
+
+  const displayTime = `${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')} ${time.isPM ? 'PM' : 'AM'}`;
 
   return (
     <div className="space-y-2 relative">
@@ -345,7 +453,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
         style={{ minHeight: '44px' }}
       >
         <span className={`font-bold ${value ? "text-black" : "text-slate-400"} text-sm lg:text-base`}>
-          {value || "HH:MM"}
+          {value ? displayTime : "HH:MM AM/PM"}
         </span>
         <Clock size={16} className="text-[#9181EE] opacity-60" />
       </div>
@@ -355,39 +463,36 @@ const CustomTimePicker = ({ value, onChange, label }) => {
           ref={timeRef}
           className="absolute z-[9999] top-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl p-6 w-full max-w-xs animate-in fade-in zoom-in-95"
         >
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-2">
             {/* Hours */}
             <div className="flex flex-col items-center gap-2">
               <label className="text-xs font-bold text-slate-500 uppercase">Hours</label>
-              <div className="flex items-center gap-2">
-                <button
-                  onTouchStart={() => setHours(hours === 0 ? 23 : hours - 1)}
-                  onClick={() => setHours(hours === 0 ? 23 : hours - 1)}
-                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
-                >
-                  <ChevronUp size={18} className="text-[#9181EE]" />
-                </button>
-              </div>
+              <button
+                onClick={() => handleTimeChange({ ...time, hours: time.hours === 1 ? 12 : time.hours - 1 })}
+                className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+              >
+                <ChevronUp size={18} className="text-[#9181EE]" />
+              </button>
               <input
                 type="number"
-                min="0"
-                max="23"
-                value={String(hours).padStart(2, '0')}
-                onChange={(e) => setHours(Math.min(23, Math.max(0, parseInt(e.target.value) || 0)))}
+                min="1"
+                max="12"
+                value={String(time.hours).padStart(2, '0')}
+                onChange={(e) => {
+                  const h = Math.min(12, Math.max(1, parseInt(e.target.value) || 1));
+                  handleTimeChange({ ...time, hours: h });
+                }}
                 className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg"
                 style={{ fontSize: '16px' }}
               />
-              <div className="flex items-center gap-2">
-                <button
-                  onTouchStart={() => setHours(hours === 23 ? 0 : hours + 1)}
-                  onClick={() => setHours(hours === 23 ? 0 : hours + 1)}
-                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
-                >
-                  <ChevronDown size={18} className="text-[#9181EE]" />
-                </button>
-              </div>
+              <button
+                onClick={() => handleTimeChange({ ...time, hours: time.hours === 12 ? 1 : time.hours + 1 })}
+                className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+              >
+                <ChevronDown size={18} className="text-[#9181EE]" />
+              </button>
             </div>
 
             {/* Separator */}
@@ -396,35 +501,59 @@ const CustomTimePicker = ({ value, onChange, label }) => {
             {/* Minutes */}
             <div className="flex flex-col items-center gap-2">
               <label className="text-xs font-bold text-slate-500 uppercase">Minutes</label>
-              <div className="flex items-center gap-2">
-                <button
-                  onTouchStart={() => setMinutes(minutes === 0 ? 59 : minutes - 1)}
-                  onClick={() => setMinutes(minutes === 0 ? 59 : minutes - 1)}
-                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
-                >
-                  <ChevronUp size={18} className="text-[#9181EE]" />
-                </button>
-              </div>
+              <button
+                onClick={() => handleTimeChange({ ...time, minutes: time.minutes === 0 ? 59 : time.minutes - 1 })}
+                className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+              >
+                <ChevronUp size={18} className="text-[#9181EE]" />
+              </button>
               <input
                 type="number"
                 min="0"
                 max="59"
-                value={String(minutes).padStart(2, '0')}
-                onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                value={String(time.minutes).padStart(2, '0')}
+                onChange={(e) => {
+                  const m = Math.min(59, Math.max(0, parseInt(e.target.value) || 0));
+                  handleTimeChange({ ...time, minutes: m });
+                }}
                 className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg"
                 style={{ fontSize: '16px' }}
               />
-              <div className="flex items-center gap-2">
-                <button
-                  onTouchStart={() => setMinutes(minutes === 59 ? 0 : minutes + 1)}
-                  onClick={() => setMinutes(minutes === 59 ? 0 : minutes + 1)}
-                  className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
-                >
-                  <ChevronDown size={18} className="text-[#9181EE]" />
-                </button>
-              </div>
+              <button
+                onClick={() => handleTimeChange({ ...time, minutes: time.minutes === 59 ? 0 : time.minutes + 1 })}
+                className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+              >
+                <ChevronDown size={18} className="text-[#9181EE]" />
+              </button>
+            </div>
+
+            {/* AM/PM Toggle */}
+            <div className="flex flex-col items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">Period</label>
+              <button
+                onClick={() => handleTimeChange({ ...time, isPM: !time.isPM })}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95 ${
+                  time.isPM 
+                    ? 'bg-slate-100 text-slate-700' 
+                    : 'bg-[#9181EE] text-white'
+                }`}
+                style={{ minHeight: '44px' }}
+              >
+                AM
+              </button>
+              <button
+                onClick={() => handleTimeChange({ ...time, isPM: !time.isPM })}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95 ${
+                  time.isPM 
+                    ? 'bg-[#9181EE] text-white' 
+                    : 'bg-slate-100 text-slate-700'
+                }`}
+                style={{ minHeight: '44px' }}
+              >
+                PM
+              </button>
             </div>
           </div>
 
@@ -776,7 +905,7 @@ export default function UnifiedMatrimonialForm() {
   // Generate height options from 4ft to 7ft
   const generateHeightOptions = () => {
     const options = [];
-    for (let feet = 4; feet <= 7; feet++) {
+    for (let feet = 4; feet < 7; feet++) {
       for (let inches = 0; inches < 12; inches++) {
         options.push(`${feet}' ${inches}"`);
       }
@@ -787,19 +916,19 @@ export default function UnifiedMatrimonialForm() {
   const dropdownOptions = {
     gender: ["Male", "Female"],
     maritalStatus: ["Unmarried", "Divorced", "Separated", "Widowed"],
-    motherTongue: ["English", "Marathi", "Hindi", "Tamil"],
+    motherTongue: ["English", "Marathi", "Hindi", "Tamil", "Telugu"],
     height: generateHeightOptions(),
     complexion: ["Very Fair", "Fair", "Wheatish", "Dark"],
     bloodGroup: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
     highestEducation: [
+        "Professional Degree (CA / CS / ICWA)",
+        "Doctorate (PhD)",
+        "Post Graduate",
+        "Graduate",
+        "Diploma",
+        "12th Pass",
+        "10th Pass",
       "Below 10th",
-      "10th Pass",
-      "12th Pass",
-      "Diploma",
-      "Graduate",
-      "Post Graduate",
-      "Doctorate (PhD)",
-      "Professional Degree (CA / CS / ICWA)"
     ],
     occupation: [
       "Salaried (Private)",
@@ -818,7 +947,7 @@ export default function UnifiedMatrimonialForm() {
     minAnnualIncome: ["₹10 LPA +", "₹15 LPA +", "₹20 LPA +", "₹25 LPA +", "₹30 LPA +", "₹40 LPA +", "₹50 LPA +"]
   };
 
-  const ageOptions = Array.from({ length: 50 }, (_, i) => i + 18);
+  const ageOptions = Array.from({ length: 25 }, (_, i) => i + 21);
 
   // Calculate age from date of birth
   const calculateAge = (dob) => {
@@ -916,6 +1045,15 @@ export default function UnifiedMatrimonialForm() {
       ...prev,
       [field]: value
     }));
+    
+    // Clear error for this field when user starts editing
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   // Format date for input[type="date"]
@@ -1161,7 +1299,10 @@ export default function UnifiedMatrimonialForm() {
                     <input
                       type="text"
                       value={formData.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      onChange={(e) => {
+                        const filteredValue = e.target.value.replace(/[0-9]/g, '');
+                        handleInputChange('fullName', filteredValue);
+                      }}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                       placeholder="Enter your full name"
                       style={{ fontSize: '16px' }} 
@@ -1229,15 +1370,24 @@ export default function UnifiedMatrimonialForm() {
                   <div className="flex items-center gap-2 ml-1">
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">WhatsApp Number</label>
                   </div>
-                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.whatsappNumber ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                  }`}>
                     <input
                       type="tel"
                       value={formData.whatsappNumber}
                       onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                       placeholder="Enter WhatsApp number"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
+                  {errors.whatsappNumber && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.whatsappNumber}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Email Address */}
@@ -1245,15 +1395,24 @@ export default function UnifiedMatrimonialForm() {
                   <div className="flex items-center gap-2 ml-1">
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Email Address</label>
                   </div>
-                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.emailId ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                  }`}>
                     <input
                       type="email"
                       value={formData.emailId}
                       onChange={(e) => handleInputChange('emailId', e.target.value)}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                       placeholder="Enter email address"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
+                  {errors.emailId && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.emailId}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Marital Status */}
@@ -1289,6 +1448,39 @@ export default function UnifiedMatrimonialForm() {
                     </div>
                   )}
                 </div>
+
+                {/* First Gotra */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">First Gotra</label>
+                    </div>
+                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                      <input
+                        type="text"
+                        value={formData.firstGotra}
+                        onChange={(e) => handleInputChange('firstGotra', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter birth place"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Second Gotra */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Second Gotra</label>
+                    </div>
+                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                      <input
+                        type="text"
+                        value={formData.secondGotra}
+                        onChange={(e) => handleInputChange('secondGotra', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter birth name"
+                      />
+                    </div>
+                  </div>
+
 
                 {/* Height */}
                 <div>
@@ -1365,7 +1557,7 @@ export default function UnifiedMatrimonialForm() {
                 </div>
 
                 {/* College/University */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">College/University</label>
                   </div>
@@ -1378,7 +1570,7 @@ export default function UnifiedMatrimonialForm() {
                       placeholder="Enter college/university"
                     />
                   </div>
-                </div>
+                </div> */}
 
                 {/* Occupation */}
                 <div>
@@ -1400,7 +1592,9 @@ export default function UnifiedMatrimonialForm() {
                 {/* Organization */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Organization</label>
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      {formData.occupation === "Business Owner" ? "Business Name" : "Organization"}
+                    </label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
                     <input
@@ -1408,27 +1602,50 @@ export default function UnifiedMatrimonialForm() {
                       value={formData.organization}
                       onChange={(e) => handleInputChange('organization', e.target.value)}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter organization"
+                      placeholder={formData.occupation === "Business Owner" ? "Enter your business name" : "Enter organization"}
                     />
                   </div>
                 </div>
 
                 {/* Annual Income */}
-                <div>
-                  <CustomSelect
-                    label="Annual Income"
-                    value={formData.annualIncome}
-                    options={dropdownOptions.annualIncome}
-                    onChange={(val) => handleInputChange('annualIncome', val)}
-                    placeholder="Select income range"
-                  />
-                  {errors.annualIncome && (
-                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
-                      <AlertCircle size={14} />
-                      <span>{errors.annualIncome}</span>
+                {formData.occupation === "Business Owner" ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Annual Income</label>
                     </div>
-                  )}
-                </div>
+                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                      <input
+                        type="text"
+                        value={formData.annualIncome}
+                        onChange={(e) => handleInputChange('annualIncome', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter your annual income"
+                      />
+                    </div>
+                    {errors.annualIncome && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.annualIncome}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <CustomSelect
+                      label="Annual Income"
+                      value={formData.annualIncome}
+                      options={dropdownOptions.annualIncome}
+                      onChange={(val) => handleInputChange('annualIncome', val)}
+                      placeholder="Select income range"
+                    />
+                    {errors.annualIncome && (
+                      <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.annualIncome}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Job Location */}
                 <div className="space-y-2">
@@ -1463,7 +1680,10 @@ export default function UnifiedMatrimonialForm() {
                       <input
                         type="text"
                         value={formData.fathersFullName}
-                        onChange={(e) => handleInputChange('fathersFullName', e.target.value)}
+                        onChange={(e) => {
+                          const filteredValue = e.target.value.replace(/[0-9]/g, '');
+                          handleInputChange('fathersFullName', filteredValue);
+                        }}
                         className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                         placeholder="Enter father's full name"
                         style={{ fontSize: '16px' }}
@@ -1506,7 +1726,10 @@ export default function UnifiedMatrimonialForm() {
                       <input
                         type="text"
                         value={formData.mothersFullName}
-                        onChange={(e) => handleInputChange('mothersFullName', e.target.value)}
+                        onChange={(e) => {
+                          const filteredValue = e.target.value.replace(/[0-9]/g, '');
+                          handleInputChange('mothersFullName', filteredValue);
+                        }}
                         className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                         placeholder="Enter mother's full name"
                         style={{ fontSize: '16px' }}
@@ -1654,38 +1877,7 @@ export default function UnifiedMatrimonialForm() {
                     </div>
                   </div>
 
-                  {/* First Gotra */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">First Gotra</label>
-                    </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
-                      <input
-                        type="text"
-                        value={formData.firstGotra}
-                        onChange={(e) => handleInputChange('firstGotra', e.target.value)}
-                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder="Enter birth place"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Second Gotra */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Second Gotra</label>
-                    </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
-                      <input
-                        type="text"
-                        value={formData.secondGotra}
-                        onChange={(e) => handleInputChange('secondGotra', e.target.value)}
-                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder="Enter birth name"
-                      />
-                    </div>
-                  </div>
-
+                  
                   
 
                   
@@ -1821,7 +2013,7 @@ export default function UnifiedMatrimonialForm() {
               onClick={currentStep === steps.length ? handleSubmit : next}
               className="flex items-center gap-3 bg-[#9181EE] text-white px-4 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_-5px_rgba(145,129,238,0.5)] hover:bg-[#7b6fd6] active:scale-95 transition-all"
             >
-              {currentStep === steps.length ? "Submit" : "Next Step"} <ChevronRight size={18} />
+              {currentStep === steps.length ? "Submit" : "Next"} <ChevronRight size={18} />
             </button>
           </div>
         </div>
