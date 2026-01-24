@@ -54,7 +54,8 @@ const CustomSelect = ({
   placeholder = "Select option",
   disabled = false,
   className = "",
-  showIcon = true
+  showIcon = true,
+  required = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState("bottom");
@@ -95,7 +96,10 @@ const CustomSelect = ({
   return (
     <div className={`group relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
       <div className="flex items-center gap-2 ml-1">
-        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">{label}</label>
+        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
       </div>
       
       <div 
@@ -148,8 +152,139 @@ const CustomSelect = ({
   );
 };
 
+// Custom Multi-Select Component
+const CustomMultiSelect = ({ 
+  label, 
+  value = [], 
+  options = [], 
+  onChange, 
+  placeholder = "Select options",
+  disabled = false,
+  className = "",
+  required = false
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState("bottom");
+  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - triggerRect.bottom;
+      const spaceAbove = triggerRect.top;
+      const dropdownHeight = Math.min(options.length * 44, 240);
+      
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        setPosition("top");
+      } else {
+        setPosition("bottom");
+      }
+    }
+  }, [isOpen, options.length]);
+
+  const handleSelect = (option) => {
+    const newValue = value.includes(option)
+      ? value.filter(item => item !== option)
+      : [...value, option];
+    onChange(newValue);
+  };
+
+  const displayText = value.length === 0 
+    ? placeholder 
+    : value.length === 1 
+      ? value[0] 
+      : `${value.length} selected`;
+
+  return (
+    <div className={`group relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
+      <div className="flex items-center gap-2 ml-1">
+        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      </div>
+      
+      <div 
+        ref={triggerRef}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`bg-white mt-2 border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
+          isOpen 
+            ? "border-[#9181EE] shadow-[0_0_0_3px_rgba(145,129,238,0.1)]" 
+            : "border-slate-100 hover:border-[#9181EE]/30"
+        } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+        style={{ position: 'relative', zIndex: isOpen ? 10000 : 0 }}
+      >
+        <div className="flex items-center gap-2 flex-1">
+          <span className={`font-bold ${value.length > 0 ? "text-black" : "text-slate-400"} text-base truncate`}>
+            {displayText}
+          </span>
+          {value.length > 1 && (
+            <div className="flex flex-wrap gap-1 max-w-[200px] overflow-hidden">
+              {value.slice(0, 2).map((item, idx) => (
+                <span key={idx} className="bg-[#F8F7FF] text-[#9181EE] px-2 py-1 rounded-lg text-xs font-semibold">
+                  {item.length > 10 ? `${item.substring(0, 10)}...` : item}
+                </span>
+              ))}
+              {value.length > 2 && (
+                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-xs font-semibold">
+                  +{value.length - 2}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <ChevronDown 
+          size={18} 
+          className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#9181EE]" : "text-slate-300"}`} 
+        />
+      </div>
+
+      {isOpen && options.length > 0 && (
+        <div 
+          className={`absolute z-[9999] w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 ${
+            position === "top" ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+          style={{
+            maxHeight: 'min(240px, 50vh)',
+            minWidth: '200px'
+          }}
+        >
+          <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: 'inherit' }}>
+            {options.map((option, index) => (
+              <div
+                key={index}
+                onClick={() => handleSelect(option)}
+                className={`px-4 lg:px-5 py-3 font-bold hover:bg-[#F8F7FF] hover:text-[#9181EE] transition-colors cursor-pointer border-b border-slate-50 last:border-0 text-base flex items-center justify-between ${
+                  value.includes(option) ? "bg-[#F8F7FF] text-[#9181EE]" : "text-black"
+                }`}
+              >
+                <span>{option}</span>
+                {value.includes(option) && (
+                  <Check size={16} className="text-[#9181EE]" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Custom Calendar Picker Component (iOS-friendly)
-const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) => {
+const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date(), required = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
@@ -246,7 +381,10 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date() }) 
   return (
     <div className="space-y-2 relative">
       <div className="flex items-center gap-2 ml-1">
-        <label className="text-[12px] font-bold text-slate-500 uppercase">{label}</label>
+        <label className="text-[12px] font-bold text-slate-500 uppercase">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
       </div>
 
       <div
@@ -750,7 +888,13 @@ const SiblingField = ({
     name: "",
     maritalStatus: "",
     occupation: "",
-    spouseName: ""
+    spouseName: "",
+    businessName: "",
+    businessLocation: "",
+    designation: "",
+    companyName: "",
+    currentEducation: "",
+    otherOccupation: ""
   });
 
   // Custom dropdown states
@@ -786,7 +930,7 @@ const SiblingField = ({
   };
 
   const maritalStatusOptions = ["Unmarried", "Married"];
-  const occupationOptions = ["Job", "Business", "Student", "Professional"];
+  const occupationOptions = ["Business", "Job/Salaried", "Student", "Homemaker", "Not Working", "Other"];
 
   return (
     <div className="space-y-4 p-4 bg-slate-50 rounded-2xl">
@@ -920,6 +1064,98 @@ const SiblingField = ({
             </div>
           </div>
         )}
+
+        {/* Business Fields */}
+        {siblingData.occupation === 'Business' && (
+          <>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Business Name</label>
+              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+                <input
+                  type="text"
+                  value={siblingData.businessName}
+                  onChange={(e) => handleChange('businessName', e.target.value)}
+                  className="w-full text-sm font-semibold text-slate-700 outline-none bg-transparent"
+                  placeholder="Enter business name"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Business Location</label>
+              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+                <input
+                  type="text"
+                  value={siblingData.businessLocation}
+                  onChange={(e) => handleChange('businessLocation', e.target.value)}
+                  className="w-full text-sm font-semibold text-slate-700 outline-none bg-transparent"
+                  placeholder="Enter business location"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Job/Salaried Fields */}
+        {siblingData.occupation === 'Job/Salaried' && (
+          <>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Designation</label>
+              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+                <input
+                  type="text"
+                  value={siblingData.designation}
+                  onChange={(e) => handleChange('designation', e.target.value)}
+                  className="w-full text-sm font-semibold text-slate-700 outline-none bg-transparent"
+                  placeholder="Enter designation"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Company Name</label>
+              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+                <input
+                  type="text"
+                  value={siblingData.companyName}
+                  onChange={(e) => handleChange('companyName', e.target.value)}
+                  className="w-full text-sm font-semibold text-slate-700 outline-none bg-transparent"
+                  placeholder="Enter company name"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Student Field */}
+        {siblingData.occupation === 'Student' && (
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 uppercase">Current Education</label>
+            <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <input
+                type="text"
+                value={siblingData.currentEducation}
+                onChange={(e) => handleChange('currentEducation', e.target.value)}
+                className="w-full text-sm font-semibold text-slate-700 outline-none bg-transparent"
+                placeholder="Enter current education"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Other Occupation Field */}
+        {siblingData.occupation === 'Other' && (
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 uppercase">Other Occupation</label>
+            <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <input
+                type="text"
+                value={siblingData.otherOccupation}
+                onChange={(e) => handleChange('otherOccupation', e.target.value)}
+                className="w-full text-sm font-semibold text-slate-700 outline-none bg-transparent"
+                placeholder="Enter other occupation"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -930,6 +1166,7 @@ interface FormData {
   gender: string;
   dateOfBirth: string;
   age: string;
+  aboutMe: string;
   maritalStatus: string;
   motherTongue: string;
   height: string;
@@ -939,16 +1176,32 @@ interface FormData {
   collegeUniversity: string;
   occupation: string;
   organization: string;
+  designation: string;
+  currentEducation: string;
+  otherOccupation: string;
   annualIncome: string;
   jobLocation: string;
   fathersFullName: string;
   fathersOccupation:string;
+  fathersBusinessName: string;
+  fathersBusinessLocation: string;
+  fathersDesignation: string;
+  fathersCompanyName: string;
+  fathersOtherOccupation: string;
   mothersFullName: string;
   mothersOccupation:string;
+  mothersBusinessName: string;
+  mothersBusinessLocation: string;
+  mothersDesignation: string;
+  mothersCompanyName: string;
+  mothersOtherOccupation: string;
   brothers: Record<string, string>[];
   sisters: Record<string, string>[];
   whatsappNumber: string;
   emailId: string;
+  linkedinHandle: string;
+  instagramHandle: string;
+  facebookHandle: string;
   birthName: string;
   birthTime: string;
   birthPlace: string;
@@ -956,8 +1209,8 @@ interface FormData {
   secondGotra: string;
   partnerAgeFrom: string;
   partnerAgeTo: string;
-  partnerEducation: string;
-  preferredLocation: string;
+  partnerQualification: string[];
+  preferredLocation: string[];
   minAnnualIncome: string;
 }
 
@@ -971,27 +1224,110 @@ const validateStep1 = (formData: FormData) => {
   if (!formData.height) errors.height = "Height is required";
   if (!formData.complexion) errors.complexion = "Complexion is required";
   if (!formData.bloodGroup) errors.bloodGroup = "Blood group is required";
+  
   if (formData.whatsappNumber && !validatePhoneNumber(formData.whatsappNumber)) {
     errors.whatsappNumber = "Enter a valid 10-digit phone number";
   }
   if (formData.emailId && !validateEmail(formData.emailId)) {
     errors.emailId = "Enter a valid email address";
   }
+  
+  // At least one social media handle is required
+  const hasSocialMedia = formData.linkedinHandle?.trim() || formData.instagramHandle?.trim() || formData.facebookHandle?.trim();
+  if (!hasSocialMedia) {
+    errors.socialMedia = "At least one social media profile is required";
+    // Add error to all social media fields to highlight them
+    if (!formData.linkedinHandle?.trim()) errors.linkedinHandle = "Required (at least one social media profile)";
+    if (!formData.instagramHandle?.trim()) errors.instagramHandle = "Required (at least one social media profile)";
+    if (!formData.facebookHandle?.trim()) errors.facebookHandle = "Required (at least one social media profile)";
+  }
+  
   return errors;
 };
 
 const validateStep2 = (formData: FormData) => {
   const errors: Record<string, string> = {};
+  
+  // Always required fields for Step 2
   if (!formData.highestEducation) errors.highestEducation = "Education is required";
+  // Note: collegeUniversity field is not currently visible in the UI, so don't require it
   if (!formData.occupation) errors.occupation = "Occupation is required";
-  if (!formData.annualIncome) errors.annualIncome = "Annual income is required";
+  
+  // Dynamic validation based on occupation
+  const nonWorkingOccupations = ["Student", "Homemaker", "Not Working"];
+  
+  if (!nonWorkingOccupations.includes(formData.occupation)) {
+    // Organization/Business Name is required for working occupations
+    if (!formData.organization?.trim()) {
+      errors.organization = formData.occupation === "Business Owner" ? "Business name is required" : "Organization is required";
+    }
+    
+    // Annual Income is required for working occupations
+    if (!formData.annualIncome?.trim()) {
+      errors.annualIncome = "Annual income is required";
+    }
+    
+    // Job Location validation
+    if (formData.occupation === "Business Owner") {
+      // Business Location is stored in jobLocation field for Business Owner
+      if (!formData.jobLocation?.trim()) {
+        errors.jobLocation = "Business location is required";
+      }
+    } else {
+      // Job Location is required for other working occupations
+      if (!formData.jobLocation?.trim()) {
+        errors.jobLocation = "Job location is required";
+      }
+    }
+    
+    // Designation validation for salaried employees
+    if ((formData.occupation === "Salaried (Private)" || formData.occupation === "Salaried (Government)") && !formData.designation?.trim()) {
+      errors.designation = "Designation is required";
+    }
+    
+    // Other details validation for self-employed/freelancer
+    if ((formData.occupation === "Self-Employed" || formData.occupation === "Freelancer") && !formData.otherOccupation?.trim()) {
+      errors.otherOccupation = "Additional details are required";
+    }
+  }
+  
+  // Student-specific validation
+  if (formData.occupation === "Student" && !formData.currentEducation?.trim()) {
+    errors.currentEducation = "Current education is required";
+  }
+  
   return errors;
 };
 
 const validateStep3 = (formData: FormData) => {
   const errors: Record<string, string> = {};
+  
+  // Always required fields
   if (!formData.fathersFullName?.trim()) errors.fathersFullName = "Father's name is required";
   if (!formData.mothersFullName?.trim()) errors.mothersFullName = "Mother's name is required";
+  
+  // Dynamic validation for father's occupation fields
+  if (formData.fathersOccupation === "Business") {
+    if (!formData.fathersBusinessName?.trim()) errors.fathersBusinessName = "Father's business name is required";
+    if (!formData.fathersBusinessLocation?.trim()) errors.fathersBusinessLocation = "Father's business location is required";
+  } else if (formData.fathersOccupation === "Job/Salaried") {
+    if (!formData.fathersDesignation?.trim()) errors.fathersDesignation = "Father's designation is required";
+    if (!formData.fathersCompanyName?.trim()) errors.fathersCompanyName = "Father's company name is required";
+  } else if (formData.fathersOccupation === "Other") {
+    if (!formData.fathersOtherOccupation?.trim()) errors.fathersOtherOccupation = "Father's occupation details are required";
+  }
+  
+  // Dynamic validation for mother's occupation fields
+  if (formData.mothersOccupation === "Business") {
+    if (!formData.mothersBusinessName?.trim()) errors.mothersBusinessName = "Mother's business name is required";
+    if (!formData.mothersBusinessLocation?.trim()) errors.mothersBusinessLocation = "Mother's business location is required";
+  } else if (formData.mothersOccupation === "Job/Salaried") {
+    if (!formData.mothersDesignation?.trim()) errors.mothersDesignation = "Mother's designation is required";
+    if (!formData.mothersCompanyName?.trim()) errors.mothersCompanyName = "Mother's company name is required";
+  } else if (formData.mothersOccupation === "Other") {
+    if (!formData.mothersOtherOccupation?.trim()) errors.mothersOtherOccupation = "Mother's occupation details are required";
+  }
+  
   return errors;
 };
 
@@ -999,8 +1335,8 @@ const validateStep4 = (formData: FormData) => {
   const errors: Record<string, string> = {};
   if (!formData.partnerAgeFrom) errors.partnerAgeFrom = "Partner age range is required";
   if (!formData.partnerAgeTo) errors.partnerAgeTo = "Partner age range is required";
-  if (!formData.partnerEducation) errors.partnerEducation = "Partner education is required";
-  if (!formData.preferredLocation) errors.preferredLocation = "Preferred location is required";
+  if (!formData.partnerQualification || formData.partnerQualification.length === 0) errors.partnerQualification = "Partner qualification is required";
+  if (!formData.preferredLocation || formData.preferredLocation.length === 0) errors.preferredLocation = "Preferred location is required";
   if (!formData.minAnnualIncome) errors.minAnnualIncome = "Minimum income is required";
   return errors;
 };
@@ -1008,12 +1344,14 @@ const validateStep4 = (formData: FormData) => {
 export default function UnifiedMatrimonialForm() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [photo, setPhoto] = useState(null);
+  const [westernPhoto, setWesternPhoto] = useState(null);
+  const [traditionalPhoto, setTraditionalPhoto] = useState(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Image cropper states
   const [showCropper, setShowCropper] = useState(false);
   const [originalImage, setOriginalImage] = useState(null);
+  const [cropperMode, setCropperMode] = useState(null); // 'western' or 'traditional'
   
   // Date picker state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -1025,6 +1363,7 @@ export default function UnifiedMatrimonialForm() {
     gender: "",
     dateOfBirth: "",
     age: "",
+    aboutMe: "",
     maritalStatus: "",
     motherTongue: "",
     height: "",
@@ -1036,20 +1375,36 @@ export default function UnifiedMatrimonialForm() {
     collegeUniversity: "",
     occupation: "",
     organization: "",
+    designation: "",
+    currentEducation: "",
+    otherOccupation: "",
     annualIncome: "",
     jobLocation: "",
     
     // Family Details
     fathersFullName: "",
     fathersOccupation:"",
+    fathersBusinessName: "",
+    fathersBusinessLocation: "",
+    fathersDesignation: "",
+    fathersCompanyName: "",
+    fathersOtherOccupation: "",
     mothersFullName: "",
     mothersOccupation:"",
+    mothersBusinessName: "",
+    mothersBusinessLocation: "",
+    mothersDesignation: "",
+    mothersCompanyName: "",
+    mothersOtherOccupation: "",
     brothers: [],
     sisters: [],
     
     // Contact Details
     whatsappNumber: "",
     emailId: "",
+    linkedinHandle: "",
+    instagramHandle: "",
+    facebookHandle: "",
     
     // Kundali Details
     birthName: "",
@@ -1061,8 +1416,8 @@ export default function UnifiedMatrimonialForm() {
     // Partner Preference
     partnerAgeFrom: "",
     partnerAgeTo: "",
-    partnerEducation: "",
-    preferredLocation: "",
+    partnerQualification: [],
+    preferredLocation: [],
     minAnnualIncome: ""
   });
 
@@ -1106,16 +1461,306 @@ export default function UnifiedMatrimonialForm() {
       "Salaried (Government)",
       "Self-Employed",
       "Business Owner",
-      "Professional (Doctor / Lawyer / CA / Engineer)",
       "Freelancer",
       "Student",
       "Homemaker",
       "Not Working"
     ],
     annualIncome: ["₹0-5 LPA", "₹5-10 LPA", "₹10-15 LPA", "₹15-20 LPA", "₹20-25 LPA", "₹25-35 LPA", "₹35-50 LPA", "₹50 LPA +"],
-    partnerEducation: ["Graduate", "Post Graduate", "IIT/IIM", "Doctorate", "Any Graduate"],
-    preferredLocation: ["Bangalore", "Pune", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Any Metro City"],
-    minAnnualIncome: ["Not Reqired","5LPA+","₹10 LPA +", "₹15 LPA +", "₹20 LPA +", "₹25 LPA +", "₹30 LPA +", "₹40 LPA +", "₹50 LPA +"]
+    partnerQualification: [
+      "Doctor (MBBS/MD/MS)",
+      "Engineer (B.Tech/M.Tech)",
+      "Chartered Accountant (CA)",
+      "Company Secretary (CS)",
+      "Cost Accountant (CMA)",
+      "Lawyer/Advocate",
+      "MBA",
+      "Pharmacist",
+      "Architect",
+      "Software Engineer",
+      "Data Scientist",
+      "Civil Services (IAS/IPS/IFS)",
+      "Banking Professional",
+      "Teacher/Professor",
+      "Consultant",
+      "Business Owner",
+      "Government Employee",
+      "Any Graduate",
+      "Any Post Graduate",
+      "No Preference"
+    ],
+    preferredLocation: [
+      "Mumbai", 
+      "Delhi/NCR", 
+      "Bangalore", 
+      "Pune", 
+      "Hyderabad", 
+      "Chennai", 
+      "Kolkata", 
+      "Ahmedabad", 
+      "Surat", 
+      "Jaipur", 
+      "Lucknow", 
+      "Kanpur", 
+      "Nagpur", 
+      "Indore", 
+      "Thane", 
+      "Bhopal", 
+      "Visakhapatnam", 
+      "Pimpri-Chinchwad", 
+      "Patna", 
+      "Vadodara", 
+      "Ghaziabad", 
+      "Ludhiana", 
+      "Agra", 
+      "Nashik", 
+      "Faridabad", 
+      "Meerut", 
+      "Rajkot", 
+      "Kalyan-Dombivali", 
+      "Vasai-Virar", 
+      "Varanasi", 
+      "Srinagar", 
+      "Aurangabad", 
+      "Dhanbad", 
+      "Amritsar", 
+      "Navi Mumbai", 
+      "Allahabad", 
+      "Ranchi", 
+      "Howrah", 
+      "Coimbatore", 
+      "Jabalpur", 
+      "Gwalior", 
+      "Vijayawada", 
+      "Jodhpur", 
+      "Madurai", 
+      "Raipur", 
+      "Kota", 
+      "Chandigarh", 
+      "Guwahati", 
+      "Solapur", 
+      "Hubli-Dharwad", 
+      "Bareilly", 
+      "Moradabad", 
+      "Mysore", 
+      "Gurgaon", 
+      "Aligarh", 
+      "Jalandhar", 
+      "Tiruchirappalli", 
+      "Bhubaneswar", 
+      "Salem", 
+      "Warangal", 
+      "Mira-Bhayandar", 
+      "Thiruvananthapuram", 
+      "Bhiwandi", 
+      "Saharanpur", 
+      "Gorakhpur", 
+      "Guntur", 
+      "Bikaner", 
+      "Amravati", 
+      "Noida", 
+      "Jamshedpur", 
+      "Bhilai Nagar", 
+      "Cuttack", 
+      "Firozabad", 
+      "Kochi", 
+      "Bhavnagar", 
+      "Dehradun", 
+      "Durgapur", 
+      "Asansol", 
+      "Nanded-Waghala", 
+      "Kolhapur", 
+      "Ajmer", 
+      "Gulbarga", 
+      "Jamnagar", 
+      "Ujjain", 
+      "Loni", 
+      "Siliguri", 
+      "Jhansi", 
+      "Ulhasnagar", 
+      "Nellore", 
+      "Jammu", 
+      "Sangli-Miraj & Kupwad", 
+      "Belgaum", 
+      "Mangalore", 
+      "Ambattur", 
+      "Tirunelveli", 
+      "Malegaon", 
+      "Gaya", 
+      "Jalgaon", 
+      "Udaipur", 
+      "Maheshtala", 
+      "Any Metro City", 
+      "Any Tier 1 City", 
+      "Any Tier 2 City", 
+      "Anywhere in India", 
+      "Open to Relocation"
+    ],
+    minAnnualIncome: ["Not Reqired","5LPA+","₹10 LPA +", "₹15 LPA +", "₹20 LPA +", "₹25 LPA +", "₹30 LPA +", "₹40 LPA +", "₹50 LPA +"],
+    parentOccupation: ["Business", "Job/Salaried", "Retired", "Homemaker", "Not Working", "Other"],
+    gotra: [
+      "Aankul",
+      "Abhimanchkul",
+      "Abhimankul",
+      "Abhimanyukul",
+      "Akumanchal",
+      "Anantkul",
+      "Ankul",
+      "Antakul",
+      "Ayankul",
+      "Balshishta/Balshatal",
+      "Bhanukul",
+      "Bibshatla",
+      "Bomadshatla",
+      "Budhankul",
+      "Chandkul",
+      "Chandrakul",
+      "Chandrashil",
+      "Chennakul (Channakul)",
+      "Chidrupkul",
+      "Chilkul",
+      "Chilshil",
+      "Chinnakul",
+      "Chitrapil",
+      "Deokul",
+      "Deoshatla",
+      "Deoshetti/Devshishta",
+      "Deshatla",
+      "Dhankul",
+      "Dhanshil",
+      "Dikshkul",
+      "Ebhrashatla",
+      "Ebishatla",
+      "Ekshakul",
+      "Enkol",
+      "Enkul",
+      "Ennakul",
+      "Eshashishta",
+      "Eshpal",
+      "Eshwakul",
+      "Gandheshil",
+      "Gandheshwar",
+      "Ganshatla",
+      "Gaurshatla",
+      "Gondakulla",
+      "Gondkul",
+      "Gontakul",
+      "Gunai",
+      "Gundkul",
+      "Guntkul",
+      "Janukul",
+      "Jenchkul",
+      "Khushal",
+      "Komarshatla",
+      "Kumshatla",
+      "Madankul",
+      "Malshet",
+      "Mandkul",
+      "Mankul",
+      "Masantkul",
+      "Minkul",
+      "Mithunkul",
+      "Molukul",
+      "Moonkul",
+      "Morkul",
+      "Mulkul",
+      "Munikul",
+      "Munjikula",
+      "Murkul",
+      "Nabhilla",
+      "Nabhilkul",
+      "Narali",
+      "Navshil",
+      "Pabhal/Prabhal",
+      "Padgeshil",
+      "Padgeshwar",
+      "Padmashatla",
+      "Padmashil",
+      "Padmashishta",
+      "Pagadikul",
+      "Paidikul",
+      "Paidkul",
+      "Paitkul",
+      "Panaskul",
+      "Panchkul",
+      "Panshil",
+      "Pansul",
+      "Parashar",
+      "Paulshishta",
+      "Pawanshil",
+      "Pendakul",
+      "Pendalkul",
+      "Pendlikul",
+      "Penlikul",
+      "Pennakul",
+      "Perushatla(Perishatla)",
+      "Polishatla",
+      "Polshatla",
+      "Pongeshil",
+      "Puchhakul",
+      "Pulashatla",
+      "Pulkul",
+      "Pulshetal",
+      "Punavshil",
+      "Pungeshil",
+      "Pungwshwar",
+      "Punjashil",
+      "Punyashil",
+      "Punyeshwar",
+      "Punsakul",
+      "Pushpal",
+      "Rankul",
+      "Rantkul/Runtakul",
+      "Rentkul",
+      "Renukul",
+      "Rontakul",
+      "Sanku",
+      "Senshatla",
+      "Shaigol/Shaivgol",
+      "Shankul",
+      "Shayankul",
+      "Sheelkul",
+      "Shirsal",
+      "Shirshatla",
+      "Shrinikul",
+      "Shrishal",
+      "Shrishatla",
+      "Shrisheel",
+      "Shrishishta",
+      "Shrishreshta",
+      "Sirsal",
+      "Sirshatla",
+      "Sudarshan",
+      "Surkul",
+      "Sursal",
+      "Suryakul",
+      "Susal",
+      "Totkul",
+      "Tulashatla",
+      "Tulshishta (Tulshitla)",
+      "Upankul",
+      "Utkul/Utkalkul",
+      "Vachhakul",
+      "Vastrakul",
+      "Vatsakul",
+      "Vikramshishta/ Vikramshil",
+      "Vinukul",
+      "Viparishatla",
+      "Viparishishta",
+      "Viprashatla",
+      "Vishnukul",
+      "Vishwapal",
+      "Yalkul",
+      "Yalshat",
+      "Yalshatla",
+      "Yalshatti",
+      "Yalshishta",
+      "Yankul",
+      "Yannakul",
+      "Yenishatala",
+      "Yenkul",
+      "Yetakul"
+    ]
   };
 
   const ageOptions = Array.from({ length: 25 }, (_, i) => i + 21);
@@ -1137,14 +1782,28 @@ export default function UnifiedMatrimonialForm() {
     
     if (isNaN(birthDate.getTime())) return "";
     
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
     
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+      years--;
+      months += 12;
     }
     
-    return `${age} years`;
+    if (today.getDate() < birthDate.getDate()) {
+      months--;
+      if (months < 0) {
+        months += 12;
+      }
+    }
+    
+    if (years === 0) {
+      return `${months} month${months !== 1 ? 's' : ''}`;
+    } else if (months === 0) {
+      return `${years} year${years !== 1 ? 's' : ''}`;
+    } else {
+      return `${years} year${years !== 1 ? 's' : ''} ${months} month${months !== 1 ? 's' : ''}`;
+    }
   };
 
   // Handle date selection
@@ -1186,10 +1845,14 @@ export default function UnifiedMatrimonialForm() {
   }, []);
 
   const next = () => {
-    let stepErrors = {};
+    let stepErrors: Record<string, string> = {};
     
     if (currentStep === 1) {
       stepErrors = validateStep1(formData);
+      // Check if at least one photo is uploaded
+      if (!westernPhoto && !traditionalPhoto) {
+        stepErrors.photos = "Please upload at least one photo (Western or Traditional)";
+      }
     } else if (currentStep === 2) {
       stepErrors = validateStep2(formData);
     } else if (currentStep === 3) {
@@ -1225,6 +1888,18 @@ export default function UnifiedMatrimonialForm() {
         return newErrors;
       });
     }
+    
+    // Clear social media validation errors when any social media field is filled
+    if (['linkedinHandle', 'instagramHandle', 'facebookHandle'].includes(field) && value?.trim()) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.socialMedia;
+        delete newErrors.linkedinHandle;
+        delete newErrors.instagramHandle;
+        delete newErrors.facebookHandle;
+        return newErrors;
+      });
+    }
   };
 
   // Format date for input[type="date"]
@@ -1240,12 +1915,13 @@ export default function UnifiedMatrimonialForm() {
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e, photoType) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setOriginalImage(reader.result);
+        setCropperMode(photoType); // 'western' or 'traditional'
         setShowCropper(true);
       };
       reader.readAsDataURL(file);
@@ -1253,21 +1929,46 @@ export default function UnifiedMatrimonialForm() {
   };
 
   const handleCropComplete = (croppedImageUrl) => {
-    setPhoto(croppedImageUrl);
+    if (cropperMode === 'western') {
+      setWesternPhoto(croppedImageUrl);
+    } else if (cropperMode === 'traditional') {
+      setTraditionalPhoto(croppedImageUrl);
+    }
     setShowCropper(false);
     setOriginalImage(null);
+    setCropperMode(null);
   };
 
   const handleCropCancel = () => {
     setShowCropper(false);
     setOriginalImage(null);
+    setCropperMode(null);
+  };
+
+  const removePhoto = (photoType) => {
+    if (photoType === 'western') {
+      setWesternPhoto(null);
+    } else if (photoType === 'traditional') {
+      setTraditionalPhoto(null);
+    }
   };
 
   // Sibling management functions
   const addBrother = () => {
     setFormData(prev => ({
       ...prev,
-      brothers: [...prev.brothers, { name: "", maritalStatus: "", occupation: "", spouseName: "" }]
+      brothers: [...prev.brothers, { 
+        name: "", 
+        maritalStatus: "", 
+        occupation: "", 
+        spouseName: "",
+        businessName: "",
+        businessLocation: "",
+        designation: "",
+        companyName: "",
+        currentEducation: "",
+        otherOccupation: ""
+      }]
     }));
   };
 
@@ -1288,7 +1989,18 @@ export default function UnifiedMatrimonialForm() {
   const addSister = () => {
     setFormData(prev => ({
       ...prev,
-      sisters: [...prev.sisters, { name: "", maritalStatus: "", occupation: "", spouseName: "" }]
+      sisters: [...prev.sisters, { 
+        name: "", 
+        maritalStatus: "", 
+        occupation: "", 
+        spouseName: "",
+        businessName: "",
+        businessLocation: "",
+        designation: "",
+        companyName: "",
+        currentEducation: "",
+        otherOccupation: ""
+      }]
     }));
   };
 
@@ -1412,10 +2124,10 @@ export default function UnifiedMatrimonialForm() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-7xl w-full">
+      <div className="flex-1 max-w-7xl w-full pb-20 lg:pb-0">
         <div className="bg-white rounded-2xl lg:rounded-[40px] p-4 md:p-6 lg:p-8 border border-purple-50 w-full overflow-hidden">
 
-            <div className="lg:hidden flex items-center gap-1 overflow-x-auto pb-2 no-scrollbar">
+            <div className="lg:hidden flex items-center justify-center gap-1 overflow-x-auto pb-2 no-scrollbar">
               {steps.map((step, idx) => (
                 <React.Fragment key={step.id}>
                   <div className="flex flex-col items-center min-w-[50px]">
@@ -1438,21 +2150,64 @@ export default function UnifiedMatrimonialForm() {
               ))}
             </div>
           
-          {/* Profile Photo Section - Centered below progress */}
+          {/* Photos Section - Western and Traditional */}
           <div className="flex flex-col items-center mb-6 lg:mb-10">
-            <div className="relative mb-4">
-              <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-2xl border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
-                {photo ? (
-                  <img src={photo} className="w-full h-full object-cover" alt="Profile" />
-                ) : (
-                  <User size={48} className="text-slate-300" />
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-4">
+              {/* Western Photo */}
+              <div className="relative">
+                <div className="w-24 h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+                  {westernPhoto ? (
+                    <img src={westernPhoto} className="w-full h-full object-cover" alt="Western Photo" />
+                  ) : (
+                    <User size={48} className="text-slate-300" />
+                  )}
+                </div>
+                <label className="absolute bottom-2 right-2 bg-[#9181EE] p-2 lg:p-3 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
+                  <Camera size={16} className="lg:size-5" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'western')} />
+                </label>
+                {westernPhoto && (
+                  <button
+                    onClick={() => removePhoto('western')}
+                    className="absolute top-2 right-2 bg-red-500 p-1 lg:p-2 rounded-full text-white hover:bg-red-600 transition-colors"
+                  >
+                    <X size={14} className="lg:size-4" />
+                  </button>
                 )}
+                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2 uppercase">Western</p>
               </div>
-              <label className="absolute bottom-2 right-2 bg-[#9181EE] p-2 lg:p-3 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
-                <Camera size={16} className="lg:size-5" />
-                <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
-              </label>
+
+              {/* Traditional Photo */}
+              <div className="relative">
+                <div className="w-24 h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+                  {traditionalPhoto ? (
+                    <img src={traditionalPhoto} className="w-full h-full object-cover" alt="Traditional Photo" />
+                  ) : (
+                    <User size={48} className="text-slate-300" />
+                  )}
+                </div>
+                <label className="absolute bottom-2 right-2 bg-[#9181EE] p-2 lg:p-3 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
+                  <Camera size={16} className="lg:size-5" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'traditional')} />
+                </label>
+                {traditionalPhoto && (
+                  <button
+                    onClick={() => removePhoto('traditional')}
+                    className="absolute top-2 right-2 bg-red-500 p-1 lg:p-2 rounded-full text-white hover:bg-red-600 transition-colors"
+                  >
+                    <X size={14} className="lg:size-4" />
+                  </button>
+                )}
+                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2 uppercase">Traditional</p>
+              </div>
             </div>
+
+            {errors.photos && (
+              <div className="flex items-center gap-2 text-red-500 text-xs mb-4">
+                <AlertCircle size={14} />
+                <span>{errors.photos}</span>
+              </div>
+            )}
             
             <div className="text-center space-y-1">
               <h1 className="text-lg md:text-xl lg:text-2xl font-extrabold text-[#2D2D2D] uppercase tracking-tight">
@@ -1474,10 +2229,12 @@ export default function UnifiedMatrimonialForm() {
                 {/* Full Name */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Full Name</label>
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
                   </div>
                   <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.fullName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    errors.fullName ? 'border-slate-100 bg-red-50' : 'border-slate-100'
                   }`}>
                     <input
                       type="text"
@@ -1507,6 +2264,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.gender}
                     onChange={(val) => handleInputChange('gender', val)}
                     placeholder="Select gender"
+                    required={true}
                   />
                   {errors.gender && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1526,6 +2284,7 @@ export default function UnifiedMatrimonialForm() {
                     }}
                     label="Date of Birth"
                     maxDate={new Date()}
+                    required={true}
                   />
                   {errors.dateOfBirth && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1554,14 +2313,20 @@ export default function UnifiedMatrimonialForm() {
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">WhatsApp Number</label>
                   </div>
                   <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.whatsappNumber ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    errors.whatsappNumber ? 'border-slate-100 bg-red-50' : 'border-slate-100'
                   }`}>
                     <input
                       type="tel"
                       value={formData.whatsappNumber}
-                      onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                        if (value.length <= 10) {
+                          handleInputChange('whatsappNumber', value);
+                        }
+                      }}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                       placeholder="Enter WhatsApp number"
+                      maxLength={10}
                       style={{ fontSize: '16px' }}
                     />
                   </div>
@@ -1579,7 +2344,7 @@ export default function UnifiedMatrimonialForm() {
                     <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Email Address</label>
                   </div>
                   <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.emailId ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    errors.emailId ? 'border-slate-100 bg-red-50' : 'border-slate-100'
                   }`}>
                     <input
                       type="email"
@@ -1598,6 +2363,92 @@ export default function UnifiedMatrimonialForm() {
                   )}
                 </div>
 
+                {/* LinkedIn Handle */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">LinkedIn Profile</label>
+                  </div>
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.linkedinHandle ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                  }`}>
+                    <input
+                      type="url"
+                      value={formData.linkedinHandle}
+                      onChange={(e) => handleInputChange('linkedinHandle', e.target.value)}
+                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                      placeholder="Enter LinkedIn profile URL"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                  {errors.linkedinHandle && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.linkedinHandle}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Instagram Handle */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Instagram Profile</label>
+                  </div>
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.instagramHandle ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                  }`}>
+                    <input
+                      type="url"
+                      value={formData.instagramHandle}
+                      onChange={(e) => handleInputChange('instagramHandle', e.target.value)}
+                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                      placeholder="Enter Instagram profile URL"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                  {errors.instagramHandle && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.instagramHandle}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Facebook Handle */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Facebook Profile</label>
+                  </div>
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.facebookHandle ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                  }`}>
+                    <input
+                      type="url"
+                      value={formData.facebookHandle}
+                      onChange={(e) => handleInputChange('facebookHandle', e.target.value)}
+                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                      placeholder="Enter Facebook profile URL"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                  {errors.facebookHandle && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.facebookHandle}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Social Media Requirement Notice */}
+                {errors.socialMedia && (
+                  <div className="md:col-span-2 bg-red-50 border border-red-200 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 text-red-600 text-sm">
+                      <AlertCircle size={16} />
+                      <span className="font-semibold">At least one social media profile is required</span>
+                    </div>
+                    <p className="text-red-500 text-xs mt-1 ml-6">Please provide your LinkedIn, Instagram, or Facebook profile URL.</p>
+                  </div>
+                )}
+
                 {/* Marital Status */}
                 <div>
                   <CustomSelect
@@ -1606,6 +2457,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.maritalStatus}
                     onChange={(val) => handleInputChange('maritalStatus', val)}
                     placeholder="Select status"
+                    required={true}
                   />
                   {errors.maritalStatus && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1623,6 +2475,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.motherTongue}
                     onChange={(val) => handleInputChange('motherTongue', val)}
                     placeholder="Select language"
+                    required={true}
                   />
                   {errors.motherTongue && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1633,36 +2486,26 @@ export default function UnifiedMatrimonialForm() {
                 </div>
 
                 {/* First Gotra */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">First Gotra</label>
-                    </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
-                      <input
-                        type="text"
-                        value={formData.firstGotra}
-                        onChange={(e) => handleInputChange('firstGotra', e.target.value)}
-                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder="Enter birth place"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <CustomSelect
+                    label="First Gotra"
+                    value={formData.firstGotra}
+                    options={dropdownOptions.gotra}
+                    onChange={(val) => handleInputChange('firstGotra', val)}
+                    placeholder="Select first gotra"
+                  />
+                </div>
 
-                  {/* Second Gotra */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Second Gotra</label>
-                    </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
-                      <input
-                        type="text"
-                        value={formData.secondGotra}
-                        onChange={(e) => handleInputChange('secondGotra', e.target.value)}
-                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder="Enter birth name"
-                      />
-                    </div>
-                  </div>
+                {/* Second Gotra */}
+                <div>
+                  <CustomSelect
+                    label="Second Gotra"
+                    value={formData.secondGotra}
+                    options={dropdownOptions.gotra}
+                    onChange={(val) => handleInputChange('secondGotra', val)}
+                    placeholder="Select second gotra"
+                  />
+                </div>
 
 
                 {/* Height */}
@@ -1673,6 +2516,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.height}
                     onChange={(val) => handleInputChange('height', val)}
                     placeholder="Select height"
+                    required={true}
                   />
                   {errors.height && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1690,6 +2534,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.complexion}
                     onChange={(val) => handleInputChange('complexion', val)}
                     placeholder="Select complexion"
+                    required={true}
                   />
                   {errors.complexion && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1707,6 +2552,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.bloodGroup}
                     onChange={(val) => handleInputChange('bloodGroup', val)}
                     placeholder="Select blood group"
+                    required={true}
                   />
                   {errors.bloodGroup && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1714,6 +2560,28 @@ export default function UnifiedMatrimonialForm() {
                       <span>{errors.bloodGroup}</span>
                     </div>
                   )}
+                </div>
+
+                {/* About Me */}
+                <div className="md:col-span-2 space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      About Me
+                    </label>
+                    <span className="text-[10px] text-slate-400">({formData.aboutMe?.length || 0}/100)</span>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                    <textarea
+                      value={formData.aboutMe}
+                      onChange={(e) => {
+                        const value = e.target.value.slice(0, 100);
+                        handleInputChange('aboutMe', value);
+                      }}
+                      className="w-full font-semibold text-black text-sm lg:text-base outline-none bg-transparent resize-none"
+                      placeholder="Tell us about yourself (max 100 characters)"
+                      style={{ fontSize: '16px', minHeight: '80px' }}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -1730,6 +2598,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.highestEducation}
                     onChange={(val) => handleInputChange('highestEducation', val)}
                     placeholder="Select highest education"
+                    required={true}
                   />
                   {errors.highestEducation && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1739,21 +2608,7 @@ export default function UnifiedMatrimonialForm() {
                   )}
                 </div>
 
-                {/* College/University */}
-                {/* <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">College/University</label>
-                  </div>
-                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
-                    <input
-                      type="text"
-                      value={formData.collegeUniversity}
-                      onChange={(e) => handleInputChange('collegeUniversity', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter college/university"
-                    />
-                  </div>
-                </div> */}
+                
 
                 {/* Occupation */}
                 <div>
@@ -1763,6 +2618,7 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.occupation}
                     onChange={(val) => handleInputChange('occupation', val)}
                     placeholder="Select occupation"
+                    required={true}
                   />
                   {errors.occupation && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -1773,36 +2629,171 @@ export default function UnifiedMatrimonialForm() {
                 </div>
 
                 {/* Organization */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
-                      {formData.occupation === "Business Owner" ? "Business Name" : "Organization"}
-                    </label>
-                  </div>
-                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
-                    <input
-                      type="text"
-                      value={formData.organization}
-                      onChange={(e) => handleInputChange('organization', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder={formData.occupation === "Business Owner" ? "Enter your business name" : "Enter organization"}
-                    />
-                  </div>
-                </div>
-
-                {/* Annual Income */}
-                {formData.occupation === "Business Owner" ? (
+                {formData.occupation !== "Student" && formData.occupation !== "Homemaker" && formData.occupation !== "Not Working" && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Annual Income</label>
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        {formData.occupation === "Business Owner" ? "Business Name" : "Organization"} <span className="text-red-500">*</span>
+                      </label>
                     </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.organization ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
+                      <input
+                        type="text"
+                        value={formData.organization}
+                        onChange={(e) => handleInputChange('organization', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder={formData.occupation === "Business Owner" ? "Enter your business name" : "Enter organization"}
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    {errors.organization && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.organization}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Dynamic Fields Based on Occupation */}
+                {/* Business Owner Fields */}
+                {formData.occupation === "Business Owner" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        Business Location <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.jobLocation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
+                      <input
+                        type="text"
+                        value={formData.jobLocation}
+                        onChange={(e) => handleInputChange('jobLocation', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter business location"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    {errors.jobLocation && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.jobLocation}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Job/Salaried Fields */}
+                {(formData.occupation === "Salaried (Private)" || formData.occupation === "Salaried (Government)") && (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-1">
+                        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          Designation <span className="text-red-500">*</span>
+                        </label>
+                      </div>
+                      <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                        errors.designation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                      }`}>
+                        <input
+                          type="text"
+                          value={formData.designation}
+                          onChange={(e) => handleInputChange('designation', e.target.value)}
+                          className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                          placeholder="Enter designation"
+                          style={{ fontSize: '16px' }}
+                        />
+                      </div>
+                      {errors.designation && (
+                        <div className="flex items-center gap-2 text-red-500 text-xs">
+                          <AlertCircle size={14} />
+                          <span>{errors.designation}</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Student Field */}
+                {formData.occupation === "Student" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        Current Education <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.currentEducation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
+                      <input
+                        type="text"
+                        value={formData.currentEducation}
+                        onChange={(e) => handleInputChange('currentEducation', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter current education"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    {errors.currentEducation && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.currentEducation}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Other Occupation Field */}
+                {(formData.occupation === "Self-Employed" || formData.occupation === "Freelancer") && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        Other Details <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.otherOccupation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
+                      <input
+                        type="text"
+                        value={formData.otherOccupation}
+                        onChange={(e) => handleInputChange('otherOccupation', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter additional details"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    {errors.otherOccupation && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.otherOccupation}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Annual Income */}
+                {formData.occupation !== "Student" && formData.occupation !== "Homemaker" && formData.occupation !== "Not Working" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        Annual Income <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.annualIncome ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
                       <input
                         type="text"
                         value={formData.annualIncome}
                         onChange={(e) => handleInputChange('annualIncome', e.target.value)}
                         className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
                         placeholder="Enter your annual income"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                     {errors.annualIncome && (
@@ -1812,39 +2803,36 @@ export default function UnifiedMatrimonialForm() {
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div>
-                    <CustomSelect
-                      label="Annual Income"
-                      value={formData.annualIncome}
-                      options={dropdownOptions.annualIncome}
-                      onChange={(val) => handleInputChange('annualIncome', val)}
-                      placeholder="Select income range"
-                    />
-                    {errors.annualIncome && (
-                      <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                )}
+
+                {/* Job Location */}
+                {formData.occupation !== "Business Owner" && formData.occupation !== "Student" && formData.occupation !== "Homemaker" && formData.occupation !== "Not Working" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        Job Location <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                      errors.jobLocation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
+                      <input
+                        type="text"
+                        value={formData.jobLocation}
+                        onChange={(e) => handleInputChange('jobLocation', e.target.value)}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder="Enter job location"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    {errors.jobLocation && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs">
                         <AlertCircle size={14} />
-                        <span>{errors.annualIncome}</span>
+                        <span>{errors.jobLocation}</span>
                       </div>
                     )}
                   </div>
                 )}
-
-                {/* Job Location */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Job Location</label>
-                  </div>
-                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
-                    <input
-                      type="text"
-                      value={formData.jobLocation}
-                      onChange={(e) => handleInputChange('jobLocation', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter job location"
-                    />
-                  </div>
-                </div>
               </div>
             )}
 
@@ -1855,10 +2843,12 @@ export default function UnifiedMatrimonialForm() {
                   {/* Father's Full Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Father's Full Name</label>
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        Father's Full Name <span className="text-red-500">*</span>
+                      </label>
                     </div>
                     <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                      errors.fathersFullName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                      errors.fathersFullName ? 'border-slate-100 bg-red-50' : 'border-slate-100'
                     }`}>
                       <input
                         type="text"
@@ -1882,29 +2872,166 @@ export default function UnifiedMatrimonialForm() {
 
 
                   {/* Father's Occupation */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Father's Occupation</label>
-                    </div>
-                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm border-slate-100`}>
-                      <input
-                        type="text"
-                        value={formData.fathersOccupation}
-                        onChange={(e) => handleInputChange('fathersOccupation', e.target.value)}
-                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder="Enter father's occupation"
-                        style={{ fontSize: '16px' }}
-                      />
-                    </div>
+                  <div>
+                    <CustomSelect
+                      label="Father's Occupation"
+                      value={formData.fathersOccupation}
+                      options={dropdownOptions.parentOccupation}
+                      onChange={(val) => handleInputChange('fathersOccupation', val)}
+                      placeholder="Select father's occupation"
+                    />
                   </div>
+
+                  {/* Father's Business Fields */}
+                  {formData.fathersOccupation === "Business" && (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Business Name <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.fathersBusinessName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.fathersBusinessName}
+                            onChange={(e) => handleInputChange('fathersBusinessName', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter business name"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.fathersBusinessName && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.fathersBusinessName}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Business Location <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.fathersBusinessLocation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.fathersBusinessLocation}
+                            onChange={(e) => handleInputChange('fathersBusinessLocation', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter business location"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.fathersBusinessLocation && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.fathersBusinessLocation}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Father's Job/Salaried Fields */}
+                  {formData.fathersOccupation === "Job/Salaried" && (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Designation <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.fathersDesignation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.fathersDesignation}
+                            onChange={(e) => handleInputChange('fathersDesignation', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter designation"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.fathersDesignation && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.fathersDesignation}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Company Name <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.fathersCompanyName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.fathersCompanyName}
+                            onChange={(e) => handleInputChange('fathersCompanyName', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter company name"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.fathersCompanyName && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.fathersCompanyName}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Father's Other Occupation Field */}
+                  {formData.fathersOccupation === "Other" && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-1">
+                        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          Other Occupation <span className="text-red-500">*</span>
+                        </label>
+                      </div>
+                      <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                        errors.fathersOtherOccupation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                      }`}>
+                        <input
+                          type="text"
+                          value={formData.fathersOtherOccupation}
+                          onChange={(e) => handleInputChange('fathersOtherOccupation', e.target.value)}
+                          className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                          placeholder="Enter other occupation"
+                          style={{ fontSize: '16px' }}
+                        />
+                      </div>
+                      {errors.fathersOtherOccupation && (
+                        <div className="flex items-center gap-2 text-red-500 text-xs">
+                          <AlertCircle size={14} />
+                          <span>{errors.fathersOtherOccupation}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Mother's Full Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Mother's Full Name</label>
+                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        Mother's Full Name <span className="text-red-500">*</span>
+                      </label>
                     </div>
                     <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                      errors.mothersFullName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                      errors.mothersFullName ? 'border-slate-100 bg-red-50' : 'border-slate-100'
                     }`}>
                       <input
                         type="text"
@@ -1926,23 +3053,157 @@ export default function UnifiedMatrimonialForm() {
                     )}
                   </div>
 
-                  {/* Mother's Full Name */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Mother's Occupation</label>
-                    </div>
-                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm border-slate-100`}>
-                      <input
-                        type="text"
-                        value={formData.mothersOccupation}
-                        onChange={(e) => handleInputChange('mothersOccupation', e.target.value)}
-                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder="Enter mother's occupation"
-                        style={{ fontSize: '16px' }}
-                      />
-                    </div>
-                    
+                  {/* Mother's Occupation */}
+                  <div>
+                    <CustomSelect
+                      label="Mother's Occupation"
+                      value={formData.mothersOccupation}
+                      options={dropdownOptions.parentOccupation}
+                      onChange={(val) => handleInputChange('mothersOccupation', val)}
+                      placeholder="Select mother's occupation"
+                    />
                   </div>
+
+                  {/* Mother's Business Fields */}
+                  {formData.mothersOccupation === "Business" && (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Business Name <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.mothersBusinessName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.mothersBusinessName}
+                            onChange={(e) => handleInputChange('mothersBusinessName', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter business name"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.mothersBusinessName && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.mothersBusinessName}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Business Location <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.mothersBusinessLocation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.mothersBusinessLocation}
+                            onChange={(e) => handleInputChange('mothersBusinessLocation', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter business location"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.mothersBusinessLocation && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.mothersBusinessLocation}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Mother's Job/Salaried Fields */}
+                  {formData.mothersOccupation === "Job/Salaried" && (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Designation <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.mothersDesignation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.mothersDesignation}
+                            onChange={(e) => handleInputChange('mothersDesignation', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter designation"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.mothersDesignation && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.mothersDesignation}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                            Company Name <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.mothersCompanyName ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.mothersCompanyName}
+                            onChange={(e) => handleInputChange('mothersCompanyName', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter company name"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.mothersCompanyName && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.mothersCompanyName}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Mother's Other Occupation Field */}
+                  {formData.mothersOccupation === "Other" && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-1">
+                        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          Other Occupation <span className="text-red-500">*</span>
+                        </label>
+                      </div>
+                      <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                        errors.mothersOtherOccupation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                      }`}>
+                        <input
+                          type="text"
+                          value={formData.mothersOtherOccupation}
+                          onChange={(e) => handleInputChange('mothersOtherOccupation', e.target.value)}
+                          className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                          placeholder="Enter other occupation"
+                          style={{ fontSize: '16px' }}
+                        />
+                      </div>
+                      {errors.mothersOtherOccupation && (
+                        <div className="flex items-center gap-2 text-red-500 text-xs">
+                          <AlertCircle size={14} />
+                          <span>{errors.mothersOtherOccupation}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Brothers Section */}
@@ -2125,31 +3386,33 @@ export default function UnifiedMatrimonialForm() {
                       </div>
                     </div>
 
-                    {/* Partner Education */}
+                    {/* Partner Qualification */}
                     <div>
-                      <CustomSelect
-                        label="Partner's Education"
-                        value={formData.partnerEducation}
-                        options={dropdownOptions.partnerEducation}
-                        onChange={(val) => handleInputChange('partnerEducation', val)}
-                        placeholder="Select education"
+                      <CustomMultiSelect
+                        label="Partner's Qualification"
+                        value={formData.partnerQualification}
+                        options={dropdownOptions.partnerQualification}
+                        onChange={(val) => handleInputChange('partnerQualification', val)}
+                        placeholder="Select qualification options"
+                        required={true}
                       />
-                      {errors.partnerEducation && (
+                      {errors.partnerQualification && (
                         <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
                           <AlertCircle size={14} />
-                          <span>{errors.partnerEducation}</span>
+                          <span>{errors.partnerQualification}</span>
                         </div>
                       )}
                     </div>
 
                     {/* Preferred Location */}
                     <div>
-                      <CustomSelect
+                      <CustomMultiSelect
                         label="Preferred Location"
                         value={formData.preferredLocation}
                         options={dropdownOptions.preferredLocation}
                         onChange={(val) => handleInputChange('preferredLocation', val)}
-                        placeholder="Select location"
+                        placeholder="Select location options"
+                        required={true}
                       />
                       {errors.preferredLocation && (
                         <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -2182,7 +3445,7 @@ export default function UnifiedMatrimonialForm() {
           </div>
 
           {/* Navigation Footer */}
-          <div className="mt-10 flex items-center justify-between pt-6 border-t border-slate-50">
+          <div className="hidden lg:flex mt-10  items-center justify-between pt-6 border-t border-slate-50 lg:relative">
             <button 
               onClick={back}
               className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
@@ -2198,6 +3461,33 @@ export default function UnifiedMatrimonialForm() {
             >
               {currentStep === steps.length ? "Submit" : "Next"} <ChevronRight size={18} />
             </button>
+          </div>
+
+          {/* Mobile Sticky Navigation - Only visible on mobile */}
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-40 shadow-lg">
+            <div className="flex items-center justify-between max-w-md mx-auto">
+              <button 
+                onClick={back}
+                className={`flex items-center gap-2 px-4 py-3 rounded-xl font-bold transition-all ${
+                  currentStep === 1 ? "opacity-0 pointer-events-none" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <ChevronLeft size={18} /> Previous
+              </button>
+
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                <span>{currentStep}</span>
+                <span>/</span>
+                <span>{steps.length}</span>
+              </div>
+
+              <button 
+                onClick={currentStep === steps.length ? handleSubmit : next}
+                className="flex items-center gap-2 bg-[#9181EE] text-white px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide shadow-lg hover:bg-[#7b6fd6] active:scale-95 transition-all"
+              >
+                {currentStep === steps.length ? "Submit" : "Next"} <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
