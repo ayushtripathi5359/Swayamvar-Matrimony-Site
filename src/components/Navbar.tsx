@@ -34,6 +34,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center h-full gap-1">
           <NavItem label="Home" href="/home" />
           <NavItem label="Profile" href="/profile" />
+          <NavItem label="My Matches" href="/inbox" />
         </div>
 
         {/* Mobile Hamburger */}
@@ -63,11 +64,11 @@ export default function Navbar() {
               Profile
             </Link>
             <Link
-              to="/profile"
+              to="/inbox"
               className="block px-4 py-2 text-slate-900 hover:text-pink-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Profile
+              My Matches
             </Link>
           </div>
         )}

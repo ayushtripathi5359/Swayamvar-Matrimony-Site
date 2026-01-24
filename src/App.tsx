@@ -9,6 +9,7 @@ import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/profile";
 import StepwiseRegistration from "./pages/StepwiseRegistration";
+import InboxListingPage from "./pages/InboxListingPage";
 import Navbar from "./components/Navbar";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/home" element={<Landing />} />
           <Route path="/registration" element={<StepwiseRegistration />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/inbox" element={<InboxListingPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

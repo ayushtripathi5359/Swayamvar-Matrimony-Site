@@ -1,14 +1,18 @@
+import Navbar from "../components/Navbar";
+
 export default function InboxListingPage() {
   const profiles = Array.from({ length: 9 });
 
   return (
-    <section className="bg-white min-h-screen py-16">
-      <div className="max-w-[1200px] mx-auto px-4">
+    <>
+      <Navbar />
+      <section className="bg-white min-h-screen py-16 pt-24">
+        <div className="max-w-[1200px] mx-auto px-4">
 
         {/* PAGE TITLE */}
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-semibold text-[#111827]">
-            Inbox Listing Page
+            My Matches
           </h1>
           <p className="text-gray-500 text-sm mt-2">
             Discover profiles that are interested in you
@@ -111,5 +115,6 @@ export default function InboxListingPage() {
         </div>
       </div>
     </section>
+    </>
   );
 }
