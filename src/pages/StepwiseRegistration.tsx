@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import {
   User,
   Phone,
@@ -26,7 +28,9 @@ import {
   X,
   Plus,
   AlertCircle,
-  ChevronUp
+  ChevronUp,
+  Crop as CropIcon,
+  RotateCcw
 } from "lucide-react";
 
 // Validation Functions
@@ -570,6 +574,168 @@ const CustomTimePicker = ({ value, onChange, label }) => {
   );
 };
 
+// Image Cropper Component
+const ImageCropper = ({ 
+  imageSrc, 
+  onCropComplete, 
+  onCancel, 
+  isOpen 
+}) => {
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    width: 80,
+    height: 80,
+    x: 10,
+    y: 10
+  });
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const imgRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const getCroppedImg = (image: HTMLImageElement, crop: PixelCrop): Promise<string> => {
+    const canvas = canvasRef.current;
+    if (!canvas || !crop.width || !crop.height) {
+      return Promise.resolve('');
+    }
+
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      return Promise.resolve('');
+    }
+
+    // Make canvas square with the crop dimensions
+    const size = Math.max(crop.width, crop.height);
+    const pixelRatio = window.devicePixelRatio;
+    canvas.width = size * pixelRatio;
+    canvas.height = size * pixelRatio;
+
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.imageSmoothingQuality = 'high';
+
+    // Fill with white background for square image
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // Center the cropped image in the square canvas
+    const offsetX = (size - crop.width) / 2;
+    const offsetY = (size - crop.height) / 2;
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      offsetX,
+      offsetY,
+      crop.width,
+      crop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resolve('');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', 0.95);
+    });
+  };
+
+  const handleCropComplete = async () => {
+    if (imgRef.current && completedCrop?.width && completedCrop?.height) {
+      const croppedImageUrl = await getCroppedImg(imgRef.current, completedCrop);
+      onCropComplete(croppedImageUrl);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-700">Crop Your Photo</h3>
+          <button
+            onClick={onCancel}
+            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+          >
+            <X size={20} className="text-slate-500" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="text-center text-sm text-slate-600 mb-4">
+            Drag to adjust the square crop area for your profile photo
+          </div>
+          
+          <div className="flex justify-center bg-slate-50 p-4 rounded-xl">
+            <ReactCrop
+              crop={crop}
+              onChange={(c) => setCrop(c)}
+              onComplete={(c) => setCompletedCrop(c)}
+              aspect={1} // Force square aspect ratio
+              minWidth={100}
+              minHeight={100}
+              keepSelection={true}
+              ruleOfThirds={true}
+            >
+              <img
+                ref={imgRef}
+                src={imageSrc}
+                alt="Crop preview"
+                className="max-w-full max-h-96 object-contain"
+                onLoad={() => {
+                  // Set initial square crop to center
+                  if (imgRef.current) {
+                    const { width, height } = imgRef.current;
+                    const size = Math.min(width, height) * 0.7; // 70% of the smaller dimension
+                    const x = (width - size) / 2;
+                    const y = (height - size) / 2;
+                    
+                    setCrop({
+                      unit: 'px',
+                      width: size,
+                      height: size, // Ensure square
+                      x: x,
+                      y: y
+                    });
+                  }
+                }}
+              />
+            </ReactCrop>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+            <button
+              onClick={onCancel}
+              className="px-6 py-3 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl font-semibold transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCropComplete}
+              className="px-6 py-3 bg-[#9181EE] text-white rounded-xl font-semibold hover:bg-[#7b6fd6] transition-all flex items-center gap-2"
+            >
+              <CropIcon size={16} />
+              Apply Square Crop
+            </button>
+          </div>
+        </div>
+
+        {/* Hidden canvas for cropping */}
+        <canvas ref={canvasRef} className="hidden" />
+      </div>
+    </div>
+  );
+};
+
 // Sibling Component
 const SiblingField = ({ 
   type, 
@@ -844,6 +1010,11 @@ export default function UnifiedMatrimonialForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [photo, setPhoto] = useState(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Image cropper states
+  const [showCropper, setShowCropper] = useState(false);
+  const [originalImage, setOriginalImage] = useState(null);
+  
   // Date picker state
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
@@ -944,7 +1115,7 @@ export default function UnifiedMatrimonialForm() {
     annualIncome: ["₹0-5 LPA", "₹5-10 LPA", "₹10-15 LPA", "₹15-20 LPA", "₹20-25 LPA", "₹25-35 LPA", "₹35-50 LPA", "₹50 LPA +"],
     partnerEducation: ["Graduate", "Post Graduate", "IIT/IIM", "Doctorate", "Any Graduate"],
     preferredLocation: ["Bangalore", "Pune", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Any Metro City"],
-    minAnnualIncome: ["₹10 LPA +", "₹15 LPA +", "₹20 LPA +", "₹25 LPA +", "₹30 LPA +", "₹40 LPA +", "₹50 LPA +"]
+    minAnnualIncome: ["Not Reqired","5LPA+","₹10 LPA +", "₹15 LPA +", "₹20 LPA +", "₹25 LPA +", "₹30 LPA +", "₹40 LPA +", "₹50 LPA +"]
   };
 
   const ageOptions = Array.from({ length: 25 }, (_, i) => i + 21);
@@ -1074,10 +1245,22 @@ export default function UnifiedMatrimonialForm() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhoto(reader.result);
+        setOriginalImage(reader.result);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImageUrl) => {
+    setPhoto(croppedImageUrl);
+    setShowCropper(false);
+    setOriginalImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setOriginalImage(null);
   };
 
   // Sibling management functions
@@ -1258,7 +1441,7 @@ export default function UnifiedMatrimonialForm() {
           {/* Profile Photo Section - Centered below progress */}
           <div className="flex flex-col items-center mb-6 lg:mb-10">
             <div className="relative mb-4">
-              <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+              <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-2xl border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
                 {photo ? (
                   <img src={photo} className="w-full h-full object-cover" alt="Profile" />
                 ) : (
@@ -2018,6 +2201,14 @@ export default function UnifiedMatrimonialForm() {
           </div>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      <ImageCropper
+        imageSrc={originalImage}
+        onCropComplete={handleCropComplete}
+        onCancel={handleCropCancel}
+        isOpen={showCropper}
+      />
     </div>
   );
 }
