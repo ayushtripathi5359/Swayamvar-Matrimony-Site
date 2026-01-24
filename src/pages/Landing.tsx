@@ -2,6 +2,7 @@ import { Mail, Menu, Bell, Heart, Star, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 import couple1 from "@/assets/couple1.png"
 import FindPerfectBride from "@/components/FindPerfectBride"
+import WebsiteFeatures from "@/components/WebsiteFeatures"
 import Navbar from "@/components/Navbar"
 import { Link } from "react-router-dom";
 
@@ -155,6 +156,7 @@ export default function Landing() {
 
         </div>
         <FindPerfectBride></FindPerfectBride>
+        <WebsiteFeatures></WebsiteFeatures>
       </main>
       
     </div>

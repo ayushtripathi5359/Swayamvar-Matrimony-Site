@@ -10,6 +10,7 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
+    middlewareMode: false,
   },
   plugins: [react()],
   resolve: {

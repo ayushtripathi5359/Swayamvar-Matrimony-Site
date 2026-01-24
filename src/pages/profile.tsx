@@ -17,7 +17,19 @@ import {
   ShieldCheck,
   Languages,
   BadgeIndianRupee,
-  Music
+  Music,
+  Edit3,
+  Instagram,
+  Linkedin,
+  Facebook,
+  Home,
+  DollarSign,
+  Award,
+  Building,
+  Clock,
+  BookOpen,
+  Globe,
+  MessageCircle
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
@@ -28,9 +40,9 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDF8FB]  md:px-4 mb-20 lg:mb-0 py-6 text-[14px] text-slate-700 font-['Plus_Jakarta_Sans',_sans-serif]">
+    <div className="min-h-screen bg-[#FDF8FB] md:px-4 mb-20 lg:mb-0 py-6 text-[14px] text-slate-700 font-['Plus_Jakarta_Sans',_sans-serif]">
       <Navbar />
-      <div className="max-w-5xl  mt-14 sm:mt-20 mx-auto space-y-6">
+      <div className="max-w-5xl mt-14 sm:mt-20 mx-auto space-y-6">
         
 
         {/* ================= HERO SECTION ================= */}
@@ -68,15 +80,16 @@ export default function ProfilePage() {
               <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all">
                 <Star size={16} /> Shortlist
               </button>
-              {/* <button className="flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all">
-                <Phone size={16} /> Contact
-              </button> */}
+              <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all">
+                <Edit3 size={16} /> Edit Profile
+              </button>
             </div>
 
             <div className="flex justify-center lg:justify-start gap-5 text-sm text-slate-500 font-medium tracking-tight">
               <span className="flex items-center gap-1.5"><Calendar size={14} className="text-rose-400" /> 26 yrs</span>
               <span className="flex items-center gap-1.5"><Ruler size={14} className="text-rose-400" /> 5'4"</span>
               <span className="flex items-center gap-1.5"><Droplet size={14} className="text-rose-400" /> B+</span>
+              <span className="flex items-center gap-1.5"><Globe size={14} className="text-rose-400" /> Marathi</span>
             </div>
           </div>
         </div>
@@ -98,11 +111,15 @@ export default function ProfilePage() {
             <Section title="Personal Information" glow={glowStyle}>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
                 <Info label="Date of Birth" value="22 Oct 1999 (26y 3m)" icon={<Calendar size={14}/>} />
+                <Info label="Age" value="26 years 3 months" icon={<Calendar size={14}/>} />
                 <Info label="Marital Status" value="Never Married" icon={<ShieldCheck size={14}/>} />
+                <Info label="Gender" value="Female" icon={<User size={14}/>} />
                 <Info label="Mother Tongue" value="Marathi" icon={<Languages size={14}/>} />
+                <Info label="Complexion" value="Fair" icon={<Droplet size={14}/>} />
                 <Info label="Height" value="5' 4''" icon={<Ruler size={14}/>} />
                 <Info label="Blood Group" value="B Positive" icon={<Droplet size={14}/>} />
-                <Info label="Annual Income" value="₹25–35 LPA" icon={<BadgeIndianRupee size={14}/>} />
+                <Info label="First Gotra" value="Shrishal" icon={<Flame size={14} className="text-orange-400"/>} />
+                <Info label="Second Gotra" value="Pabhal" icon={<Flame size={14} className="text-orange-400"/>} />
               </div>
             </Section>
 
@@ -120,25 +137,45 @@ export default function ProfilePage() {
                 iconBg="bg-rose-400"
                 title="Career"
                 value="Senior Data Scientist"
-                sub="Microsoft R&D Center, Bangalore"
+                sub="Microsoft R&D Center, Bangalore | ₹25-35 LPA"
                 glow={glowStyle}
               />
             </div>
 
+            {/* Job Details Section - MISSING FROM ORIGINAL */}
+            <Section title="Job Details" glow={glowStyle}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Info label="Designation" value="Senior Data Scientist" icon={<Award size={14}/>} />
+                <Info label="Organization" value="Microsoft R&D Center" icon={<Building size={14}/>} />
+                <Info label="Annual Income" value="₹25-35 LPA" icon={<DollarSign size={14}/>} />
+                <Info label="Job Location" value="Bangalore, Karnataka" icon={<MapPin size={14}/>} />
+                <Info label="Current Education" value="N/A" icon={<BookOpen size={14}/>} />
+                <Info label="Other Details" value="Specialized in ML algorithms" icon={<MessageCircle size={14}/>} />
+              </div>
+            </Section>
+
             <Section title="Family Details" glow={glowStyle}>
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-slate-50 p-4 rounded-xl border-l-4 border-indigo-200  shadow-sm">
+                  <div className="bg-slate-50 p-4 rounded-xl border-l-4 border-indigo-200 shadow-sm">
                     <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Father</p>
-                    <p className="font-bold text-slate-800 text-base uppercase tracking-tight">DR. VINAYAK</p>
+                    <p className="font-bold text-slate-800 text-base uppercase tracking-tight">DR. VINAYAK KULKARNI</p>
                     <p className="text-xs text-slate-600 leading-relaxed mt-2">
                       Senior Consultant Cardiologist. Retired from Govt. Medical College. Currently running a private clinic in Nashik.
                     </p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <Info label="Occupation" value="Doctor" icon={<Briefcase size={10}/>} />
+                      <Info label="Business" value="Private Clinic" icon={<Home size={10}/>} />
+                    </div>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-xl border-l-4 border-rose-200 shadow-sm">
                     <p className="text-[10px] font-bold text-rose-400 uppercase mb-1">Mother</p>
-                    <p className="font-bold text-slate-800 text-base uppercase tracking-tight">MRS. SUNITA</p>
+                    <p className="font-bold text-slate-800 text-base uppercase tracking-tight">MRS. SUNITA KULKARNI</p>
                     <p className="text-xs text-slate-600 mt-2 font-medium italic tracking-tight">M.A. Literature, Senior Professor (Retd).</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <Info label="Occupation" value="Professor" icon={<Briefcase size={10}/>} />
+                      <Info label="Status" value="Retired" icon={<User size={10}/>} />
+                    </div>
                   </div>
                 </div>
                 
@@ -147,11 +184,29 @@ export default function ProfilePage() {
                     <span>Brothers: <b className="text-slate-700">1 (Unmarried)</b></span>
                     <span>Sisters: <b className="text-slate-700">0</b></span>
                   </div>
-                  <div className="bg-[#F8F7FF] p-4 rounded-xl border border-rose-50 shadow-sm">
-                    <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1 text-[9px]">Brother Details</p>
+                  
+                  {/* Brother 1 Details */}
+                  <div className="bg-[#F8F7FF] p-4 rounded-xl border border-rose-50 shadow-sm mb-3">
+                    <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Brother 1 Details</p>
                     <p className="text-xs text-slate-600 leading-relaxed tracking-tight">
-                      <b>Rohan (MBA):</b> Product Manager at Google, Hyderabad. Pursued MBA from IIM Ahmedabad.
+                      <b>Rohan Kulkarni (MBA, Unmarried):</b> Product Manager at Google, Hyderabad. Pursued MBA from IIM Ahmedabad.
                     </p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <Info label="Occupation" value="Product Manager" icon={<Briefcase size={10}/>} />
+                      <Info label="Company" value="Google, Hyderabad" icon={<Building size={10}/>} />
+                    </div>
+                  </div>
+
+                  {/* Brother 2 Details (Example) */}
+                  <div className="bg-[#F8F7FF] p-4 rounded-xl border border-rose-50 shadow-sm">
+                    <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Brother 2 Details</p>
+                    <p className="text-xs text-slate-600 leading-relaxed tracking-tight">
+                      <b>Rahul Kulkarni (Married):</b> Business Owner in Mumbai. Married to Priya (Software Engineer).
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <Info label="Occupation" value="Business Owner" icon={<Briefcase size={10}/>} />
+                      <Info label="Location" value="Mumbai" icon={<MapPin size={10}/>} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -167,7 +222,7 @@ export default function ProfilePage() {
                   <div className="bg-rose-50 p-2 rounded-lg text-rose-500 shadow-sm"><Mail size={16} /></div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Email ID</p>
-                    <p className="text-xs font-semibold truncate w-40 tracking-tighter">ananya.kulk••••@outlook.com</p>
+                    <p className="text-xs font-semibold truncate tracking-tighter">ananya.kulk••••@outlook.com</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 text-slate-700">
@@ -177,35 +232,84 @@ export default function ProfilePage() {
                     <p className="text-xs font-semibold">+91-98234••••</p>
                   </div>
                 </div>
-                <button className="w-full bg-[#9181EE] text-white py-3 rounded-xl font-bold text-xs shadow-lg active:scale-95 transition-all uppercase tracking-widest">
+                
+                {/* Social Media Links - MISSING FROM ORIGINAL */}
+                <div className="pt-3 border-t border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-2">Social Media</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Linkedin size={14} className="text-blue-600" />
+                      <span className="text-xs text-slate-600">linkedin.com/in/ananyakulkarni</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Instagram size={14} className="text-pink-600" />
+                      <span className="text-xs text-slate-600">@ananya_kulkarni</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Facebook size={14} className="text-blue-700" />
+                      <span className="text-xs text-slate-600">facebook.com/ananya.kulkarni</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <button className="w-full bg-[#9181EE] text-white py-3 rounded-xl font-bold text-xs shadow-lg active:scale-95 transition-all uppercase tracking-widest mt-2">
                   REQUEST CONTACT
                 </button>
               </div>
             </Section>
 
-            <Section title="Kundali" glow={glowStyle}>
-              <div className="grid grid-cols-2 gap-4">
-                <Info label="Birth Time" value="10:15 AM" icon={<Flame size={14} className="text-orange-400"/>} />
-                <Info label="Birth Place" value="Nashik" icon={<MapPin size={14} className="text-rose-400"/>} />
+            <Section title="Kundali Details" glow={glowStyle}>
+              <div className="space-y-3">
+                <Info label="Birth Name" value="Ananya" icon={<User size={14} className="text-indigo-400"/>} />
+                <Info label="Birth Time" value="10:15 AM" icon={<Clock size={14} className="text-orange-400"/>} />
+                <Info label="Birth Place" value="Nashik, Maharashtra" icon={<MapPin size={14} className="text-rose-400"/>} />
+                <Info label="First Gotra" value="Shrishal" icon={<Flame size={14} className="text-orange-400"/>} />
+                <Info label="Second Gotra" value="Pabhal" icon={<Flame size={14} className="text-orange-400"/>} />
               </div>
             </Section>
 
-            <Section title="Ideal Partner" glow={glowStyle}>
+            <Section title="Ideal Partner Expectations" glow={glowStyle}>
               <div className="space-y-3">
                 <ExpectItem label="Age Range" value="26 to 29 years" />
-                <ExpectItem label="Education" value="IIM/IIT/IISc Postgraduates Preferred" />
-                <ExpectItem label="Location" value="Bangalore / Hyderabad / Pune" />
-                <ExpectItem label="Interests" value="Travel, Fitness, Fine Arts" />
+                <ExpectItem label="Education" value="IIM/IIT/IISc Postgraduates Preferred (CA/CS/MBA/Engineers)" />
+                <ExpectItem label="Location" value="Bangalore / Hyderabad / Pune / Mumbai" />
+                <ExpectItem label="Minimum Annual Income" value="₹25 LPA +" />
                 <ExpectItem label="Height" value="Above 5' 8''" />
+                <ExpectItem label="Marital Status" value="Never Married" />
+                <ExpectItem label="Mother Tongue" value="Marathi Preferred" />
+                <ExpectItem label="Interests" value="Travel, Fitness, Fine Arts, Technology" />
               </div>
             </Section>
 
-            <Section title="Location" glow={glowStyle}>
-              <div className="flex items-start gap-2">
-                <MapPin size={16} className="text-rose-400 mt-1" />
-                <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
-                  Prestige Shantiniketan, ITPL Main Road, Whitefield, Bangalore, Karnataka.
-                </p>
+            <Section title="Location & Lifestyle" glow={glowStyle}>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <MapPin size={16} className="text-rose-400 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Current Location</p>
+                    <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
+                      Prestige Shantiniketan, ITPL Main Road, Whitefield, Bangalore, Karnataka - 560066
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Home size={16} className="text-indigo-400 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Hometown</p>
+                    <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
+                      Nashik, Maharashtra
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Globe size={16} className="text-green-400 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Willing to Relocate</p>
+                    <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
+                      Yes, anywhere in India for the right partner
+                    </p>
+                  </div>
+                </div>
               </div>
             </Section>
           </div>
@@ -214,21 +318,18 @@ export default function ProfilePage() {
 
       {/* MOBILE STICKY CTA */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-purple-100 p-3 z-50">
-  <div className="flex gap-3">
-    
-    {/* Shortlist */}
-    <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform">
-      <Star size={16} /> Shortlist
-    </button>
-
-    {/* Send Interest */}
-    <button className="flex-[2] flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-[#9181EE] text-white font-bold shadow-lg active:scale-95 transition-transform">
-      <Heart size={18} fill="white" /> Send Interest
-    </button>
-
-  </div>
-</div>
-
+        <div className="flex gap-3">
+          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform">
+            <Edit3 size={16} /> Edit
+          </button>
+          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform">
+            <Star size={16} /> Shortlist
+          </button>
+          <button className="flex-[2] flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-[#9181EE] text-white font-bold shadow-lg active:scale-95 transition-transform">
+            <Heart size={18} fill="white" /> Send Interest
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

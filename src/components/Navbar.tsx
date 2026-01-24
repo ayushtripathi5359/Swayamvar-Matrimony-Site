@@ -62,6 +62,13 @@ export default function Navbar() {
             >
               Profile
             </Link>
+            <Link
+              to="/profile"
+              className="block px-4 py-2 text-slate-900 hover:text-pink-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Profile
+            </Link>
           </div>
         )}
       </div>
