@@ -27,7 +27,7 @@ export default function InboxListingPage() {
               "Accepted (0)",
               "Sent (0)",
               "Declined (20)",
-            ].map((tab, i) => (
+            ].map((tab, i) => ( 
               <button
                 key={i}
                 className={`px-4 py-2 text-sm rounded-full transition ${
