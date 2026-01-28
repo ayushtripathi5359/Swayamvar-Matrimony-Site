@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Heart,
   Star,
@@ -32,8 +32,88 @@ import {
   MessageCircle
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { apiFetch } from "@/lib/apiClient";
+
+interface ProfileData {
+  _id?: string;
+  fullName?: string;
+  age?: string;
+  occupation?: string;
+  jobLocation?: string;
+  profilePhotos?: { western?: string; traditional?: string };
+  aboutMe?: string;
+  dateOfBirth?: string;
+  maritalStatus?: string;
+  gender?: string;
+  motherTongue?: string;
+  complexion?: string;
+  height?: string;
+  bloodGroup?: string;
+  firstGotra?: string;
+  secondGotra?: string;
+  highestEducation?: string;
+  collegeUniversity?: string;
+  designation?: string;
+  organization?: string;
+  annualIncome?: string;
+  currentEducation?: string;
+  otherOccupation?: string;
+}
 
 export default function ProfilePage() {
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await apiFetch("/api/profile/me");
+        if (!response.ok) {
+          const data = await response.json();
+          setLoadError(data.message || "Unable to load profile.");
+          return;
+        }
+        const data = await response.json();
+        setProfile(data);
+      } catch (error) {
+        setLoadError("Unable to load profile.");
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const displayProfile = {
+    fullName: profile?.fullName || "ANANYA KULKARNI",
+    profileId: profile?._id || "55892",
+    age: profile?.age || "26",
+    occupation: profile?.occupation || "Data Scientist",
+    jobLocation: profile?.jobLocation || "Bangalore",
+    profilePhoto:
+      profile?.profilePhotos?.traditional ||
+      profile?.profilePhotos?.western ||
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200",
+    aboutMe:
+      profile?.aboutMe ||
+      "\"I am an inquisitive soul who finds joy in the intersection of data and human behavior. I enjoy classical music, exploring hidden hiking trails, and am a firm believer in conscious living. I am looking for someone who values growth, intellectual curiosity, and a kind heart.\"",
+    dateOfBirth: profile?.dateOfBirth || "22 Oct 1999",
+    maritalStatus: profile?.maritalStatus || "Never Married",
+    gender: profile?.gender || "Female",
+    motherTongue: profile?.motherTongue || "Marathi",
+    complexion: profile?.complexion || "Fair",
+    height: profile?.height || "5' 4''",
+    bloodGroup: profile?.bloodGroup || "B Positive",
+    firstGotra: profile?.firstGotra || "Shrishal",
+    secondGotra: profile?.secondGotra || "Pabhal",
+    highestEducation: profile?.highestEducation || "M.S. in Data Analytics",
+    collegeUniversity: profile?.collegeUniversity || "Indian Institute of Science (IISc), Bangalore",
+    designation: profile?.designation || "Senior Data Scientist",
+    organization: profile?.organization || "Microsoft R&D Center",
+    annualIncome: profile?.annualIncome || "₹25-35 LPA",
+    currentEducation: profile?.currentEducation || "N/A",
+    otherOccupation: profile?.otherOccupation || "Specialized in ML algorithms"
+  };
+
   // Custom soft glowing shadow effect
   const glowStyle = {
     boxShadow: "0 10px 40px -10px rgba(145, 129, 238, 0.15), 0 0 20px rgba(253, 248, 251, 0.5)"
@@ -43,6 +123,11 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-[#FDF8FB] md:px-4 mb-20 lg:mb-0 py-6 text-[14px] text-slate-700 font-['Plus_Jakarta_Sans',_sans-serif]">
       <Navbar />
       <div className="max-w-5xl mt-14 sm:mt-20 mx-auto space-y-6">
+        {loadError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 text-red-600 px-4 py-3 text-sm font-semibold">
+            {loadError}
+          </div>
+        )}
         
 
         {/* ================= HERO SECTION ================= */}
@@ -53,8 +138,8 @@ export default function ProfilePage() {
 
           {/* Placeholder for Ananya's Image */}
           <img
-            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200"
-            alt="Ananya"
+            src={displayProfile.profilePhoto}
+            alt={displayProfile.fullName}
             className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-rose-50 shadow-md"
           />
 
@@ -62,14 +147,14 @@ export default function ProfilePage() {
             <div>
               <div className="flex flex-col md:flex-row md:items-center gap-2">
                 <h1 className="text-2xl font-bold text-slate-800 tracking-tight uppercase">
-                  ANANYA KULKARNI
+                  {displayProfile.fullName}
                 </h1>
                 <span className="bg-rose-100 text-rose-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase w-fit mx-auto md:mx-0">
-                  ID: 55892
+                  ID: {displayProfile.profileId}
                 </span>
               </div>
               <p className="text-rose-600 font-semibold text-base mt-1">
-                Data Scientist <span className="text-slate-300 mx-1">|</span> Bangalore
+                {displayProfile.occupation} <span className="text-slate-300 mx-1">|</span> {displayProfile.jobLocation}
               </p>
             </div>
 
@@ -86,10 +171,10 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex justify-center lg:justify-start gap-5 text-sm text-slate-500 font-medium tracking-tight">
-              <span className="flex items-center gap-1.5"><Calendar size={14} className="text-rose-400" /> 26 yrs</span>
-              <span className="flex items-center gap-1.5"><Ruler size={14} className="text-rose-400" /> 5'4"</span>
-              <span className="flex items-center gap-1.5"><Droplet size={14} className="text-rose-400" /> B+</span>
-              <span className="flex items-center gap-1.5"><Globe size={14} className="text-rose-400" /> Marathi</span>
+              <span className="flex items-center gap-1.5"><Calendar size={14} className="text-rose-400" /> {displayProfile.age} yrs</span>
+              <span className="flex items-center gap-1.5"><Ruler size={14} className="text-rose-400" /> {displayProfile.height}</span>
+              <span className="flex items-center gap-1.5"><Droplet size={14} className="text-rose-400" /> {displayProfile.bloodGroup}</span>
+              <span className="flex items-center gap-1.5"><Globe size={14} className="text-rose-400" /> {displayProfile.motherTongue}</span>
             </div>
           </div>
         </div>
@@ -102,24 +187,22 @@ export default function ProfilePage() {
 
             <Section title="About Me" glow={glowStyle}>
               <p className="leading-relaxed text-slate-600 italic font-medium">
-                "I am an inquisitive soul who finds joy in the intersection of data and human behavior. 
-                I enjoy classical music, exploring hidden hiking trails, and am a firm believer in conscious living. 
-                I am looking for someone who values growth, intellectual curiosity, and a kind heart."
+                {displayProfile.aboutMe}
               </p>
             </Section>
 
             <Section title="Personal Information" glow={glowStyle}>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
-                <Info label="Date of Birth" value="22 Oct 1999 (26y 3m)" icon={<Calendar size={14}/>} />
-                <Info label="Age" value="26 years 3 months" icon={<Calendar size={14}/>} />
-                <Info label="Marital Status" value="Never Married" icon={<ShieldCheck size={14}/>} />
-                <Info label="Gender" value="Female" icon={<User size={14}/>} />
-                <Info label="Mother Tongue" value="Marathi" icon={<Languages size={14}/>} />
-                <Info label="Complexion" value="Fair" icon={<Droplet size={14}/>} />
-                <Info label="Height" value="5' 4''" icon={<Ruler size={14}/>} />
-                <Info label="Blood Group" value="B Positive" icon={<Droplet size={14}/>} />
-                <Info label="First Gotra" value="Shrishal" icon={<Flame size={14} className="text-orange-400"/>} />
-                <Info label="Second Gotra" value="Pabhal" icon={<Flame size={14} className="text-orange-400"/>} />
+                <Info label="Date of Birth" value={displayProfile.dateOfBirth} icon={<Calendar size={14}/>} />
+                <Info label="Age" value={`${displayProfile.age} years`} icon={<Calendar size={14}/>} />
+                <Info label="Marital Status" value={displayProfile.maritalStatus} icon={<ShieldCheck size={14}/>} />
+                <Info label="Gender" value={displayProfile.gender} icon={<User size={14}/>} />
+                <Info label="Mother Tongue" value={displayProfile.motherTongue} icon={<Languages size={14}/>} />
+                <Info label="Complexion" value={displayProfile.complexion} icon={<Droplet size={14}/>} />
+                <Info label="Height" value={displayProfile.height} icon={<Ruler size={14}/>} />
+                <Info label="Blood Group" value={displayProfile.bloodGroup} icon={<Droplet size={14}/>} />
+                <Info label="First Gotra" value={displayProfile.firstGotra} icon={<Flame size={14} className="text-orange-400"/>} />
+                <Info label="Second Gotra" value={displayProfile.secondGotra} icon={<Flame size={14} className="text-orange-400"/>} />
               </div>
             </Section>
 
@@ -128,16 +211,16 @@ export default function ProfilePage() {
                 icon={<GraduationCap size={20} className="text-white" />}
                 iconBg="bg-indigo-400"
                 title="Education"
-                value="M.S. in Data Analytics"
-                sub="Indian Institute of Science (IISc), Bangalore"
+                value={displayProfile.highestEducation}
+                sub={displayProfile.collegeUniversity}
                 glow={glowStyle}
               />
               <DetailCard
                 icon={<Briefcase size={20} className="text-white" />}
                 iconBg="bg-rose-400"
                 title="Career"
-                value="Senior Data Scientist"
-                sub="Microsoft R&D Center, Bangalore | ₹25-35 LPA"
+                value={displayProfile.designation}
+                sub={`${displayProfile.organization} | ${displayProfile.annualIncome}`}
                 glow={glowStyle}
               />
             </div>
@@ -145,12 +228,12 @@ export default function ProfilePage() {
             {/* Job Details Section - MISSING FROM ORIGINAL */}
             <Section title="Job Details" glow={glowStyle}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Info label="Designation" value="Senior Data Scientist" icon={<Award size={14}/>} />
-                <Info label="Organization" value="Microsoft R&D Center" icon={<Building size={14}/>} />
-                <Info label="Annual Income" value="₹25-35 LPA" icon={<DollarSign size={14}/>} />
-                <Info label="Job Location" value="Bangalore, Karnataka" icon={<MapPin size={14}/>} />
-                <Info label="Current Education" value="N/A" icon={<BookOpen size={14}/>} />
-                <Info label="Other Details" value="Specialized in ML algorithms" icon={<MessageCircle size={14}/>} />
+                <Info label="Designation" value={displayProfile.designation} icon={<Award size={14}/>} />
+                <Info label="Organization" value={displayProfile.organization} icon={<Building size={14}/>} />
+                <Info label="Annual Income" value={displayProfile.annualIncome} icon={<DollarSign size={14}/>} />
+                <Info label="Job Location" value={displayProfile.jobLocation} icon={<MapPin size={14}/>} />
+                <Info label="Current Education" value={displayProfile.currentEducation} icon={<BookOpen size={14}/>} />
+                <Info label="Other Details" value={displayProfile.otherOccupation} icon={<MessageCircle size={14}/>} />
               </div>
             </Section>
 

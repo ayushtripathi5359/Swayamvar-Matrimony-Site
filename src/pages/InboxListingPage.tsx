@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import { apiFetch } from "@/lib/apiClient";
 
 const MOCK_PROFILES = Array.from({ length: 12 }).map((_, i) => ({
   id: i + 1,
