@@ -1,14 +1,45 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import bridegroom2 from "@/assets/bride-groom2.png";
 import flower1 from "@/assets/flower1.png";
 import flower2 from "@/assets/flower2.png";
 import rectangleBg from "@/assets/Rectangle 1.png";
-import LoginModal from "@/components/LoginModal";
-import brideImage from "@/assets/bride-illustration.png";
-import groomImage from "@/assets/groom-illustration.png";
+import { apiFetch } from "@/lib/apiClient";
+import { setAccessToken } from "@/lib/auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setErrorMessage(data.message || "Login failed. Please try again.");
+        return;
+      }
+
+      setAccessToken(data.accessToken);
+      navigate("/home");
+    } catch (error) {
+      setErrorMessage("Unable to reach the server. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row overflow-hidden">
 
@@ -125,28 +156,45 @@ export default function LoginPage() {
     <div className="h-px bg-black/10" />
 
     {/* Form */}
-    <div className="flex flex-col gap-3 lg:gap-4">
+    <form className="flex flex-col gap-3 lg:gap-4" onSubmit={handleLogin}>
       <input
         type="email"
         placeholder="helloshivani24@gmail.com"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
         className="px-4 py-3 lg:px-5 lg:py-4 rounded-[24px] lg:rounded-[32px] border border-black/10 text-sm"
+        required
       />
       <input
         type="password"
         placeholder="**********"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
         className="px-4 py-3 lg:px-5 lg:py-4 rounded-[24px] lg:rounded-[32px] border border-black/10 text-sm"
+        required
       />
+      {errorMessage && (
+        <p className="text-xs text-red-500 font-medium">{errorMessage}</p>
+      )}
       <button
-        onClick={() => navigate("/registration")}
-        className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] bg-blue-600 text-white font-semibold text-sm"
+        type="submit"
+        disabled={isSubmitting}
+        className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] bg-blue-600 text-white font-semibold text-sm disabled:opacity-70"
       >
-        Get Started
+        {isSubmitting ? "Signing in..." : "Sign In"}
       </button>
-    </div>
+      <button
+        type="button"
+        onClick={() => navigate("/registration")}
+        className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] border border-black/10 text-sm font-semibold"
+      >
+        Create Account
+      </button>
+    </form>
 
     <p className="text-center text-xs lg:text-sm text-black/60">
       Don’t have an account?{" "}
-      <Link to="/signup" className="text-black font-medium">
+      <Link to="/registration" className="text-black font-medium">
         Sign up
       </Link>
     </p>

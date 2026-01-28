@@ -1,7 +1,29 @@
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import { apiFetch } from "@/lib/apiClient";
 
 export default function InboxListingPage() {
-  const profiles = Array.from({ length: 9 });
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    const loadMatches = async () => {
+      try {
+        const response = await apiFetch("/api/matches");
+        if (!response.ok) {
+          const data = await response.json();
+          setLoadError(data.message || "Unable to load matches.");
+          return;
+        }
+        const data = await response.json();
+        setProfiles(data.matches || []);
+      } catch (error) {
+        setLoadError("Unable to load matches.");
+      }
+    };
+
+    loadMatches();
+  }, []);
 
   return (
     <>
@@ -66,33 +88,39 @@ export default function InboxListingPage() {
           </button>
         </div>
 
+        {loadError && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 text-red-600 px-4 py-3 text-sm font-semibold text-center">
+            {loadError}
+          </div>
+        )}
+
         {/* PROFILE GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
-          {profiles.map((_, i) => (
+          {profiles.map((profile, i) => (
             <div
-              key={i}
+              key={profile.id || i}
               className="bg-white rounded-3xl p-5 shadow-md"
             >
               <div className="flex gap-4">
                 <img
-                  src="https://randomuser.me/api/portraits/women/44.jpg"
+                  src={profile.profilePhoto || "https://randomuser.me/api/portraits/women/44.jpg"}
                   alt="profile"
                   className="w-14 h-14 rounded-xl object-cover"
                 />
 
                 <div>
                   <h3 className="font-medium text-[#111827] text-sm">
-                    Saiteja G
+                    {profile.fullName || "New Member"}
                   </h3>
                   <p className="text-xs text-gray-500">
-                    (27), Aurangabad
+                    ({profile.age || "--"}), {profile.location || "Unknown"}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Mechanical Engineering GEV DOC Life Cycle Operati…
+                    {profile.occupation || "Profile details pending"}
                   </p>
                   <p className="text-xs text-red-500 mt-1">
-                    Last Active: 1 hour ago
+                    Last Active: {profile.lastActive || "Recently"}
                   </p>
                 </div>
               </div>
@@ -113,6 +141,11 @@ export default function InboxListingPage() {
           ))}
 
         </div>
+        {!loadError && profiles.length === 0 && (
+          <p className="text-center text-sm text-gray-500 mt-6">
+            No matches found yet. Check back soon!
+          </p>
+        )}
       </div>
     </section>
     </>
