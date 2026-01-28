@@ -4,24 +4,39 @@ import couple1 from "@/assets/couple1.png"
 import FindPerfectBride from "@/components/FindPerfectBride"
 import WebsiteFeatures from "@/components/WebsiteFeatures"
 import Navbar from "@/components/Navbar"
-import { Link } from "react-router-dom";
+import { apiFetch } from "@/lib/apiClient";
 
 export default function Landing() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2500);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim()) {
-      setSubmitted(true);
-      setEmail("");
-      setTimeout(() => setSubmitted(false), 3000);
+      setSubmitError("");
+      try {
+        const response = await apiFetch("/api/newsletter", {
+          method: "POST",
+          body: JSON.stringify({ email })
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          setSubmitError(data.message || "Unable to subscribe right now.");
+          return;
+        }
+        setSubmitted(true);
+        setEmail("");
+        setTimeout(() => setSubmitted(false), 3000);
+      } catch (error) {
+        setSubmitError("Unable to subscribe right now.");
+      }
     }
   };
 
@@ -97,6 +112,11 @@ export default function Landing() {
       {submitted && (
         <div className="absolute -bottom-7 left-1/2 lg:left-6 -translate-x-1/2 lg:translate-x-0 text-[#ED9B59] font-medium text-xs sm:text-sm animate-fade-in">
           ✓ Thanks! Check your email to get started.
+        </div>
+      )}
+      {submitError && (
+        <div className="absolute -bottom-7 left-1/2 lg:left-6 -translate-x-1/2 lg:translate-x-0 text-red-500 font-medium text-xs sm:text-sm animate-fade-in">
+          {submitError}
         </div>
       )}
     </form>

@@ -32,6 +32,8 @@ import {
   Crop as CropIcon,
   RotateCcw
 } from "lucide-react";
+import { apiFetch } from "@/lib/apiClient";
+import { setAccessToken } from "@/lib/auth";
 
 // Validation Functions
 const validateEmail = (email: string) => {
@@ -1199,6 +1201,8 @@ interface FormData {
   sisters: Record<string, string>[];
   whatsappNumber: string;
   emailId: string;
+  password: string;
+  confirmPassword: string;
   linkedinHandle: string;
   instagramHandle: string;
   facebookHandle: string;
@@ -1228,8 +1232,22 @@ const validateStep1 = (formData: FormData) => {
   if (formData.whatsappNumber && !validatePhoneNumber(formData.whatsappNumber)) {
     errors.whatsappNumber = "Enter a valid 10-digit phone number";
   }
-  if (formData.emailId && !validateEmail(formData.emailId)) {
+  if (!formData.emailId?.trim()) {
+    errors.emailId = "Email is required";
+  } else if (formData.emailId && !validateEmail(formData.emailId)) {
     errors.emailId = "Enter a valid email address";
+  }
+
+  if (!formData.password) {
+    errors.password = "Password is required";
+  } else if (formData.password.length < 8) {
+    errors.password = "Password must be at least 8 characters";
+  }
+
+  if (!formData.confirmPassword && formData.password) {
+    errors.confirmPassword = "Please confirm your password";
+  } else if (formData.password !== formData.confirmPassword) {
+    errors.confirmPassword = "Passwords do not match";
   }
   
   // At least one social media handle is required
@@ -1347,6 +1365,8 @@ export default function UnifiedMatrimonialForm() {
   const [westernPhoto, setWesternPhoto] = useState(null);
   const [traditionalPhoto, setTraditionalPhoto] = useState(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Image cropper states
   const [showCropper, setShowCropper] = useState(false);
@@ -1402,6 +1422,8 @@ export default function UnifiedMatrimonialForm() {
     // Contact Details
     whatsappNumber: "",
     emailId: "",
+    password: "",
+    confirmPassword: "",
     linkedinHandle: "",
     instagramHandle: "",
     facebookHandle: "",
@@ -2018,18 +2040,43 @@ export default function UnifiedMatrimonialForm() {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Final validation before submission
     const finalErrors = validateStep4(formData);
     if (Object.keys(finalErrors).length > 0) {
       setErrors(finalErrors);
       return;
     }
-    
-    // Navigate to profile page after successful validation
+
     setErrors({});
-    navigate("/profile");
-    console.log("Form Data:", formData);
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    const { password, confirmPassword, ...profileData } = formData;
+
+    try {
+      const response = await apiFetch("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email: formData.emailId,
+          password,
+          profile: profileData
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setSubmitError(data.message || "Registration failed. Please try again.");
+        return;
+      }
+
+      setAccessToken(data.accessToken);
+      navigate("/profile");
+    } catch (error) {
+      setSubmitError("Unable to complete registration. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -2359,6 +2406,56 @@ export default function UnifiedMatrimonialForm() {
                     <div className="flex items-center gap-2 text-red-500 text-xs">
                       <AlertCircle size={14} />
                       <span>{errors.emailId}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Password */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Create Password</label>
+                  </div>
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.password ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                  }`}>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                      placeholder="Create a password"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                  {errors.password && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.password}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Confirm Password</label>
+                  </div>
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.confirmPassword ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                  }`}>
+                    <input
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                      placeholder="Re-enter password"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.confirmPassword}</span>
                     </div>
                   )}
                 </div>
@@ -3444,6 +3541,12 @@ export default function UnifiedMatrimonialForm() {
             )}
           </div>
 
+          {submitError && (
+            <div className="mt-6 text-center text-red-500 text-sm font-semibold">
+              {submitError}
+            </div>
+          )}
+
           {/* Navigation Footer */}
           <div className="hidden lg:flex mt-10  items-center justify-between pt-6 border-t border-slate-50 lg:relative">
             <button 
@@ -3457,9 +3560,10 @@ export default function UnifiedMatrimonialForm() {
 
             <button 
               onClick={currentStep === steps.length ? handleSubmit : next}
-              className="flex items-center gap-3 bg-[#9181EE] text-white px-4 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_-5px_rgba(145,129,238,0.5)] hover:bg-[#7b6fd6] active:scale-95 transition-all"
+              disabled={isSubmitting}
+              className="flex items-center gap-3 bg-[#9181EE] text-white px-4 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_-5px_rgba(145,129,238,0.5)] hover:bg-[#7b6fd6] active:scale-95 transition-all disabled:opacity-70"
             >
-              {currentStep === steps.length ? "Submit" : "Next"} <ChevronRight size={18} />
+              {currentStep === steps.length ? (isSubmitting ? "Submitting..." : "Submit") : "Next"} <ChevronRight size={18} />
             </button>
           </div>
 
@@ -3483,9 +3587,10 @@ export default function UnifiedMatrimonialForm() {
 
               <button 
                 onClick={currentStep === steps.length ? handleSubmit : next}
-                className="flex items-center gap-2 bg-[#9181EE] text-white px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide shadow-lg hover:bg-[#7b6fd6] active:scale-95 transition-all"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 bg-[#9181EE] text-white px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide shadow-lg hover:bg-[#7b6fd6] active:scale-95 transition-all disabled:opacity-70"
               >
-                {currentStep === steps.length ? "Submit" : "Next"} <ChevronRight size={16} />
+                {currentStep === steps.length ? (isSubmitting ? "Submitting..." : "Submit") : "Next"} <ChevronRight size={16} />
               </button>
             </div>
           </div>
