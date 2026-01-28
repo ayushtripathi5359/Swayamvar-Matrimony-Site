@@ -35,6 +35,8 @@ export default function Navbar() {
           <NavItem label="Home" href="/home" />
           <NavItem label="Profile" href="/profile" />
           <NavItem label="My Matches" href="/inbox" />
+          <NavItem label="About Us" href="/aboutus" />
+          {/* <NavItem label="Pricing" href="/pricing" /> */}
         </div>
 
         {/* Mobile Hamburger */}
@@ -70,6 +72,20 @@ export default function Navbar() {
             >
               My Matches
             </Link>
+            <Link
+              to="/aboutus"
+              className="block px-4 py-2 text-slate-900 hover:text-pink-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              About Us
+            </Link>
+            {/* <Link
+              to="/pricing"
+              className="block px-4 py-2 text-slate-900 hover:text-pink-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Pricing
+            </Link> */}
           </div>
         )}
       </div>

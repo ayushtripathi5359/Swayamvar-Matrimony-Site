@@ -136,6 +136,15 @@ export default function LoginPage() {
         placeholder="**********"
         className="px-4 py-3 lg:px-5 lg:py-4 rounded-[24px] lg:rounded-[32px] border border-black/10 text-sm"
       />
+      {/* Forgot Password */}
+    <div className="text-right">
+      <Link
+        to="/forgot-password"
+        className="text-xs text-blue-600 font-medium"
+      >
+        Forgot password?
+      </Link>
+    </div>
       <button
         onClick={() => navigate("/registration")}
         className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] bg-blue-600 text-white font-semibold text-sm"

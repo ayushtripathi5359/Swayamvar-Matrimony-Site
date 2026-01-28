@@ -4,6 +4,7 @@ import couple1 from "@/assets/couple1.png"
 import FindPerfectBride from "@/components/FindPerfectBride"
 import WebsiteFeatures from "@/components/WebsiteFeatures"
 import Navbar from "@/components/Navbar"
+import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 
 export default function Landing() {
@@ -35,7 +36,7 @@ export default function Landing() {
         <BackgroundPatterns />
       </div>
 
-      <main className="relative z-10 max-w-[1512px] mx-auto px-2 md:px-9 py-4">
+      <main className="relative z-10 max-w-[1512px] mx-auto px-2 md:px-9 pt-4">
         <div className="rounded-[32px] bg-white overflow-hidden relative shadow-sm border border-slate-50 min-h-[calc(100vh-40px)]">
           
           <Navbar />
@@ -157,6 +158,7 @@ export default function Landing() {
         </div>
         <FindPerfectBride></FindPerfectBride>
         <WebsiteFeatures></WebsiteFeatures>
+        <Footer></Footer>
       </main>
       
     </div>
