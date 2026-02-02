@@ -45,77 +45,105 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @route   POST /api/auth/register
 // @access  Public
 const register = asyncHandler(async (req, res, next) => {
-  const { email, password, profile } = req.body;
-  
-  // Create user
-  const user = await User.create({
-    email,
-    password,
-    authProvider: 'local'
-  });
-  
-  // Create basic profile if profile data is provided
-  if (profile && (profile.firstName || profile.lastName)) {
-    try {
-      await Profile.create({
-        userId: user._id,
-        firstName: profile.firstName || '',
-        middleName: profile.middleName || '',
-        lastName: profile.lastName || '',
-        emailId: email
-      });
-    } catch (profileError) {
-      console.log('Profile creation failed during registration:', profileError.message);
-      // Continue with user registration even if profile creation fails
-    }
-  }
-  
-  // Generate email verification token
-  const verificationToken = crypto.randomBytes(20).toString('hex');
-  user.emailVerificationToken = crypto
-    .createHash('sha256')
-    .update(verificationToken)
-    .digest('hex');
-  user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-  
-  await user.save();
-  
-  // Create verification URL
-  const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
-  
-  const message = `
-    Welcome to Swayamvar! Please verify your email address by clicking the link below:
-    
-    ${verificationUrl}
-    
-    This link will expire in 24 hours.
-    
-    If you did not create an account, please ignore this email.
-  `;
-  
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Verify Your Email Address - Swayamvar',
-      message
+    const { email, password, profile } = req.body;
+    
+    console.log('Registration attempt for:', email);
+    console.log('Profile data:', profile);
+    
+    // Create user
+    const user = await User.create({
+      email,
+      password,
+      authProvider: 'local'
     });
     
-    // Send token response for immediate authentication
-    sendTokenResponse(user, 201, res);
-  } catch (error) {
-    console.log('Email sending failed:', error.message);
+    console.log('User created successfully:', user._id);
     
-    // In development, allow registration to succeed even if email fails
+    // Create basic profile if profile data is provided
+    if (profile && (profile.firstName || profile.lastName)) {
+      try {
+        const newProfile = await Profile.create({
+          userId: user._id,
+          firstName: profile.firstName || '',
+          middleName: profile.middleName || '',
+          lastName: profile.lastName || '',
+          emailId: email
+        });
+        console.log('Profile created successfully:', newProfile._id);
+      } catch (profileError) {
+        console.log('Profile creation failed during registration:', profileError.message);
+        // Continue with user registration even if profile creation fails
+      }
+    }
+    
+    // Set user as email verified for manual registration (skip email verification in development)
     if (process.env.NODE_ENV === 'development') {
+      user.isEmailVerified = true;
+      await user.save();
+      console.log('Email verification skipped in development mode');
+      
       // Send token response for immediate authentication
       sendTokenResponse(user, 201, res);
-    } else {
-      user.emailVerificationToken = undefined;
-      user.emailVerificationExpires = undefined;
-      await user.save();
-      
-      return next(new Error('Email could not be sent'));
+      return;
     }
+    
+    // Generate email verification token for production
+    const verificationToken = crypto.randomBytes(20).toString('hex');
+    user.emailVerificationToken = crypto
+      .createHash('sha256')
+      .update(verificationToken)
+      .digest('hex');
+    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    
+    await user.save();
+    
+    // Create verification URL
+    const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
+    
+    const message = `
+      Welcome to Swayamvar! Please verify your email address by clicking the link below:
+      
+      ${verificationUrl}
+      
+      This link will expire in 24 hours.
+      
+      If you did not create an account, please ignore this email.
+    `;
+    
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Verify Your Email Address - Swayamvar',
+        message
+      });
+      
+      // Send token response for immediate authentication
+      sendTokenResponse(user, 201, res);
+    } catch (error) {
+      console.log('Email sending failed:', error.message);
+      
+      // In development, allow registration to succeed even if email fails
+      if (process.env.NODE_ENV === 'development') {
+        // Send token response for immediate authentication
+        sendTokenResponse(user, 201, res);
+      } else {
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
+        
+        return res.status(500).json({
+          success: false,
+          message: 'User created but email could not be sent. Please contact support.'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Registration failed'
+    });
   }
 });
 
@@ -479,9 +507,21 @@ const resendVerification = asyncHandler(async (req, res, next) => {
 const getMe = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   
+  // Fetch user's profile to get names
+  const profile = await Profile.findOne({ userId: req.user.id });
+  
+  const userWithProfile = {
+    ...user.toObject(),
+    profile: profile ? {
+      firstName: profile.firstName,
+      middleName: profile.middleName,
+      lastName: profile.lastName
+    } : null
+  };
+  
   res.status(200).json({
     success: true,
-    user
+    user: userWithProfile
   });
 });
 

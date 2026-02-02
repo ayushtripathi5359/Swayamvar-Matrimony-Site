@@ -6,12 +6,13 @@ const {
   deleteProfile,
   uploadPhotos,
   deletePhoto,
+  browseProfiles,
   searchProfiles,
   getProfileById,
   incrementProfileView
 } = require('../controllers/profileController');
 const { protect, checkSubscription, actionRateLimit } = require('../middleware/auth');
-const { validateProfile, validateSearch, validateObjectId } = require('../middleware/validation');
+const { validateSearch, validateObjectId } = require('../middleware/validation');
 const upload = require('../middleware/upload');
 
 const router = express.Router();
@@ -21,9 +22,9 @@ router.use(protect);
 
 // Profile CRUD operations
 router.route('/')
-  .post(validateProfile, createProfile)
+  .post(createProfile)
   .get(getProfile)
-  .put(validateProfile, updateProfile)
+  .put(updateProfile)
   .delete(deleteProfile);
 
 // Photo upload routes
@@ -33,6 +34,9 @@ router.post('/photos', upload.fields([
 ]), uploadPhotos);
 
 router.delete('/photos/:type', deletePhoto);
+
+// Browse profiles (for FindPerfectBride component)
+router.get('/browse', browseProfiles);
 
 // Search profiles
 router.get('/search', validateSearch, searchProfiles);

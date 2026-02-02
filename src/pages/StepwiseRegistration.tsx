@@ -1700,13 +1700,29 @@ export default function UnifiedMatrimonialForm() {
       try {
         setIsLoading(true);
         
-        // Fetch current user's email
+        // Fetch current user's email and profile data
         const userResponse = await apiFetch("/api/auth/me");
         if (userResponse.ok) {
           const userData = await userResponse.json();
           setUserEmail(userData.user.email);
           
-          // Try to fetch existing profile
+          // Prefill names from user profile data if available
+          if (userData.user.profile) {
+            setFormData(prev => ({
+              ...prev,
+              firstName: userData.user.profile.firstName || '',
+              middleName: userData.user.profile.middleName || '',
+              lastName: userData.user.profile.lastName || '',
+              emailId: userData.user.email
+            }));
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              emailId: userData.user.email
+            }));
+          }
+          
+          // Try to fetch existing full profile
           const profileResponse = await apiFetch("/api/profiles");
           if (profileResponse.ok) {
             // Profile exists - enter edit mode
@@ -1721,6 +1737,10 @@ export default function UnifiedMatrimonialForm() {
               // Map old field names to new ones for backward compatibility
               education: profile.education || profile.highestEducation || '',
               emailId: userData.user.email,
+              // Ensure names are set
+              firstName: profile.firstName || userData.user.profile?.firstName || '',
+              middleName: profile.middleName || userData.user.profile?.middleName || '',
+              lastName: profile.lastName || userData.user.profile?.lastName || '',
               // Handle arrays properly
               brothers: profile.brothers || [],
               sisters: profile.sisters || [],
@@ -1729,18 +1749,21 @@ export default function UnifiedMatrimonialForm() {
             }));
             
             // Set photos if they exist
-            if (profile.profilePhotos?.western) {
-              setWesternPhoto(profile.profilePhotos.western);
+            if (profile.photos?.western?.url) {
+              setWesternPhoto(profile.photos.western.url);
             }
-            if (profile.profilePhotos?.traditional) {
-              setTraditionalPhoto(profile.profilePhotos.traditional);
+            if (profile.photos?.traditional?.url) {
+              setTraditionalPhoto(profile.photos.traditional.url);
             }
           } else {
-            // No profile exists - create mode, but prefill email
+            // No profile exists - create mode, but prefill email and names if available
             setIsEditMode(false);
             setFormData(prev => ({
               ...prev,
-              emailId: userData.user.email
+              emailId: userData.user.email,
+              firstName: userData.user.profile?.firstName || '',
+              middleName: userData.user.profile?.middleName || '',
+              lastName: userData.user.profile?.lastName || ''
             }));
           }
         }
@@ -2399,11 +2422,20 @@ export default function UnifiedMatrimonialForm() {
         linkedinHandle: formData.socialMediaLinks.find(link => link.platform === 'LinkedIn')?.url || formData.linkedinHandle || '',
         instagramHandle: formData.socialMediaLinks.find(link => link.platform === 'Instagram')?.url || formData.instagramHandle || '',
         facebookHandle: formData.socialMediaLinks.find(link => link.platform === 'Facebook')?.url || formData.facebookHandle || '',
-        profilePhotos: {
-          western: westernPhoto || "",
-          traditional: traditionalPhoto || ""
+        // Fix photo structure to match backend model
+        photos: {
+          western: westernPhoto ? { url: westernPhoto, publicId: '' } : undefined,
+          traditional: traditionalPhoto ? { url: traditionalPhoto, publicId: '' } : undefined
         }
       };
+
+      console.log('=== STEPWISE REGISTRATION SUBMIT DEBUG ===');
+      console.log('Western photo exists:', !!westernPhoto);
+      console.log('Traditional photo exists:', !!traditionalPhoto);
+      console.log('Western photo length:', westernPhoto ? westernPhoto.length : 0);
+      console.log('Traditional photo length:', traditionalPhoto ? traditionalPhoto.length : 0);
+      console.log('Photos object being sent:', submitData.photos);
+      console.log('=== STEPWISE REGISTRATION SUBMIT DEBUG END ===');
 
       const endpoint = isEditMode ? "/api/profiles" : "/api/profiles";
       const method = isEditMode ? "PUT" : "POST";

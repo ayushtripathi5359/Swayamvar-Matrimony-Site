@@ -240,6 +240,50 @@ const deletePhoto = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Get other profiles for browsing (excluding current user)
+// @route   GET /api/profiles/browse
+// @access  Private
+const browseProfiles = asyncHandler(async (req, res, next) => {
+  const {
+    page = 1,
+    limit = 8
+  } = req.query;
+  
+  // Build query to exclude current user and only show complete profiles
+  const query = {
+    userId: { $ne: req.user.id }, // Exclude current user
+    isComplete: true
+  };
+  
+  // Get current user's profile to determine opposite gender
+  const userProfile = await Profile.findOne({ userId: req.user.id });
+  if (userProfile && userProfile.gender) {
+    // Show opposite gender profiles by default
+    query.gender = userProfile.gender === 'Male' ? 'Female' : 'Male';
+  }
+  
+  // Execute search with essential fields only
+  const profiles = await Profile.find(query)
+    .select('firstName middleName lastName fullName age education occupation jobLocation photos profilePhotos')
+    .sort({ lastActive: -1, createdAt: -1 })
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit));
+  
+  const total = await Profile.countDocuments(query);
+  
+  res.status(200).json({
+    success: true,
+    count: profiles.length,
+    total,
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      pages: Math.ceil(total / parseInt(limit))
+    },
+    profiles
+  });
+});
+
 // @desc    Search profiles
 // @route   GET /api/profiles/search
 // @access  Private
@@ -362,15 +406,8 @@ const incrementProfileView = asyncHandler(async (req, res, next) => {
     await profile.incrementViews();
   }
   
-  // Continue to next middleware or return profile
-  if (res.headersSent) {
-    return next();
-  }
-  
-  res.status(200).json({
-    success: true,
-    message: 'Profile view recorded'
-  });
+  // Continue to next middleware (which will call getProfileById)
+  next();
 });
 
 module.exports = {
@@ -380,6 +417,7 @@ module.exports = {
   deleteProfile,
   uploadPhotos,
   deletePhoto,
+  browseProfiles,
   searchProfiles,
   getProfileById,
   incrementProfileView

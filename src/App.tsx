@@ -32,6 +32,7 @@ const App = () => (
           <Route path="/home" element={<Landing />} />
           <Route path="/registration" element={<StepwiseRegistration />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/:id" element={<ProfilePage />} />
           <Route path="/my-profile" element={<MyProfile />} />
           <Route path="/inbox" element={<InboxListingPage />} />
           <Route path="/signup" element={<SignupPage />} />

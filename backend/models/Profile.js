@@ -9,7 +9,6 @@ const profileSchema = new mongoose.Schema({
   // Basic Information
   firstName: {
     type: String,
-    required: [true, 'First name is required'],
     trim: true,
     maxlength: [50, 'First name cannot exceed 50 characters']
   },
@@ -20,44 +19,35 @@ const profileSchema = new mongoose.Schema({
   },
   lastName: {
     type: String,
-    required: [true, 'Last name is required'],
     trim: true,
     maxlength: [50, 'Last name cannot exceed 50 characters']
   },
   gender: {
     type: String,
-    required: [true, 'Gender is required'],
     enum: ['Male', 'Female']
   },
   dateOfBirth: {
-    type: Date,
-    required: [true, 'Date of birth is required']
+    type: Date
   },
   age: {
-    type: String,
-    required: true
+    type: String
   },
   maritalStatus: {
     type: String,
-    required: [true, 'Marital status is required'],
     enum: ['Unmarried', 'Divorced', 'Separated', 'Widowed']
   },
   motherTongue: {
-    type: String,
-    required: [true, 'Mother tongue is required']
+    type: String
   },
   height: {
-    type: String,
-    required: [true, 'Height is required']
+    type: String
   },
   complexion: {
     type: String,
-    required: [true, 'Complexion is required'],
     enum: ['Very Fair', 'Fair', 'Wheatish', 'Dark']
   },
   bloodGroup: {
     type: String,
-    required: [true, 'Blood group is required'],
     enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
   },
   aboutMe: {
@@ -68,7 +58,6 @@ const profileSchema = new mongoose.Schema({
   // Address Information
   currentAddressLine1: {
     type: String,
-    required: [true, 'Current address line 1 is required'],
     trim: true,
     maxlength: [100, 'Address line 1 cannot exceed 100 characters']
   },
@@ -79,19 +68,16 @@ const profileSchema = new mongoose.Schema({
   },
   currentCity: {
     type: String,
-    required: [true, 'Current city is required'],
     trim: true,
     maxlength: [50, 'City name cannot exceed 50 characters']
   },
   currentState: {
     type: String,
-    required: [true, 'Current state is required'],
     trim: true,
     maxlength: [50, 'State name cannot exceed 50 characters']
   },
   currentPincode: {
     type: String,
-    required: [true, 'Current pincode is required'],
     match: [/^\d{6}$/, 'Pincode must be exactly 6 digits']
   },
   permanentAddressLine1: {
@@ -125,12 +111,10 @@ const profileSchema = new mongoose.Schema({
   
   // Contact Information
   whatsappNumber: {
-    type: String,
-    required: [true, 'WhatsApp number is required']
+    type: String
   },
   countryCode: {
     type: String,
-    required: [true, 'Country code is required'],
     default: '+91'
   },
   emailId: {
@@ -143,13 +127,11 @@ const profileSchema = new mongoose.Schema({
   
   // Education & Career
   education: {
-    type: String,
-    required: [true, 'Education is required']
+    type: String
   },
   collegeUniversity: String,
   occupation: {
-    type: String,
-    required: [true, 'Occupation is required']
+    type: String
   },
   organization: String,
   designation: String,
@@ -159,12 +141,10 @@ const profileSchema = new mongoose.Schema({
   
   // Family Details
   fathersFullName: {
-    type: String,
-    required: [true, 'Father\'s name is required']
+    type: String
   },
   fathersOccupation: {
-    type: String,
-    required: [true, 'Father\'s occupation is required']
+    type: String
   },
   fathersBusinessName: String,
   fathersBusinessLocation: String,
@@ -172,12 +152,10 @@ const profileSchema = new mongoose.Schema({
   fathersCompanyName: String,
   
   mothersFullName: {
-    type: String,
-    required: [true, 'Mother\'s name is required']
+    type: String
   },
   mothersOccupation: {
-    type: String,
-    required: [true, 'Mother\'s occupation is required']
+    type: String
   },
   mothersBusinessName: String,
   mothersBusinessLocation: String,
@@ -213,12 +191,10 @@ const profileSchema = new mongoose.Schema({
   birthTime: String,
   birthPlace: String,
   firstGotra: {
-    type: String,
-    required: [true, 'First gotra is required']
+    type: String
   },
   secondGotra: {
-    type: String,
-    required: [true, 'Second gotra is required']
+    type: String
   },
   
   // Partner Preferences

@@ -10,8 +10,11 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
+    // Require password only when creating a new local-auth user.
+    // This avoids validation errors when saving existing users that were
+    // loaded without the password field selected.
     required: function() {
-      return this.authProvider === 'local'; // Require password for local auth
+      return this.isNew && this.authProvider === 'local';
     },
     minlength: [8, 'Password must be at least 8 characters'],
     select: false

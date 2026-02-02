@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile Click Test</title>
+</head>
+<body>
+    <h1>Profile Click Test</h1>
+    <button onclick="testProfileFetch()">Test Profile Fetch</button>
+    <div id="result"></div>
+
+    <script>
+        async function testProfileFetch() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // First test browse to get a profile ID
+                console.log('Testing browse profiles...');
+                const browseResponse = await fetch('http://localhost:5002/api/profiles/browse?limit=1', {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Browse response status:', browseResponse.status);
+                
+                if (browseResponse.ok) {
+                    const browseData = await browseResponse.json();
+                    console.log('Browse data:', browseData);
+                    
+                    if (browseData.profiles && browseData.profiles.length > 0) {
+                        const profileId = browseData.profiles[0]._id;
+                        console.log('Testing profile fetch for ID:', profileId);
+                        
+                        // Now test individual profile fetch
+                        const profileResponse = await fetch(`http://localhost:5002/api/profiles/${profileId}`, {
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        console.log('Profile response status:', profileResponse.status);
+                        
+                        if (profileResponse.ok) {
+                            const profileData = await profileResponse.json();
+                            console.log('Profile data:', profileData);
+                            resultDiv.innerHTML = `<pre>${JSON.stringify(profileData, null, 2)}</pre>`;
+                        } else {
+                            const errorText = await profileResponse.text();
+                            console.log('Profile error:', errorText);
+                            resultDiv.innerHTML = `Profile fetch failed: ${profileResponse.status} - ${errorText}`;
+                        }
+                    } else {
+                        resultDiv.innerHTML = 'No profiles found in browse';
+                    }
+                } else {
+                    const errorText = await browseResponse.text();
+                    console.log('Browse error:', errorText);
+                    resultDiv.innerHTML = `Browse failed: ${browseResponse.status} - ${errorText}`;
+                }
+            } catch (error) {
+                console.error('Test error:', error);
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,8 +1,171 @@
-import { Pencil, Check, X, Clock, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Pencil, Check, X, Clock, Plus, Camera, Upload } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import Navbar from "@/components/Navbar";
 import { apiFetch } from "@/lib/apiClient";
+
+// Image Cropper Component
+const ImageCropper = ({ 
+  imageSrc, 
+  onCropComplete, 
+  onCancel, 
+  isOpen 
+}) => {
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    width: 80,
+    height: 80,
+    x: 10,
+    y: 10
+  });
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const imgRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const getCroppedImg = (image: HTMLImageElement, crop: PixelCrop): Promise<string> => {
+    const canvas = canvasRef.current;
+    if (!canvas || !crop.width || !crop.height) {
+      return Promise.resolve('');
+    }
+
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      return Promise.resolve('');
+    }
+
+    // Make canvas square with the crop dimensions
+    const size = Math.max(crop.width, crop.height);
+    const pixelRatio = window.devicePixelRatio;
+    canvas.width = size * pixelRatio;
+    canvas.height = size * pixelRatio;
+
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.imageSmoothingQuality = 'high';
+
+    // Fill with white background for square image
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // Center the cropped image in the square canvas
+    const offsetX = (size - crop.width) / 2;
+    const offsetY = (size - crop.height) / 2;
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      offsetX,
+      offsetY,
+      crop.width,
+      crop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resolve('');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', 0.95);
+    });
+  };
+
+  const handleCropComplete = async () => {
+    if (imgRef.current && completedCrop?.width && completedCrop?.height) {
+      const croppedImageUrl = await getCroppedImg(imgRef.current, completedCrop);
+      onCropComplete(croppedImageUrl);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-700">Crop Your Photo</h3>
+          <button
+            onClick={onCancel}
+            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+          >
+            <X size={20} className="text-slate-500" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="text-center text-sm text-slate-600 mb-4">
+            Drag to adjust the square crop area for your profile photo
+          </div>
+          
+          <div className="flex justify-center bg-slate-50 p-4 rounded-xl">
+            <ReactCrop
+              crop={crop}
+              onChange={(c) => setCrop(c)}
+              onComplete={(c) => setCompletedCrop(c)}
+              aspect={1} // Force square aspect ratio
+              minWidth={100}
+              minHeight={100}
+              keepSelection={true}
+              ruleOfThirds={true}
+            >
+              <img
+                ref={imgRef}
+                src={imageSrc}
+                alt="Crop preview"
+                className="max-w-full max-h-96 object-contain"
+                onLoad={() => {
+                  // Set initial square crop to center
+                  if (imgRef.current) {
+                    const { width, height } = imgRef.current;
+                    const size = Math.min(width, height) * 0.7; // 70% of the smaller dimension
+                    const x = (width - size) / 2;
+                    const y = (height - size) / 2;
+                    
+                    setCrop({
+                      unit: 'px',
+                      width: size,
+                      height: size, // Ensure square
+                      x: x,
+                      y: y
+                    });
+                  }
+                }}
+              />
+            </ReactCrop>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+            <button
+              onClick={onCancel}
+              className="px-6 py-3 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl font-semibold transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCropComplete}
+              className="px-6 py-3 bg-[#ED9B59] text-white rounded-xl font-semibold hover:bg-orange-500 transition-all flex items-center gap-2"
+            >
+              Apply Crop
+            </button>
+          </div>
+        </div>
+
+        {/* Hidden canvas for cropping */}
+        <canvas ref={canvasRef} className="hidden" />
+      </div>
+    </div>
+  );
+};
 
 // Social Media URL Validation Functions
 const validateLinkedInURL = (url: string) => {
@@ -139,8 +302,14 @@ interface ProfileData {
   partnerQualification?: string[];
   preferredLocation?: string[];
   minAnnualIncome?: string;
+  photos?: { 
+    western?: { url?: string }; 
+    traditional?: { url?: string }; 
+  };
   profilePhotos?: { western?: string; traditional?: string };
 }
+
+
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -150,6 +319,13 @@ const MyProfile = () => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  
+  // Photo upload states
+  const [showCropper, setShowCropper] = useState(false);
+  const [originalImage, setOriginalImage] = useState(null);
+  const [cropperMode, setCropperMode] = useState<'western' | 'traditional' | null>(null);
+  const [westernPhoto, setWesternPhoto] = useState<string | null>(null);
+  const [traditionalPhoto, setTraditionalPhoto] = useState<string | null>(null);
 
   // Dropdown options matching StepwiseRegistration
   const dropdownOptions = {
@@ -232,6 +408,14 @@ const MyProfile = () => {
         console.log("Profile data received:", data);
         // Backend returns { success: true, profile: {...} }
         setProfile(data.profile || data);
+        
+        // Set photo states from profile data
+        if (data.profile?.photos?.western?.url || data.photos?.western?.url) {
+          setWesternPhoto(data.profile?.photos?.western?.url || data.photos?.western?.url);
+        }
+        if (data.profile?.photos?.traditional?.url || data.photos?.traditional?.url) {
+          setTraditionalPhoto(data.profile?.photos?.traditional?.url || data.photos?.traditional?.url);
+        }
       } catch (error) {
         console.error("Profile fetch error:", error);
         setError("Unable to load profile.");
@@ -413,6 +597,83 @@ const MyProfile = () => {
     }));
   };
 
+  // Photo upload handlers
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, photoType: 'western' | 'traditional') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setOriginalImage(reader.result as string);
+        setCropperMode(photoType);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = (croppedImageUrl: string) => {
+    if (cropperMode === 'western') {
+      setWesternPhoto(croppedImageUrl);
+      // Save with the new western photo
+      savePhotoUpdate(croppedImageUrl, traditionalPhoto);
+    } else if (cropperMode === 'traditional') {
+      setTraditionalPhoto(croppedImageUrl);
+      // Save with the new traditional photo
+      savePhotoUpdate(westernPhoto, croppedImageUrl);
+    }
+    setShowCropper(false);
+    setOriginalImage(null);
+    setCropperMode(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setOriginalImage(null);
+    setCropperMode(null);
+  };
+
+  const removePhoto = (photoType: 'western' | 'traditional') => {
+    if (photoType === 'western') {
+      setWesternPhoto(null);
+      // Save with western photo removed
+      savePhotoUpdate(null, traditionalPhoto);
+    } else if (photoType === 'traditional') {
+      setTraditionalPhoto(null);
+      // Save with traditional photo removed
+      savePhotoUpdate(westernPhoto, null);
+    }
+  };
+
+  const savePhotoUpdate = async (newWesternPhoto?: string | null, newTraditionalPhoto?: string | null) => {
+    try {
+      setSaving(true);
+      const photoData = {
+        photos: {
+          western: newWesternPhoto ? { url: newWesternPhoto, publicId: '' } : undefined,
+          traditional: newTraditionalPhoto ? { url: newTraditionalPhoto, publicId: '' } : undefined
+        }
+      };
+
+      const response = await apiFetch("/api/profiles", {
+        method: "PUT",
+        body: JSON.stringify(photoData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update photos");
+      }
+
+      const data = await response.json();
+      setProfile(data.profile || data);
+    } catch (error) {
+      console.error("Error saving photos:", error);
+      alert("Failed to save photo changes. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getFatherOccupationDetails = () => {
     if (!profile?.fathersOccupation) return "Occupation not specified";
     
@@ -569,12 +830,80 @@ const MyProfile = () => {
 
                   {/* Profile Image */}
                   <div className="relative mb-6">
-                    <div className="w-36 h-36 mx-auto rounded-[24px] overflow-hidden shadow-2xl ring-4 ring-white">
+                    <div className="w-36 h-36 mx-auto rounded-[24px] overflow-hidden shadow-2xl ring-4 ring-white relative group">
                       <img
-                        src={profile.profilePhotos?.traditional || profile.profilePhotos?.western || "https://images.unsplash.com/photo-1607746882042-944635dfe10e"}
+                        src={traditionalPhoto || 
+                             westernPhoto || 
+                             profile?.photos?.traditional?.url || 
+                             profile?.photos?.western?.url || 
+                             profile?.profilePhotos?.traditional || 
+                             profile?.profilePhotos?.western || 
+                             "https://images.unsplash.com/photo-1607746882042-944635dfe10e"}
                         alt={profile.fullName || "Profile"}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                       />
+                      
+                      {/* Photo Upload Overlay */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <div className="flex gap-2">
+                          <label className="cursor-pointer bg-white/90 hover:bg-white p-2 rounded-full transition-colors">
+                            <Camera size={20} className="text-slate-700" />
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*" 
+                              onChange={(e) => handleFileUpload(e, 'traditional')} 
+                            />
+                          </label>
+                          <label className="cursor-pointer bg-white/90 hover:bg-white p-2 rounded-full transition-colors">
+                            <Upload size={20} className="text-slate-700" />
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*" 
+                              onChange={(e) => handleFileUpload(e, 'western')} 
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Photo Type Indicator */}
+                    <div className="flex justify-center mt-2 gap-2">
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        traditionalPhoto || profile?.photos?.traditional?.url || profile?.profilePhotos?.traditional
+                          ? 'bg-orange-100 text-orange-600' 
+                          : 'bg-slate-100 text-slate-400'
+                      }`}>
+                        Traditional
+                      </div>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        westernPhoto || profile?.photos?.western?.url || profile?.profilePhotos?.western
+                          ? 'bg-blue-100 text-blue-600' 
+                          : 'bg-slate-100 text-slate-400'
+                      }`}>
+                        Western
+                      </div>
+                    </div>
+                    
+                    {/* Photo Management Buttons */}
+                    <div className="flex justify-center mt-3 gap-2">
+                      {(traditionalPhoto || profile?.photos?.traditional?.url || profile?.profilePhotos?.traditional) && (
+                        <button
+                          onClick={() => removePhoto('traditional')}
+                          className="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-full transition-colors"
+                        >
+                          Remove Traditional
+                        </button>
+                      )}
+                      {(westernPhoto || profile?.photos?.western?.url || profile?.profilePhotos?.western) && (
+                        <button
+                          onClick={() => removePhoto('western')}
+                          className="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-full transition-colors"
+                        >
+                          Remove Western
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1975,6 +2304,14 @@ const MyProfile = () => {
           </div>
         </div>
       </main>
+      
+      {/* Image Cropper Modal */}
+      <ImageCropper
+        imageSrc={originalImage}
+        onCropComplete={handleCropComplete}
+        onCancel={handleCropCancel}
+        isOpen={showCropper}
+      />
     </div>
   );
 };

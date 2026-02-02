@@ -13,6 +13,7 @@ export default function SignupPage() {
 
   const [form, setForm] = useState({
     firstName: "",
+    middleName: "",
     lastName: "",
     email: "",
     password: "",
@@ -21,6 +22,7 @@ export default function SignupPage() {
 
   const [errors, setErrors] = useState({
     firstName: "",
+    middleName: "",
     lastName: "",
     email: "",
     password: "",
@@ -29,6 +31,7 @@ export default function SignupPage() {
 
   const [touched, setTouched] = useState({
     firstName: false,
+    middleName: false,
     lastName: false,
     email: false,
     password: false,
@@ -110,6 +113,7 @@ export default function SignupPage() {
   const validateForm = () => {
     const newErrors = {
       firstName: validateField("firstName", form.firstName),
+      middleName: validateField("middleName", form.middleName),
       lastName: validateField("lastName", form.lastName),
       email: validateField("email", form.email),
       password: validateField("password", form.password),
@@ -119,6 +123,7 @@ export default function SignupPage() {
     setErrors(newErrors);
     setTouched({
       firstName: true,
+      middleName: true,
       lastName: true,
       email: true,
       password: true,
@@ -259,7 +264,7 @@ export default function SignupPage() {
               <div className="flex-1 h-px bg-gray-200"></div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="flex flex-col gap-1">
                 <input 
                   name="firstName" 
@@ -275,6 +280,24 @@ export default function SignupPage() {
                 />
                 {errors.firstName && touched.firstName && (
                   <p className="text-xs text-red-500 ml-4">{errors.firstName}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <input 
+                  name="middleName" 
+                  placeholder="Middle Name (Optional)" 
+                  value={form.middleName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`px-4 py-3 rounded-full border text-sm ${
+                    errors.middleName && touched.middleName 
+                      ? "border-red-500 focus:ring-red-200" 
+                      : "border-black/10 focus:ring-blue-200"
+                  } focus:outline-none focus:ring-2`}
+                />
+                {errors.middleName && touched.middleName && (
+                  <p className="text-xs text-red-500 ml-4">{errors.middleName}</p>
                 )}
               </div>
 
