@@ -1,47 +1,45 @@
 # Swayamvar Backend
 
-## Overview
-Node.js + Express backend providing authentication, profile management, matches, and newsletter subscription APIs for the Swayamvar Matrimony frontend.
+A matrimonial platform backend built with Node.js, Express, and MongoDB.
 
 ## Setup
-```bash
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-```
 
-## Environment Variables
-See `.env.example` for required values.
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-## Auth Flow
-- **Register** → Creates user + profile, returns access token, sets refresh token cookie.
-- **Login** → Returns access token, sets refresh token cookie.
-- **Refresh** → Rotates refresh token, returns new access token.
-- **Logout** → Clears refresh token cookie.
+2. **Configure environment**
+   - Copy `.env` and update values:
+   ```env
+   NODE_ENV=development
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/swayamvar
+   JWT_ACCESS_SECRET=your-secret-key
+   JWT_REFRESH_SECRET=your-refresh-secret
+   CORS_ORIGINS=http://localhost:5173
+   ```
 
-Access tokens are sent as `Authorization: Bearer <token>` from the frontend. Refresh token is stored as an HTTP-only cookie.
+3. **Start the server**
+   ```bash
+   # Development
+   npm run dev
+   
+   # Production
+   npm start
+   ```
 
 ## API Endpoints
-### Health
-- `GET /api/health`
 
-### Auth
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
+- **Auth**: `/api/auth/*` - Authentication endpoints
+- **Profiles**: `/api/profiles/*` - Profile management
+- **Interests**: `/api/interests/*` - Interest management
+- **Matches**: `/api/matches/*` - Match system
+- **Users**: `/api/users/*` - User management
+- **Subscriptions**: `/api/subscriptions/*` - Subscription plans
 
-### Profile
-- `GET /api/profile/me` (protected)
-- `PUT /api/profile/me` (protected)
+## Health Check
 
-### Matches
-- `GET /api/matches` (protected)
-
-### Newsletter
-- `POST /api/newsletter`
-
-## Frontend Integration Notes
-- Set `VITE_API_URL` in the frontend `.env` to the backend base URL (e.g. `http://localhost:5000`).
-- The frontend stores the access token locally and automatically refreshes when it expires.
+```bash
+curl http://localhost:5000/health
+```

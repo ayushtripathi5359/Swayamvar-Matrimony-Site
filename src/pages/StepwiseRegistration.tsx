@@ -46,6 +46,62 @@ const validatePhoneNumber = (phone: string) => {
   return phoneRegex.test(phone.replace(/\D/g, ''));
 };
 
+// Country codes with phone number validation patterns
+const countryCodes = [
+  { code: '+91', country: 'India', flag: '🇮🇳', pattern: /^[6-9]\d{9}$/, length: 10 },
+  { code: '+1', country: 'United States', flag: '🇺🇸', pattern: /^\d{10}$/, length: 10 },
+  { code: '+44', country: 'United Kingdom', flag: '🇬🇧', pattern: /^\d{10,11}$/, length: [10, 11] },
+  { code: '+61', country: 'Australia', flag: '🇦🇺', pattern: /^[2-9]\d{8}$/, length: 9 },
+  { code: '+81', country: 'Japan', flag: '🇯🇵', pattern: /^[7-9]\d{9}$/, length: 10 },
+  { code: '+49', country: 'Germany', flag: '🇩🇪', pattern: /^\d{10,12}$/, length: [10, 12] },
+  { code: '+33', country: 'France', flag: '🇫🇷', pattern: /^[1-9]\d{8}$/, length: 9 },
+  { code: '+86', country: 'China', flag: '🇨🇳', pattern: /^1[3-9]\d{9}$/, length: 11 },
+  { code: '+7', country: 'Russia', flag: '🇷🇺', pattern: /^9\d{9}$/, length: 10 },
+  { code: '+55', country: 'Brazil', flag: '🇧🇷', pattern: /^[1-9]\d{10}$/, length: 11 },
+  { code: '+27', country: 'South Africa', flag: '🇿🇦', pattern: /^[1-9]\d{8}$/, length: 9 },
+  { code: '+971', country: 'UAE', flag: '🇦🇪', pattern: /^5[0-9]\d{7}$/, length: 9 },
+  { code: '+65', country: 'Singapore', flag: '🇸🇬', pattern: /^[89]\d{7}$/, length: 8 },
+  { code: '+60', country: 'Malaysia', flag: '🇲🇾', pattern: /^1[0-9]\d{7,8}$/, length: [9, 10] },
+  { code: '+66', country: 'Thailand', flag: '🇹🇭', pattern: /^[689]\d{8}$/, length: 9 },
+];
+
+// Validate phone number based on country code
+const validatePhoneByCountry = (phone: string, countryCode: string) => {
+  const country = countryCodes.find(c => c.code === countryCode);
+  if (!country) return false;
+  
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Check length
+  if (Array.isArray(country.length)) {
+    if (!country.length.includes(cleanPhone.length)) return false;
+  } else {
+    if (cleanPhone.length !== country.length) return false;
+  }
+  
+  // Check pattern
+  return country.pattern.test(cleanPhone);
+};
+
+// Social Media URL Validation Functions
+const validateLinkedInURL = (url: string) => {
+  if (!url.trim()) return true; // Allow empty
+  const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/(in|pub|profile)\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/;
+  return linkedinRegex.test(url);
+};
+
+const validateInstagramURL = (url: string) => {
+  if (!url.trim()) return true; // Allow empty
+  const instagramRegex = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/;
+  return instagramRegex.test(url);
+};
+
+const validateFacebookURL = (url: string) => {
+  if (!url.trim()) return true; // Allow empty
+  const facebookRegex = /^https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/;
+  return facebookRegex.test(url);
+};
+
 // Custom Dropdown Component with smart positioning
 const CustomSelect = ({ 
   label, 
@@ -98,7 +154,7 @@ const CustomSelect = ({
   return (
     <div className={`group relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
       <div className="flex items-center gap-2 ml-1">
-        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+        <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -163,7 +219,8 @@ const CustomMultiSelect = ({
   placeholder = "Select options",
   disabled = false,
   className = "",
-  required = false
+  required = false,
+  maxItems = null
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState("bottom");
@@ -197,24 +254,32 @@ const CustomMultiSelect = ({
   }, [isOpen, options.length]);
 
   const handleSelect = (option) => {
-    const newValue = value.includes(option)
-      ? value.filter(item => item !== option)
-      : [...value, option];
-    onChange(newValue);
+    if (value.includes(option)) {
+      // Remove item
+      const newValue = value.filter(item => item !== option);
+      onChange(newValue);
+    } else {
+      // Add item only if under maxItems limit
+      if (!maxItems || value.length < maxItems) {
+        const newValue = [...value, option];
+        onChange(newValue);
+      }
+    }
   };
 
   const displayText = value.length === 0 
     ? placeholder 
     : value.length === 1 
       ? value[0] 
-      : `${value.length} selected`;
+      : `${value.length} selected${maxItems ? ` (max ${maxItems})` : ''}`;
 
   return (
     <div className={`group relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
       <div className="flex items-center gap-2 ml-1">
-        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+        <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
+          {maxItems && <span className="text-slate-400 ml-1">(max {maxItems})</span>}
         </label>
       </div>
       
@@ -232,16 +297,24 @@ const CustomMultiSelect = ({
           <span className={`font-bold ${value.length > 0 ? "text-black" : "text-slate-400"} text-base truncate`}>
             {displayText}
           </span>
-          {value.length > 1 && (
+          {value.length > 0 && (
             <div className="flex flex-wrap gap-1 max-w-[200px] overflow-hidden">
-              {value.slice(0, 2).map((item, idx) => (
-                <span key={idx} className="bg-[#F8F7FF] text-[#9181EE] px-2 py-1 rounded-lg text-xs font-semibold">
-                  {item.length > 10 ? `${item.substring(0, 10)}...` : item}
+              {value.slice(0, 3).map((item, idx) => (
+                <span key={idx} className="bg-[#F8F7FF] text-[#9181EE] px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1">
+                  {item.length > 8 ? `${item.substring(0, 8)}...` : item}
+                  <X 
+                    size={12} 
+                    className="cursor-pointer hover:text-red-500" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelect(item);
+                    }}
+                  />
                 </span>
               ))}
-              {value.length > 2 && (
+              {value.length > 3 && (
                 <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-xs font-semibold">
-                  +{value.length - 2}
+                  +{value.length - 3}
                 </span>
               )}
             </div>
@@ -264,20 +337,32 @@ const CustomMultiSelect = ({
           }}
         >
           <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: 'inherit' }}>
-            {options.map((option, index) => (
-              <div
-                key={index}
-                onClick={() => handleSelect(option)}
-                className={`px-4 lg:px-5 py-3 font-bold hover:bg-[#F8F7FF] hover:text-[#9181EE] transition-colors cursor-pointer border-b border-slate-50 last:border-0 text-base flex items-center justify-between ${
-                  value.includes(option) ? "bg-[#F8F7FF] text-[#9181EE]" : "text-black"
-                }`}
-              >
-                <span>{option}</span>
-                {value.includes(option) && (
-                  <Check size={16} className="text-[#9181EE]" />
-                )}
-              </div>
-            ))}
+            {options.map((option, index) => {
+              const isSelected = value.includes(option);
+              const isDisabled = !isSelected && maxItems && value.length >= maxItems;
+              
+              return (
+                <div
+                  key={index}
+                  onClick={() => !isDisabled && handleSelect(option)}
+                  className={`px-4 lg:px-5 py-3 font-bold transition-colors border-b border-slate-50 last:border-0 text-base flex items-center justify-between ${
+                    isDisabled 
+                      ? "text-slate-300 cursor-not-allowed bg-slate-50" 
+                      : isSelected 
+                        ? "bg-[#F8F7FF] text-[#9181EE] cursor-pointer" 
+                        : "text-black hover:bg-[#F8F7FF] hover:text-[#9181EE] cursor-pointer"
+                  }`}
+                >
+                  <span>{option}</span>
+                  {isSelected && (
+                    <Check size={16} className="text-[#9181EE]" />
+                  )}
+                  {isDisabled && !isSelected && (
+                    <span className="text-xs text-slate-400">Max reached</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -286,22 +371,42 @@ const CustomMultiSelect = ({
 };
 
 // Custom Calendar Picker Component (iOS-friendly)
-const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date(), required = false }) => {
+const CustomCalendarPicker = ({ 
+  value, 
+  onChange, 
+  label, 
+  maxDate = new Date(), 
+  minDate, 
+  required = false 
+}: {
+  value: any;
+  onChange: any;
+  label: any;
+  maxDate?: Date;
+  minDate?: Date;
+  required?: boolean;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
       const parts = value.split('-');
       return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, 1);
     }
-    return new Date();
+    return new Date(1995, 0, 1); // Default to 1995 for better UX
   });
   const [showYearMonth, setShowYearMonth] = useState(false);
   const calendarRef = useRef(null);
   const triggerRef = useRef(null);
 
   const today = new Date();
+  // Dynamic date range: 30 years ago to 16 years ago (for marriage age eligibility)
   const currentYear = today.getFullYear();
-  const yearRange = Array.from({ length: 100 }, (_, i) => currentYear - 80 + i);
+  const dynamicMinDate = minDate || new Date(currentYear - 50, 0, 1); // 50 years ago
+  const dynamicMaxDate = maxDate || new Date(currentYear - 16, 11, 31); // 16 years ago (minimum marriage age)
+  
+  const minYear = dynamicMinDate.getFullYear();
+  const maxYear = dynamicMaxDate.getFullYear();
+  const yearRange = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -331,7 +436,7 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date(), re
 
   const isDateDisabled = (day) => {
     const selectedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    return selectedDate > today;
+    return selectedDate > dynamicMaxDate || selectedDate < dynamicMinDate;
   };
 
   const handleDateSelect = (day) => {
@@ -383,7 +488,7 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date(), re
   return (
     <div className="space-y-2 relative">
       <div className="flex items-center gap-2 ml-1">
-        <label className="text-[12px] font-bold text-slate-500 uppercase">
+        <label className="text-[12px] font-bold text-slate-500  ">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -481,7 +586,7 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date(), re
               {/* Year/Month Selector */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Select Year</label>
+                  <label className="text-xs font-bold text-slate-500   block mb-2">Select Year</label>
                   <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
                     {yearRange.map((y) => (
                       <button
@@ -500,7 +605,7 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date(), re
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Select Month</label>
+                  <label className="text-xs font-bold text-slate-500   block mb-2">Select Month</label>
                   <div className="grid grid-cols-3 gap-2">
                     {months.map((m, idx) => (
                       <button
@@ -520,7 +625,7 @@ const CustomCalendarPicker = ({ value, onChange, label, maxDate = new Date(), re
 
                 <button
                   onClick={() => setShowYearMonth(false)}
-                  className="w-full bg-[#9181EE] text-white py-2 rounded-lg font-bold text-sm uppercase transition-all active:scale-95"
+                  className="w-full bg-[#9181EE] text-white py-2 rounded-lg font-bold text-sm   transition-all active:scale-95"
                   style={{ minHeight: '44px' }}
                 >
                   Done
@@ -587,7 +692,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
   return (
     <div className="space-y-2 relative">
       <div className="flex items-center gap-2 ml-1">
-        <label className="text-[12px] font-bold text-slate-500 uppercase">{label}</label>
+        <label className="text-[12px] font-bold text-slate-500  ">{label}</label>
       </div>
 
       <div
@@ -610,7 +715,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
           <div className="flex items-center justify-center gap-2">
             {/* Hours */}
             <div className="flex flex-col items-center gap-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Hours</label>
+              <label className="text-xs font-bold text-slate-500  ">Hours</label>
               <button
                 onClick={() => handleTimeChange({ ...time, hours: time.hours === 1 ? 12 : time.hours - 1 })}
                 className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
@@ -644,7 +749,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
 
             {/* Minutes */}
             <div className="flex flex-col items-center gap-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Minutes</label>
+              <label className="text-xs font-bold text-slate-500  ">Minutes</label>
               <button
                 onClick={() => handleTimeChange({ ...time, minutes: time.minutes === 0 ? 59 : time.minutes - 1 })}
                 className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
@@ -675,7 +780,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
 
             {/* AM/PM Toggle */}
             <div className="flex flex-col items-center gap-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Period</label>
+              <label className="text-xs font-bold text-slate-500  ">Period</label>
               <button
                 onClick={() => handleTimeChange({ ...time, isPM: !time.isPM })}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95 ${
@@ -703,7 +808,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
 
           <button
             onClick={() => setIsOpen(false)}
-            className="mt-4 w-full bg-[#9181EE] text-white py-3 rounded-lg font-bold text-sm uppercase transition-all active:scale-95"
+            className="mt-4 w-full bg-[#9181EE] text-white py-3 rounded-lg font-bold text-sm   transition-all active:scale-95"
             style={{ minHeight: '44px' }}
           >
             Done
@@ -884,7 +989,8 @@ const SiblingField = ({
   onChange, 
   onRemove,
   isLast,
-  onAdd 
+  onAdd,
+  errors = {}
 }) => {
   const [siblingData, setSiblingData] = useState(data || {
     name: "",
@@ -895,8 +1001,7 @@ const SiblingField = ({
     businessLocation: "",
     designation: "",
     companyName: "",
-    currentEducation: "",
-    otherOccupation: ""
+    currentEducation: ""
   });
 
   // Custom dropdown states
@@ -967,7 +1072,7 @@ const SiblingField = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Name Field */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-slate-500 uppercase">Name</label>
+          <label className="text-xs font-semibold text-slate-500  ">Name</label>
           <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
             <input
               type="text"
@@ -981,7 +1086,7 @@ const SiblingField = ({
 
         {/* Marital Status - Custom Dropdown */}
         <div className="space-y-2 relative" ref={maritalStatusRef}>
-          <label className="text-xs font-semibold text-slate-500 uppercase">Marital Status</label>
+          <label className="text-xs font-semibold text-slate-500  ">Marital Status</label>
           <div 
             className="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all"
             onClick={() => setMaritalStatusOpen(!maritalStatusOpen)}
@@ -1017,7 +1122,7 @@ const SiblingField = ({
 
         {/* Occupation - Custom Dropdown */}
         <div className="space-y-2 relative" ref={occupationRef}>
-          <label className="text-xs font-semibold text-slate-500 uppercase">Occupation</label>
+          <label className="text-xs font-semibold text-slate-500  ">Occupation</label>
           <div 
             className="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all"
             onClick={() => setOccupationOpen(!occupationOpen)}
@@ -1054,7 +1159,7 @@ const SiblingField = ({
         {/* Spouse Name (only if married) */}
         {siblingData.maritalStatus === 'Married' && (
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-500 uppercase">Married to (Spouse Name)</label>
+            <label className="text-xs font-semibold text-slate-500  ">Married to (Spouse Name)</label>
             <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
               <input
                 type="text"
@@ -1071,8 +1176,12 @@ const SiblingField = ({
         {siblingData.occupation === 'Business' && (
           <>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Business Name</label>
-              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <label className="text-xs font-semibold text-slate-500  ">
+                Business Name <span className="text-red-500">*</span>
+              </label>
+              <div className={`bg-white border rounded-2xl px-4 py-3 ${
+                errors[`${type}_${index}_businessName`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+              }`}>
                 <input
                   type="text"
                   value={siblingData.businessName}
@@ -1081,10 +1190,20 @@ const SiblingField = ({
                   placeholder="Enter business name"
                 />
               </div>
+              {errors[`${type}_${index}_businessName`] && (
+                <div className="flex items-center gap-2 text-red-500 text-xs">
+                  <AlertCircle size={14} />
+                  <span>{errors[`${type}_${index}_businessName`]}</span>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Business Location</label>
-              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <label className="text-xs font-semibold text-slate-500  ">
+                Business Location <span className="text-red-500">*</span>
+              </label>
+              <div className={`bg-white border rounded-2xl px-4 py-3 ${
+                errors[`${type}_${index}_businessLocation`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+              }`}>
                 <input
                   type="text"
                   value={siblingData.businessLocation}
@@ -1093,6 +1212,12 @@ const SiblingField = ({
                   placeholder="Enter business location"
                 />
               </div>
+              {errors[`${type}_${index}_businessLocation`] && (
+                <div className="flex items-center gap-2 text-red-500 text-xs">
+                  <AlertCircle size={14} />
+                  <span>{errors[`${type}_${index}_businessLocation`]}</span>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -1101,8 +1226,12 @@ const SiblingField = ({
         {siblingData.occupation === 'Job/Salaried' && (
           <>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Designation</label>
-              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <label className="text-xs font-semibold text-slate-500  ">
+                Designation <span className="text-red-500">*</span>
+              </label>
+              <div className={`bg-white border rounded-2xl px-4 py-3 ${
+                errors[`${type}_${index}_designation`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+              }`}>
                 <input
                   type="text"
                   value={siblingData.designation}
@@ -1111,10 +1240,20 @@ const SiblingField = ({
                   placeholder="Enter designation"
                 />
               </div>
+              {errors[`${type}_${index}_designation`] && (
+                <div className="flex items-center gap-2 text-red-500 text-xs">
+                  <AlertCircle size={14} />
+                  <span>{errors[`${type}_${index}_designation`]}</span>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Company Name</label>
-              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <label className="text-xs font-semibold text-slate-500  ">
+                Company Name <span className="text-red-500">*</span>
+              </label>
+              <div className={`bg-white border rounded-2xl px-4 py-3 ${
+                errors[`${type}_${index}_companyName`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+              }`}>
                 <input
                   type="text"
                   value={siblingData.companyName}
@@ -1123,6 +1262,12 @@ const SiblingField = ({
                   placeholder="Enter company name"
                 />
               </div>
+              {errors[`${type}_${index}_companyName`] && (
+                <div className="flex items-center gap-2 text-red-500 text-xs">
+                  <AlertCircle size={14} />
+                  <span>{errors[`${type}_${index}_companyName`]}</span>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -1130,7 +1275,7 @@ const SiblingField = ({
         {/* Student Field */}
         {siblingData.occupation === 'Student' && (
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-500 uppercase">Current Education</label>
+            <label className="text-xs font-semibold text-slate-500  ">Current Education</label>
             <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
               <input
                 type="text"
@@ -1142,29 +1287,15 @@ const SiblingField = ({
             </div>
           </div>
         )}
-
-        {/* Other Occupation Field */}
-        {siblingData.occupation === 'Other' && (
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-500 uppercase">Other Occupation</label>
-            <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
-              <input
-                type="text"
-                value={siblingData.otherOccupation}
-                onChange={(e) => handleChange('otherOccupation', e.target.value)}
-                className="w-full text-sm font-semibold text-slate-700 outline-none bg-transparent"
-                placeholder="Enter other occupation"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
 interface FormData {
-  fullName: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
   gender: string;
   dateOfBirth: string;
   age: string;
@@ -1174,13 +1305,24 @@ interface FormData {
   height: string;
   complexion: string;
   bloodGroup: string;
-  highestEducation: string;
+  // Address fields
+  currentAddressLine1: string;
+  currentAddressLine2: string;
+  currentCity: string;
+  currentState: string;
+  currentPincode: string;
+  permanentAddressLine1: string;
+  permanentAddressLine2: string;
+  permanentCity: string;
+  permanentState: string;
+  permanentPincode: string;
+  sameAsPermanentAddress: boolean;
+  education: string;
   collegeUniversity: string;
   occupation: string;
   organization: string;
   designation: string;
   currentEducation: string;
-  otherOccupation: string;
   annualIncome: string;
   jobLocation: string;
   fathersFullName: string;
@@ -1189,20 +1331,23 @@ interface FormData {
   fathersBusinessLocation: string;
   fathersDesignation: string;
   fathersCompanyName: string;
-  fathersOtherOccupation: string;
   mothersFullName: string;
   mothersOccupation:string;
   mothersBusinessName: string;
   mothersBusinessLocation: string;
   mothersDesignation: string;
   mothersCompanyName: string;
-  mothersOtherOccupation: string;
   brothers: Record<string, string>[];
   sisters: Record<string, string>[];
   whatsappNumber: string;
+  countryCode: string;
   emailId: string;
-  password: string;
-  confirmPassword: string;
+  // Dynamic social media links
+  socialMediaLinks: Array<{
+    platform: 'LinkedIn' | 'Instagram' | 'Facebook';
+    url: string;
+  }>;
+  // Keep for backward compatibility
   linkedinHandle: string;
   instagramHandle: string;
   facebookHandle: string;
@@ -1220,7 +1365,8 @@ interface FormData {
 
 const validateStep1 = (formData: FormData) => {
   const errors: Record<string, string> = {};
-  if (!formData.fullName?.trim()) errors.fullName = "Full name is required";
+  if (!formData.firstName?.trim()) errors.firstName = "First name is required";
+  if (!formData.lastName?.trim()) errors.lastName = "Last name is required";
   if (!formData.gender) errors.gender = "Gender is required";
   if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required";
   if (!formData.maritalStatus) errors.maritalStatus = "Marital status is required";
@@ -1229,35 +1375,76 @@ const validateStep1 = (formData: FormData) => {
   if (!formData.complexion) errors.complexion = "Complexion is required";
   if (!formData.bloodGroup) errors.bloodGroup = "Blood group is required";
   
-  if (formData.whatsappNumber && !validatePhoneNumber(formData.whatsappNumber)) {
-    errors.whatsappNumber = "Enter a valid 10-digit phone number";
+  // Address validation
+  if (!formData.currentAddressLine1?.trim()) errors.currentAddressLine1 = "Current address line 1 is required";
+  if (!formData.currentCity?.trim()) errors.currentCity = "Current city is required";
+  if (!formData.currentState?.trim()) errors.currentState = "Current state is required";
+  if (!formData.currentPincode?.trim()) errors.currentPincode = "Current pincode is required";
+  else if (formData.currentPincode.length !== 6) errors.currentPincode = "Pincode must be 6 digits";
+  
+  if (!formData.sameAsPermanentAddress) {
+    if (!formData.permanentAddressLine1?.trim()) errors.permanentAddressLine1 = "Permanent address line 1 is required";
+    if (!formData.permanentCity?.trim()) errors.permanentCity = "Permanent city is required";
+    if (!formData.permanentState?.trim()) errors.permanentState = "Permanent state is required";
+    if (!formData.permanentPincode?.trim()) errors.permanentPincode = "Permanent pincode is required";
+    else if (formData.permanentPincode.length !== 6) errors.permanentPincode = "Pincode must be 6 digits";
   }
-  if (!formData.emailId?.trim()) {
-    errors.emailId = "Email is required";
-  } else if (formData.emailId && !validateEmail(formData.emailId)) {
-    errors.emailId = "Enter a valid email address";
+  
+  if (!formData.whatsappNumber?.trim()) {
+    errors.whatsappNumber = "WhatsApp number is required";
+  } else if (!validatePhoneByCountry(formData.whatsappNumber, formData.countryCode)) {
+    const country = countryCodes.find(c => c.code === formData.countryCode);
+    const lengthText = Array.isArray(country?.length) 
+      ? `${country.length[0]}-${country.length[country.length.length - 1]}` 
+      : country?.length;
+    errors.whatsappNumber = `Enter a valid ${country?.country || 'phone'} number (${lengthText} digits)`;
   }
-
-  if (!formData.password) {
-    errors.password = "Password is required";
-  } else if (formData.password.length < 8) {
-    errors.password = "Password must be at least 8 characters";
+  
+  // Social media validation with URL format checking
+  const hasSocialMedia = formData.socialMediaLinks.length > 0 || 
+                         formData.linkedinHandle?.trim() || 
+                         formData.instagramHandle?.trim() || 
+                         formData.facebookHandle?.trim();
+  
+  // Validate dynamic social media links
+  formData.socialMediaLinks.forEach((link, index) => {
+    if (!link.url?.trim()) {
+      errors[`socialMediaLink_${index}_url`] = "URL is required";
+    } else {
+      let isValid = false;
+      switch (link.platform) {
+        case 'LinkedIn':
+          isValid = validateLinkedInURL(link.url);
+          break;
+        case 'Instagram':
+          isValid = validateInstagramURL(link.url);
+          break;
+        case 'Facebook':
+          isValid = validateFacebookURL(link.url);
+          break;
+      }
+      if (!isValid) {
+        errors[`socialMediaLink_${index}_url`] = `Please enter a valid ${link.platform} profile URL`;
+      }
+    }
+  });
+  
+  // Validate legacy fields if they exist
+  if (formData.linkedinHandle?.trim() && !validateLinkedInURL(formData.linkedinHandle)) {
+    errors.linkedinHandle = "Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourname)";
   }
-
-  if (!formData.confirmPassword && formData.password) {
-    errors.confirmPassword = "Please confirm your password";
-  } else if (formData.password !== formData.confirmPassword) {
-    errors.confirmPassword = "Passwords do not match";
+  
+  if (formData.instagramHandle?.trim() && !validateInstagramURL(formData.instagramHandle)) {
+    errors.instagramHandle = "Please enter a valid Instagram profile URL (e.g., https://instagram.com/yourname)";
+  }
+  
+  if (formData.facebookHandle?.trim() && !validateFacebookURL(formData.facebookHandle)) {
+    errors.facebookHandle = "Please enter a valid Facebook profile URL (e.g., https://facebook.com/yourname)";
   }
   
   // At least one social media handle is required
-  const hasSocialMedia = formData.linkedinHandle?.trim() || formData.instagramHandle?.trim() || formData.facebookHandle?.trim();
   if (!hasSocialMedia) {
     errors.socialMedia = "At least one social media profile is required";
-    // Add error to all social media fields to highlight them
-    if (!formData.linkedinHandle?.trim()) errors.linkedinHandle = "Required (at least one social media profile)";
-    if (!formData.instagramHandle?.trim()) errors.instagramHandle = "Required (at least one social media profile)";
-    if (!formData.facebookHandle?.trim()) errors.facebookHandle = "Required (at least one social media profile)";
   }
   
   return errors;
@@ -1267,7 +1454,7 @@ const validateStep2 = (formData: FormData) => {
   const errors: Record<string, string> = {};
   
   // Always required fields for Step 2
-  if (!formData.highestEducation) errors.highestEducation = "Education is required";
+  if (!formData.education) errors.education = "Education is required";
   // Note: collegeUniversity field is not currently visible in the UI, so don't require it
   if (!formData.occupation) errors.occupation = "Occupation is required";
   
@@ -1302,11 +1489,6 @@ const validateStep2 = (formData: FormData) => {
     if ((formData.occupation === "Salaried (Private)" || formData.occupation === "Salaried (Government)") && !formData.designation?.trim()) {
       errors.designation = "Designation is required";
     }
-    
-    // Other details validation for self-employed/freelancer
-    if ((formData.occupation === "Self-Employed" || formData.occupation === "Freelancer") && !formData.otherOccupation?.trim()) {
-      errors.otherOccupation = "Additional details are required";
-    }
   }
   
   // Student-specific validation
@@ -1322,7 +1504,9 @@ const validateStep3 = (formData: FormData) => {
   
   // Always required fields
   if (!formData.fathersFullName?.trim()) errors.fathersFullName = "Father's name is required";
+  if (!formData.fathersOccupation?.trim()) errors.fathersOccupation = "Father's occupation is required";
   if (!formData.mothersFullName?.trim()) errors.mothersFullName = "Mother's name is required";
+  if (!formData.mothersOccupation?.trim()) errors.mothersOccupation = "Mother's occupation is required";
   
   // Dynamic validation for father's occupation fields
   if (formData.fathersOccupation === "Business") {
@@ -1332,7 +1516,7 @@ const validateStep3 = (formData: FormData) => {
     if (!formData.fathersDesignation?.trim()) errors.fathersDesignation = "Father's designation is required";
     if (!formData.fathersCompanyName?.trim()) errors.fathersCompanyName = "Father's company name is required";
   } else if (formData.fathersOccupation === "Other") {
-    if (!formData.fathersOtherOccupation?.trim()) errors.fathersOtherOccupation = "Father's occupation details are required";
+    // Remove validation for other occupation
   }
   
   // Dynamic validation for mother's occupation fields
@@ -1343,18 +1527,68 @@ const validateStep3 = (formData: FormData) => {
     if (!formData.mothersDesignation?.trim()) errors.mothersDesignation = "Mother's designation is required";
     if (!formData.mothersCompanyName?.trim()) errors.mothersCompanyName = "Mother's company name is required";
   } else if (formData.mothersOccupation === "Other") {
-    if (!formData.mothersOtherOccupation?.trim()) errors.mothersOtherOccupation = "Mother's occupation details are required";
+    // Remove validation for other occupation
   }
+  
+  // Sibling validation - validate each brother's job fields when visible
+  formData.brothers?.forEach((brother, index) => {
+    if (brother.occupation === "Business") {
+      if (!brother.businessName?.trim()) {
+        errors[`brother_${index}_businessName`] = "Business name is required";
+      }
+      if (!brother.businessLocation?.trim()) {
+        errors[`brother_${index}_businessLocation`] = "Business location is required";
+      }
+    } else if (brother.occupation === "Private Job" || brother.occupation === "Government Job") {
+      if (!brother.designation?.trim()) {
+        errors[`brother_${index}_designation`] = "Designation is required";
+      }
+      if (!brother.companyName?.trim()) {
+        errors[`brother_${index}_companyName`] = "Company name is required";
+      }
+    }
+  });
+  
+  // Sibling validation - validate each sister's job fields when visible
+  formData.sisters?.forEach((sister, index) => {
+    if (sister.occupation === "Business") {
+      if (!sister.businessName?.trim()) {
+        errors[`sister_${index}_businessName`] = "Business name is required";
+      }
+      if (!sister.businessLocation?.trim()) {
+        errors[`sister_${index}_businessLocation`] = "Business location is required";
+      }
+    } else if (sister.occupation === "Private Job" || sister.occupation === "Government Job") {
+      if (!sister.designation?.trim()) {
+        errors[`sister_${index}_designation`] = "Designation is required";
+      }
+      if (!sister.companyName?.trim()) {
+        errors[`sister_${index}_companyName`] = "Company name is required";
+      }
+    }
+  });
   
   return errors;
 };
 
 const validateStep4 = (formData: FormData) => {
   const errors: Record<string, string> = {};
+  
+  // Gotra validation - both required
+  if (!formData.firstGotra) errors.firstGotra = "First gotra is required";
+  if (!formData.secondGotra) errors.secondGotra = "Second gotra is required";
+  
+  // Partner preferences validation
   if (!formData.partnerAgeFrom) errors.partnerAgeFrom = "Partner age range is required";
   if (!formData.partnerAgeTo) errors.partnerAgeTo = "Partner age range is required";
-  if (!formData.partnerQualification || formData.partnerQualification.length === 0) errors.partnerQualification = "Partner qualification is required";
-  if (!formData.preferredLocation || formData.preferredLocation.length === 0) errors.preferredLocation = "Preferred location is required";
+  if (!formData.partnerQualification || formData.partnerQualification.length === 0) {
+    errors.partnerQualification = "Partner qualification is required";
+  } else if (formData.partnerQualification.length > 4) {
+    errors.partnerQualification = "Maximum 4 qualifications allowed";
+  }
+  if (!formData.preferredLocation || formData.preferredLocation.length === 0 || !formData.preferredLocation.some(loc => loc.trim())) {
+    errors.preferredLocation = "At least one preferred location is required";
+  }
   if (!formData.minAnnualIncome) errors.minAnnualIncome = "Minimum income is required";
   return errors;
 };
@@ -1367,6 +1601,9 @@ export default function UnifiedMatrimonialForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Image cropper states
   const [showCropper, setShowCropper] = useState(false);
@@ -1378,8 +1615,10 @@ export default function UnifiedMatrimonialForm() {
   const datePickerRef = useRef(null);
   
   const [formData, setFormData] = useState({
-    // Basic Profile
-    fullName: "",
+    // Personal Information
+    firstName: "",
+    middleName: "",
+    lastName: "",
     gender: "",
     dateOfBirth: "",
     age: "",
@@ -1390,14 +1629,26 @@ export default function UnifiedMatrimonialForm() {
     complexion: "",
     bloodGroup: "",
     
+    // Address fields
+    currentAddressLine1: "",
+    currentAddressLine2: "",
+    currentCity: "",
+    currentState: "",
+    currentPincode: "",
+    permanentAddressLine1: "",
+    permanentAddressLine2: "",
+    permanentCity: "",
+    permanentState: "",
+    permanentPincode: "",
+    sameAsPermanentAddress: false,
+    
     // Career & Education
-    highestEducation: "",
+    education: "",
     collegeUniversity: "",
     occupation: "",
     organization: "",
     designation: "",
     currentEducation: "",
-    otherOccupation: "",
     annualIncome: "",
     jobLocation: "",
     
@@ -1408,22 +1659,22 @@ export default function UnifiedMatrimonialForm() {
     fathersBusinessLocation: "",
     fathersDesignation: "",
     fathersCompanyName: "",
-    fathersOtherOccupation: "",
     mothersFullName: "",
     mothersOccupation:"",
     mothersBusinessName: "",
     mothersBusinessLocation: "",
     mothersDesignation: "",
     mothersCompanyName: "",
-    mothersOtherOccupation: "",
     brothers: [],
     sisters: [],
     
     // Contact Details
     whatsappNumber: "",
+    countryCode: "+91", // Default to India
     emailId: "",
-    password: "",
-    confirmPassword: "",
+    // Dynamic social media links
+    socialMediaLinks: [],
+    // Keep for backward compatibility
     linkedinHandle: "",
     instagramHandle: "",
     facebookHandle: "",
@@ -1439,12 +1690,86 @@ export default function UnifiedMatrimonialForm() {
     partnerAgeFrom: "",
     partnerAgeTo: "",
     partnerQualification: [],
-    preferredLocation: [],
+    preferredLocation: [''],
     minAnnualIncome: ""
   });
 
+  // Fetch current user's email and existing profile on component mount
+  useEffect(() => {
+    const fetchUserDataAndProfile = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch current user's email
+        const userResponse = await apiFetch("/api/auth/me");
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUserEmail(userData.user.email);
+          
+          // Try to fetch existing profile
+          const profileResponse = await apiFetch("/api/profiles");
+          if (profileResponse.ok) {
+            // Profile exists - enter edit mode
+            const profileData = await profileResponse.json();
+            const profile = profileData.profile || profileData;
+            setIsEditMode(true);
+            
+            // Prefill form with existing profile data
+            setFormData(prev => ({
+              ...prev,
+              ...profile,
+              // Map old field names to new ones for backward compatibility
+              education: profile.education || profile.highestEducation || '',
+              emailId: userData.user.email,
+              // Handle arrays properly
+              brothers: profile.brothers || [],
+              sisters: profile.sisters || [],
+              partnerQualification: profile.partnerQualification || [],
+              preferredLocation: profile.preferredLocation && profile.preferredLocation.length > 0 ? profile.preferredLocation : ['']
+            }));
+            
+            // Set photos if they exist
+            if (profile.profilePhotos?.western) {
+              setWesternPhoto(profile.profilePhotos.western);
+            }
+            if (profile.profilePhotos?.traditional) {
+              setTraditionalPhoto(profile.profilePhotos.traditional);
+            }
+          } else {
+            // No profile exists - create mode, but prefill email
+            setIsEditMode(false);
+            setFormData(prev => ({
+              ...prev,
+              emailId: userData.user.email
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+        setSubmitError("Failed to load user information. Please refresh the page.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserDataAndProfile();
+  }, []);
+
+  // Initialize with at least one social media link if none exist
+  useEffect(() => {
+    if (formData.socialMediaLinks.length === 0 && 
+        !formData.linkedinHandle && 
+        !formData.instagramHandle && 
+        !formData.facebookHandle) {
+      setFormData(prev => ({
+        ...prev,
+        socialMediaLinks: [{ platform: 'LinkedIn', url: '' }]
+      }));
+    }
+  }, [formData.socialMediaLinks, formData.linkedinHandle, formData.instagramHandle, formData.facebookHandle]);
+
   const steps = [
-    { id: 1, title: "Basic Profile", icon: <User size={18} /> },
+    { id: 1, title: "Personal Information", icon: <User size={18} /> },
     { id: 2, title: "Career & Education", icon: <GraduationCap size={18} /> },
     { id: 3, title: "Family Details", icon: <Users size={18} /> },
     { id: 4, title: "Kundali & Partner", icon: <Flame size={18} /> },
@@ -1468,8 +1793,7 @@ export default function UnifiedMatrimonialForm() {
     height: generateHeightOptions(),
     complexion: ["Very Fair", "Fair", "Wheatish", "Dark"],
     bloodGroup: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
-    highestEducation: [
-        "Professional Degree (CA / CS / ICWA)",
+    education: [
         "Doctorate (PhD)",
         "Post Graduate",
         "Graduate",
@@ -1912,13 +2236,20 @@ export default function UnifiedMatrimonialForm() {
     }
     
     // Clear social media validation errors when any social media field is filled
-    if (['linkedinHandle', 'instagramHandle', 'facebookHandle'].includes(field) && value?.trim()) {
+    if (['linkedinHandle', 'instagramHandle', 'facebookHandle', 'socialMediaLinks'].includes(field) && 
+        (value?.trim() || (Array.isArray(value) && value.length > 0))) {
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors.socialMedia;
         delete newErrors.linkedinHandle;
         delete newErrors.instagramHandle;
         delete newErrors.facebookHandle;
+        // Clear dynamic social media link errors
+        Object.keys(newErrors).forEach(key => {
+          if (key.startsWith('socialMediaLink_')) {
+            delete newErrors[key];
+          }
+        });
         return newErrors;
       });
     }
@@ -1988,8 +2319,7 @@ export default function UnifiedMatrimonialForm() {
         businessLocation: "",
         designation: "",
         companyName: "",
-        currentEducation: "",
-        otherOccupation: ""
+        currentEducation: ""
       }]
     }));
   };
@@ -2020,8 +2350,7 @@ export default function UnifiedMatrimonialForm() {
         businessLocation: "",
         designation: "",
         companyName: "",
-        currentEducation: "",
-        otherOccupation: ""
+        currentEducation: ""
       }]
     }));
   };
@@ -2052,28 +2381,47 @@ export default function UnifiedMatrimonialForm() {
     setSubmitError("");
     setIsSubmitting(true);
 
-    const { password, confirmPassword, ...profileData } = formData;
-
     try {
-      const response = await apiFetch("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          email: formData.emailId,
-          password,
-          profile: profileData
-        })
+      // Convert date from DD-MM-YYYY to YYYY-MM-DD for backend
+      const convertDateForBackend = (dateStr) => {
+        if (!dateStr) return "";
+        const parts = dateStr.split("-");
+        if (parts.length !== 3) return dateStr;
+        const [day, month, year] = parts;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      };
+
+      // Add photos to form data if they exist
+      const submitData = {
+        ...formData,
+        dateOfBirth: convertDateForBackend(formData.dateOfBirth),
+        // Convert dynamic social media links back to legacy format for backend compatibility
+        linkedinHandle: formData.socialMediaLinks.find(link => link.platform === 'LinkedIn')?.url || formData.linkedinHandle || '',
+        instagramHandle: formData.socialMediaLinks.find(link => link.platform === 'Instagram')?.url || formData.instagramHandle || '',
+        facebookHandle: formData.socialMediaLinks.find(link => link.platform === 'Facebook')?.url || formData.facebookHandle || '',
+        profilePhotos: {
+          western: westernPhoto || "",
+          traditional: traditionalPhoto || ""
+        }
+      };
+
+      const endpoint = isEditMode ? "/api/profiles" : "/api/profiles";
+      const method = isEditMode ? "PUT" : "POST";
+      
+      const response = await apiFetch(endpoint, {
+        method,
+        body: JSON.stringify(submitData)
       });
 
       const data = await response.json();
       if (!response.ok) {
-        setSubmitError(data.message || "Registration failed. Please try again.");
+        setSubmitError(data.message || `Profile ${isEditMode ? 'update' : 'creation'} failed. Please try again.`);
         return;
       }
 
-      setAccessToken(data.accessToken);
       navigate("/profile");
     } catch (error) {
-      setSubmitError("Unable to complete registration. Please try again.");
+      setSubmitError(`Unable to ${isEditMode ? 'update' : 'create'} profile. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -2081,6 +2429,16 @@ export default function UnifiedMatrimonialForm() {
 
   return (
     <div className="min-h-screen bg-[#F8F7FF] flex flex-col lg:flex-row p-2 md:p-4 font-['Plus_Jakarta_Sans',_sans-serif]">
+      {/* Loading State */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-4 border-[#9181EE] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-slate-600 font-semibold">Loading your profile...</p>
+          </div>
+        </div>
+      )}
+
       {/* Progress Bar at Top (Mobile) */}
       {/* <div className="lg:hidden mb-4">
         <div className="bg-white rounded-2xl p-4 shadow-sm">
@@ -2104,7 +2462,7 @@ export default function UnifiedMatrimonialForm() {
         <div className="bg-white rounded-[30px] p-4 lg:p-6 shadow-[0_20px_60px_-15px_rgba(145,129,238,0.15)] border border-purple-50 flex-1">
           {/* Title */}
           <div className="mb-6 lg:mb-10">
-            <h2 className="text-xl lg:text-2xl font-black text-black uppercase tracking-wider text-center">
+            <h2 className="text-xl lg:text-2xl font-black text-black   tracking-wider text-center">
               Swayamwar
             </h2>
           </div>
@@ -2127,7 +2485,7 @@ export default function UnifiedMatrimonialForm() {
                     {currentStep > step.id ? <Check size={18} strokeWidth={3} /> : step.icon}
                   </div>
                   <div>
-                    <p className={`text-xs lg:text-sm font-bold uppercase tracking-tight transition-all ${
+                    <p className={`text-xs lg:text-sm font-bold   tracking-tight transition-all ${
                       currentStep === step.id 
                         ? "text-[#2D2D2D] scale-105" 
                         : currentStep > step.id 
@@ -2184,7 +2542,7 @@ export default function UnifiedMatrimonialForm() {
                     }`}>
                       {currentStep > step.id ? <Check size={14} strokeWidth={3} /> : step.icon}
                     </div>
-                    <p className={`text-[8px] md:text-[9px] mt-1 md:mt-2 font-bold  uppercase tracking-tighter text-center ${
+                    <p className={`text-[8px] md:text-[9px] mt-1 md:mt-2 font-bold    tracking-tighter text-center ${
                       currentStep === step.id ? "text-[#2D2D2D]" : "text-slate-400"
                     }`}>
                       {step.title}
@@ -2221,7 +2579,7 @@ export default function UnifiedMatrimonialForm() {
                     <X size={14} className="lg:size-4" />
                   </button>
                 )}
-                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2 uppercase">Western</p>
+                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2  ">Western</p>
               </div>
 
               {/* Traditional Photo */}
@@ -2245,7 +2603,7 @@ export default function UnifiedMatrimonialForm() {
                     <X size={14} className="lg:size-4" />
                   </button>
                 )}
-                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2 uppercase">Traditional</p>
+                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2  ">Traditional</p>
               </div>
             </div>
 
@@ -2257,11 +2615,11 @@ export default function UnifiedMatrimonialForm() {
             )}
             
             <div className="text-center space-y-1">
-              <h1 className="text-lg md:text-xl lg:text-2xl font-extrabold text-[#2D2D2D] uppercase tracking-tight">
-                {formData.fullName || "Your Profile"}
+              <h1 className="text-lg md:text-xl lg:text-2xl font-extrabold text-[#2D2D2D]   tracking-tight">
+                {(formData.firstName || formData.lastName) ? `${formData.firstName} ${formData.lastName}`.trim() : (isEditMode ? "Edit Profile" : "Create Profile")}
               </h1>
-              <p className="text-[10px] lg:text-[11px] font-bold text-[#9181EE] uppercase tracking-[1px]">
-                Step {currentStep} of {steps.length} : <span className="text-[#9181EE]">{steps[currentStep-1].title}</span>
+              <p className="text-[10px] lg:text-[11px] font-bold text-[#9181EE]   tracking-[1px]">
+                {isEditMode ? "Update" : "Complete"} Step {currentStep} of {steps.length} : <span className="text-[#9181EE]">{steps[currentStep-1].title}</span>
               </p>
             </div>
           </div>
@@ -2269,36 +2627,96 @@ export default function UnifiedMatrimonialForm() {
           {/* Form Grid */}
           <div className="min-h-[400px] lg:min-h-[420px]">
             
-            {/* STEP 1: BASIC PROFILE */}
+            {/* STEP 1: PERSONAL INFORMATION */}
             {currentStep === 1 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* Full Name */}
+                {/* First Name */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
-                      Full Name <span className="text-red-500">*</span>
+                    <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                      First Name <span className="text-red-500">*</span>
                     </label>
                   </div>
                   <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.fullName ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                    errors.firstName ? 'border-slate-100 bg-red-50' : 'border-slate-100'
                   }`}>
                     <input
                       type="text"
-                      value={formData.fullName}
+                      value={formData.firstName}
                       onChange={(e) => {
                         const filteredValue = e.target.value.replace(/[0-9]/g, '');
-                        handleInputChange('fullName', filteredValue);
+                        handleInputChange('firstName', filteredValue);
                       }}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter your full name"
+                      placeholder="Enter your first name"
                       style={{ fontSize: '16px' }} 
                     />
                   </div>
-                  {errors.fullName && (
+                  {errors.firstName && (
                     <div className="flex items-center gap-2 text-red-500 text-xs">
                       <AlertCircle size={14} />
-                      <span>{errors.fullName}</span>
+                      <span>{errors.firstName}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Middle Name */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                      Middle Name
+                    </label>
+                  </div>
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.middleName ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                  }`}>
+                    <input
+                      type="text"
+                      value={formData.middleName}
+                      onChange={(e) => {
+                        const filteredValue = e.target.value.replace(/[0-9]/g, '');
+                        handleInputChange('middleName', filteredValue);
+                      }}
+                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                      placeholder="Enter your middle name (optional)"
+                      style={{ fontSize: '16px' }} 
+                    />
+                  </div>
+                  {errors.middleName && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.middleName}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Last Name */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                    errors.lastName ? 'border-slate-100 bg-red-50' : 'border-slate-100'
+                  }`}>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => {
+                        const filteredValue = e.target.value.replace(/[0-9]/g, '');
+                        handleInputChange('lastName', filteredValue);
+                      }}
+                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                      placeholder="Enter your last name"
+                      style={{ fontSize: '16px' }} 
+                    />
+                  </div>
+                  {errors.lastName && (
+                    <div className="flex items-center gap-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.lastName}</span>
                     </div>
                   )}
                 </div>
@@ -2330,7 +2748,6 @@ export default function UnifiedMatrimonialForm() {
                       handleInputChange('age', calculateAge(val));
                     }}
                     label="Date of Birth"
-                    maxDate={new Date()}
                     required={true}
                   />
                   {errors.dateOfBirth && (
@@ -2345,7 +2762,7 @@ export default function UnifiedMatrimonialForm() {
                 {/* Age (Auto-calculated) */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Age</label>
+                    <label className="text-[12px] font-bold text-slate-500   tracking-tighter">Age</label>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm opacity-70">
                     <span className="font-bold text-black text-sm lg:text-base">
@@ -2354,28 +2771,66 @@ export default function UnifiedMatrimonialForm() {
                   </div>
                 </div>
 
-                {/* WhatsApp Number */}
+                {/* WhatsApp Number with Country Code */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">WhatsApp Number</label>
+                    <label className="text-[12px] font-bold text-slate-500   tracking-tighter">WhatsApp Number</label>
+                    <span className="text-red-500 text-xs">*</span>
                   </div>
-                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.whatsappNumber ? 'border-slate-100 bg-red-50' : 'border-slate-100'
-                  }`}>
-                    <input
-                      type="tel"
-                      value={formData.whatsappNumber}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-                        if (value.length <= 10) {
-                          handleInputChange('whatsappNumber', value);
-                        }
-                      }}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter WhatsApp number"
-                      maxLength={10}
-                      style={{ fontSize: '16px' }}
-                    />
+                  <div className="flex gap-2">
+                    {/* Country Code Dropdown */}
+                    <div className={`bg-white border rounded-2xl shadow-sm flex-shrink-0 ${
+                      errors.countryCode ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
+                      <select
+                        value={formData.countryCode}
+                        onChange={(e) => {
+                          handleInputChange('countryCode', e.target.value);
+                          // Clear phone number when country changes to avoid confusion
+                          if (formData.whatsappNumber) {
+                            handleInputChange('whatsappNumber', '');
+                          }
+                        }}
+                        className="px-3 py-3 lg:py-4 font-bold text-black text-sm lg:text-base outline-none bg-transparent rounded-2xl min-w-[120px]"
+                        style={{ fontSize: '16px' }}
+                      >
+                        {countryCodes.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.flag} {country.code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {/* Phone Number Input */}
+                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex-1 ${
+                      errors.whatsappNumber ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                    }`}>
+                      <input
+                        type="tel"
+                        value={formData.whatsappNumber}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                          const country = countryCodes.find(c => c.code === formData.countryCode);
+                          const maxLength = Array.isArray(country?.length) 
+                            ? Math.max(...country.length) 
+                            : country?.length || 15;
+                          
+                          if (value.length <= maxLength) {
+                            handleInputChange('whatsappNumber', value);
+                          }
+                        }}
+                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                        placeholder={(() => {
+                          const country = countryCodes.find(c => c.code === formData.countryCode);
+                          if (country?.code === '+91') return "9876543210";
+                          if (country?.code === '+1') return "2345678901";
+                          if (country?.code === '+44') return "7700900123";
+                          return "Enter phone number";
+                        })()}
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
                   </div>
                   {errors.whatsappNumber && (
                     <div className="flex items-center gap-2 text-red-500 text-xs">
@@ -2383,168 +2838,143 @@ export default function UnifiedMatrimonialForm() {
                       <span>{errors.whatsappNumber}</span>
                     </div>
                   )}
+                  <div className="text-xs text-slate-500 ml-1">
+                    {(() => {
+                      const country = countryCodes.find(c => c.code === formData.countryCode);
+                      const lengthText = Array.isArray(country?.length) 
+                        ? `${country.length[0]}-${country.length[country.length.length - 1]}` 
+                        : country?.length;
+                      return `Enter ${lengthText} digit ${country?.country} phone number`;
+                    })()}
+                  </div>
                 </div>
 
-                {/* Email Address */}
+                {/* Email Address - Read Only */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Email Address</label>
+                    <label className="text-[12px] font-bold text-slate-500   tracking-tighter">Email Address</label>
                   </div>
-                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.emailId ? 'border-slate-100 bg-red-50' : 'border-slate-100'
-                  }`}>
-                    <input
-                      type="email"
-                      value={formData.emailId}
-                      onChange={(e) => handleInputChange('emailId', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter email address"
-                      style={{ fontSize: '16px' }}
-                    />
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm opacity-70">
+                    <span className="font-bold text-slate-600 text-sm lg:text-base">
+                      {formData.emailId || userEmail || "Loading..."}
+                    </span>
                   </div>
-                  {errors.emailId && (
-                    <div className="flex items-center gap-2 text-red-500 text-xs">
-                      <AlertCircle size={14} />
-                      <span>{errors.emailId}</span>
-                    </div>
-                  )}
+                  <p className="text-xs text-slate-400 ml-1">This is your registered email address</p>
                 </div>
 
-                {/* Password */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Create Password</label>
+                {/* Dynamic Social Media Profiles Section */}
+                <div className="md:col-span-2 space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-bold text-slate-900 mb-2">Add Your Social Media</h3>
+                    <p className="text-sm text-slate-600">Add up to 3 social media profiles (at least 1 required)</p>
                   </div>
-                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.password ? 'border-slate-100 bg-red-50' : 'border-slate-100'
-                  }`}>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Create a password"
-                      style={{ fontSize: '16px' }}
-                    />
-                  </div>
-                  {errors.password && (
-                    <div className="flex items-center gap-2 text-red-500 text-xs">
-                      <AlertCircle size={14} />
-                      <span>{errors.password}</span>
-                    </div>
-                  )}
-                </div>
 
-                {/* Confirm Password */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Confirm Password</label>
-                  </div>
-                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.confirmPassword ? 'border-slate-100 bg-red-50' : 'border-slate-100'
-                  }`}>
-                    <input
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Re-enter password"
-                      style={{ fontSize: '16px' }}
-                    />
-                  </div>
-                  {errors.confirmPassword && (
-                    <div className="flex items-center gap-2 text-red-500 text-xs">
-                      <AlertCircle size={14} />
-                      <span>{errors.confirmPassword}</span>
-                    </div>
-                  )}
-                </div>
+                  {/* Dynamic Social Media Links */}
+                  <div className="space-y-4">
+                    {formData.socialMediaLinks.map((link, index) => (
+                      <div key={index} className="bg-slate-50 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-bold text-slate-700">Social Media Profile {index + 1}</h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newLinks = formData.socialMediaLinks.filter((_, i) => i !== index);
+                              handleInputChange('socialMediaLinks', newLinks);
+                            }}
+                            className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* Platform Dropdown */}
+                          <div className="space-y-2">
+                            <label className="text-[12px] font-bold text-slate-500 tracking-tighter">Platform</label>
+                            <select
+                              value={link.platform}
+                              onChange={(e) => {
+                                const newLinks = [...formData.socialMediaLinks];
+                                newLinks[index] = { ...link, platform: e.target.value as 'LinkedIn' | 'Instagram' | 'Facebook' };
+                                handleInputChange('socialMediaLinks', newLinks);
+                              }}
+                              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
+                            >
+                              <option value="">Select Platform</option>
+                              <option value="LinkedIn">🔗 LinkedIn</option>
+                              <option value="Instagram">📷 Instagram</option>
+                              <option value="Facebook">� Facebook</option>
+                            </select>
+                          </div>
 
-                {/* LinkedIn Handle */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">LinkedIn Profile</label>
-                  </div>
-                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.linkedinHandle ? 'border-slate-100 bg-red-50' : 'border-slate-100'
-                  }`}>
-                    <input
-                      type="url"
-                      value={formData.linkedinHandle}
-                      onChange={(e) => handleInputChange('linkedinHandle', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter LinkedIn profile URL"
-                      style={{ fontSize: '16px' }}
-                    />
-                  </div>
-                  {errors.linkedinHandle && (
-                    <div className="flex items-center gap-2 text-red-500 text-xs">
-                      <AlertCircle size={14} />
-                      <span>{errors.linkedinHandle}</span>
-                    </div>
-                  )}
-                </div>
+                          {/* URL Input */}
+                          <div className="space-y-2">
+                            <label className="text-[12px] font-bold text-slate-500 tracking-tighter">Profile URL</label>
+                            <div className={`bg-white border rounded-xl px-4 py-3 shadow-sm transition-all ${
+                              errors[`socialMediaLink_${index}_url`] ? 'border-red-300 bg-red-50' : 'border-slate-200 focus-within:border-[#9181EE] focus-within:ring-2 focus-within:ring-[#9181EE]/20'
+                            }`}>
+                              <input
+                                type="url"
+                                value={link.url}
+                                onChange={(e) => {
+                                  const newLinks = [...formData.socialMediaLinks];
+                                  newLinks[index] = { ...link, url: e.target.value };
+                                  handleInputChange('socialMediaLinks', newLinks);
+                                }}
+                                className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                                placeholder={
+                                  link.platform === 'LinkedIn' ? 'https://linkedin.com/in/yourname' :
+                                  link.platform === 'Instagram' ? 'https://instagram.com/yourname' :
+                                  link.platform === 'Facebook' ? 'https://facebook.com/yourname' :
+                                  'Enter profile URL'
+                                }
+                                style={{ fontSize: '16px' }}
+                              />
+                            </div>
+                            {errors[`socialMediaLink_${index}_url`] && (
+                              <div className="flex items-center gap-2 text-red-500 text-xs">
+                                <AlertCircle size={14} />
+                                <span>{errors[`socialMediaLink_${index}_url`]}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
 
-                {/* Instagram Handle */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Instagram Profile</label>
-                  </div>
-                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.instagramHandle ? 'border-slate-100 bg-red-50' : 'border-slate-100'
-                  }`}>
-                    <input
-                      type="url"
-                      value={formData.instagramHandle}
-                      onChange={(e) => handleInputChange('instagramHandle', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter Instagram profile URL"
-                      style={{ fontSize: '16px' }}
-                    />
-                  </div>
-                  {errors.instagramHandle && (
-                    <div className="flex items-center gap-2 text-red-500 text-xs">
-                      <AlertCircle size={14} />
-                      <span>{errors.instagramHandle}</span>
-                    </div>
-                  )}
-                </div>
+                    {/* Add Social Media Button */}
+                    {formData.socialMediaLinks.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newLinks = [...formData.socialMediaLinks, { platform: 'LinkedIn' as const, url: '' }];
+                          handleInputChange('socialMediaLinks', newLinks);
+                        }}
+                        className="w-full bg-white border-2 border-dashed border-slate-300 rounded-2xl p-6 text-slate-500 hover:text-[#9181EE] hover:border-[#9181EE] transition-all flex items-center justify-center gap-2 font-semibold"
+                      >
+                        <Plus size={20} />
+                        Add Social Media Profile ({formData.socialMediaLinks.length}/3)
+                      </button>
+                    )}
 
-                {/* Facebook Handle */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Facebook Profile</label>
-                  </div>
-                  <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                    errors.facebookHandle ? 'border-slate-100 bg-red-50' : 'border-slate-100'
-                  }`}>
-                    <input
-                      type="url"
-                      value={formData.facebookHandle}
-                      onChange={(e) => handleInputChange('facebookHandle', e.target.value)}
-                      className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter Facebook profile URL"
-                      style={{ fontSize: '16px' }}
-                    />
-                  </div>
-                  {errors.facebookHandle && (
-                    <div className="flex items-center gap-2 text-red-500 text-xs">
-                      <AlertCircle size={14} />
-                      <span>{errors.facebookHandle}</span>
-                    </div>
-                  )}
-                </div>
+                    {/* Social Media Requirement Notice */}
+                    {errors.socialMedia && (
+                      <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                        <div className="flex items-center gap-2 text-red-600 text-sm">
+                          <AlertCircle size={16} />
+                          <span className="font-semibold">At least one social media profile is required</span>
+                        </div>
+                        <p className="text-red-500 text-xs mt-1 ml-6">Please add at least one social media profile.</p>
+                      </div>
+                    )}
 
-                {/* Social Media Requirement Notice */}
-                {errors.socialMedia && (
-                  <div className="md:col-span-2 bg-red-50 border border-red-200 rounded-2xl p-4">
-                    <div className="flex items-center gap-2 text-red-600 text-sm">
-                      <AlertCircle size={16} />
-                      <span className="font-semibold">At least one social media profile is required</span>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-500">
+                        <span className="text-red-500">*</span> At least one social media profile is required • Maximum 3 profiles
+                      </p>
                     </div>
-                    <p className="text-red-500 text-xs mt-1 ml-6">Please provide your LinkedIn, Instagram, or Facebook profile URL.</p>
                   </div>
-                )}
+                </div>
 
                 {/* Marital Status */}
                 <div>
@@ -2590,7 +3020,14 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.gotra}
                     onChange={(val) => handleInputChange('firstGotra', val)}
                     placeholder="Select first gotra"
+                    required={true}
                   />
+                  {errors.firstGotra && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.firstGotra}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Second Gotra */}
@@ -2601,7 +3038,14 @@ export default function UnifiedMatrimonialForm() {
                     options={dropdownOptions.gotra}
                     onChange={(val) => handleInputChange('secondGotra', val)}
                     placeholder="Select second gotra"
+                    required={true}
                   />
+                  {errors.secondGotra && (
+                    <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                      <AlertCircle size={14} />
+                      <span>{errors.secondGotra}</span>
+                    </div>
+                  )}
                 </div>
 
 
@@ -2659,25 +3103,330 @@ export default function UnifiedMatrimonialForm() {
                   )}
                 </div>
 
+                {/* Current Address Section */}
+                <div className="md:col-span-2">
+                  <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
+                    <h3 className="text-sm font-bold text-slate-700   tracking-wider">Current Address</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Current Address Line 1 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            Address Line 1 <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 py-3 shadow-sm ${
+                          errors.currentAddressLine1 ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.currentAddressLine1}
+                            onChange={(e) => handleInputChange('currentAddressLine1', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter address line 1"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.currentAddressLine1 && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.currentAddressLine1}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Current Address Line 2 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            Address Line 2
+                          </label>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+                          <input
+                            type="text"
+                            value={formData.currentAddressLine2}
+                            onChange={(e) => handleInputChange('currentAddressLine2', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter address line 2 (optional)"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Current City */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            City <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 py-3 shadow-sm ${
+                          errors.currentCity ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.currentCity}
+                            onChange={(e) => handleInputChange('currentCity', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter city"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.currentCity && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.currentCity}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Current State */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            State <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 py-3 shadow-sm ${
+                          errors.currentState ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.currentState}
+                            onChange={(e) => handleInputChange('currentState', e.target.value)}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter state"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.currentState && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.currentState}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Current Pincode */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            Pincode <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 py-3 shadow-sm ${
+                          errors.currentPincode ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.currentPincode}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+                              if (value.length <= 6) {
+                                handleInputChange('currentPincode', value);
+                              }
+                            }}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter 6-digit pincode"
+                            maxLength={6}
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.currentPincode && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.currentPincode}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Same as Permanent Address Checkbox */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                    <input
+                      type="checkbox"
+                      id="sameAsPermanentAddress"
+                      checked={formData.sameAsPermanentAddress}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        handleInputChange('sameAsPermanentAddress', isChecked);
+                        
+                        if (isChecked) {
+                          // Copy current address to permanent address
+                          handleInputChange('permanentAddressLine1', formData.currentAddressLine1);
+                          handleInputChange('permanentAddressLine2', formData.currentAddressLine2);
+                          handleInputChange('permanentCity', formData.currentCity);
+                          handleInputChange('permanentState', formData.currentState);
+                          handleInputChange('permanentPincode', formData.currentPincode);
+                        }
+                      }}
+                      className="w-4 h-4 text-[#9181EE] bg-white border-2 border-slate-300 rounded focus:ring-[#9181EE] focus:ring-2"
+                    />
+                    <label htmlFor="sameAsPermanentAddress" className="text-sm font-semibold text-slate-700 cursor-pointer">
+                      Same as permanent address
+                    </label>
+                  </div>
+                </div>
+
+                {/* Permanent Address Section */}
+                <div className="md:col-span-2">
+                  <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
+                    <h3 className="text-sm font-bold text-slate-700   tracking-wider">Permanent Address</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Permanent Address Line 1 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            Address Line 1 <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className={`bg-white border rounded-2xl px-4 py-3 shadow-sm ${
+                          errors.permanentAddressLine1 ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                        }`}>
+                          <input
+                            type="text"
+                            value={formData.permanentAddressLine1}
+                            onChange={(e) => handleInputChange('permanentAddressLine1', e.target.value)}
+                            disabled={formData.sameAsPermanentAddress}
+                            className={`w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent ${
+                              formData.sameAsPermanentAddress ? 'opacity-60 cursor-not-allowed' : ''
+                            }`}
+                            placeholder="Enter address line 1"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.permanentAddressLine1 && (
+                          <div className="flex items-center gap-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.permanentAddressLine1}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Permanent Address Line 2 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            Address Line 2
+                          </label>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+                          <input
+                            type="text"
+                            value={formData.permanentAddressLine2}
+                            onChange={(e) => handleInputChange('permanentAddressLine2', e.target.value)}
+                            disabled={formData.sameAsPermanentAddress}
+                            className={`w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent ${
+                              formData.sameAsPermanentAddress ? 'opacity-60 cursor-not-allowed' : ''
+                            }`}
+                            placeholder="Enter address line 2 (optional)"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Permanent City */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            City <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+                          <input
+                            type="text"
+                            value={formData.permanentCity}
+                            onChange={(e) => handleInputChange('permanentCity', e.target.value)}
+                            disabled={formData.sameAsPermanentAddress}
+                            className={`w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent ${
+                              formData.sameAsPermanentAddress ? 'opacity-60 cursor-not-allowed' : ''
+                            }`}
+                            placeholder="Enter city"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Permanent State */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            State <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+                          <input
+                            type="text"
+                            value={formData.permanentState}
+                            onChange={(e) => handleInputChange('permanentState', e.target.value)}
+                            disabled={formData.sameAsPermanentAddress}
+                            className={`w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent ${
+                              formData.sameAsPermanentAddress ? 'opacity-60 cursor-not-allowed' : ''
+                            }`}
+                            placeholder="Enter state"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Permanent Pincode */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                            Pincode <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+                          <input
+                            type="text"
+                            value={formData.permanentPincode}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+                              if (value.length <= 6) {
+                                handleInputChange('permanentPincode', value);
+                              }
+                            }}
+                            disabled={formData.sameAsPermanentAddress}
+                            className={`w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent ${
+                              formData.sameAsPermanentAddress ? 'opacity-60 cursor-not-allowed' : ''
+                            }`}
+                            placeholder="Enter 6-digit pincode"
+                            maxLength={6}
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* About Me */}
                 <div className="md:col-span-2 space-y-2">
                   <div className="flex items-center gap-2 ml-1">
-                    <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                    <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                       About Me
                     </label>
-                    <span className="text-[10px] text-slate-400">({formData.aboutMe?.length || 0}/100)</span>
                   </div>
-                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
+                  <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm relative">
                     <textarea
                       value={formData.aboutMe}
                       onChange={(e) => {
-                        const value = e.target.value.slice(0, 100);
+                        const value = e.target.value.slice(0, 200);
                         handleInputChange('aboutMe', value);
                       }}
-                      className="w-full font-semibold text-black text-sm lg:text-base outline-none bg-transparent resize-none"
-                      placeholder="Tell us about yourself (max 100 characters)"
+                      className="w-full font-semibold text-black text-sm lg:text-base outline-none bg-transparent resize-none pr-16"
+                      placeholder="Tell us about yourself (max 200 characters)"
                       style={{ fontSize: '16px', minHeight: '80px' }}
                     />
+                    <div className="absolute bottom-3 right-4 text-xs text-slate-400 font-medium">
+                      {formData.aboutMe?.length || 0}/200
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2687,20 +3436,20 @@ export default function UnifiedMatrimonialForm() {
             {currentStep === 2 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
                 
-                {/* Highest Education */}
+                {/* Education */}
                 <div>
                   <CustomSelect
-                    label="Highest Education"
-                    value={formData.highestEducation}
-                    options={dropdownOptions.highestEducation}
-                    onChange={(val) => handleInputChange('highestEducation', val)}
-                    placeholder="Select highest education"
+                    label="Education"
+                    value={formData.education}
+                    options={dropdownOptions.education}
+                    onChange={(val) => handleInputChange('education', val)}
+                    placeholder="Select education"
                     required={true}
                   />
-                  {errors.highestEducation && (
+                  {errors.education && (
                     <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
                       <AlertCircle size={14} />
-                      <span>{errors.highestEducation}</span>
+                      <span>{errors.education}</span>
                     </div>
                   )}
                 </div>
@@ -2729,7 +3478,7 @@ export default function UnifiedMatrimonialForm() {
                 {formData.occupation !== "Student" && formData.occupation !== "Homemaker" && formData.occupation !== "Not Working" && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                         {formData.occupation === "Business Owner" ? "Business Name" : "Organization"} <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -2759,7 +3508,7 @@ export default function UnifiedMatrimonialForm() {
                 {formData.occupation === "Business Owner" && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                         Business Location <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -2789,7 +3538,7 @@ export default function UnifiedMatrimonialForm() {
                   <>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 ml-1">
-                        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                        <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                           Designation <span className="text-red-500">*</span>
                         </label>
                       </div>
@@ -2819,7 +3568,7 @@ export default function UnifiedMatrimonialForm() {
                 {formData.occupation === "Student" && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                         Current Education <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -2844,40 +3593,11 @@ export default function UnifiedMatrimonialForm() {
                   </div>
                 )}
 
-                {/* Other Occupation Field */}
-                {(formData.occupation === "Self-Employed" || formData.occupation === "Freelancer") && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
-                        Other Details <span className="text-red-500">*</span>
-                      </label>
-                    </div>
-                    <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                      errors.otherOccupation ? 'border-red-300 bg-red-50' : 'border-slate-100'
-                    }`}>
-                      <input
-                        type="text"
-                        value={formData.otherOccupation}
-                        onChange={(e) => handleInputChange('otherOccupation', e.target.value)}
-                        className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder="Enter additional details"
-                        style={{ fontSize: '16px' }}
-                      />
-                    </div>
-                    {errors.otherOccupation && (
-                      <div className="flex items-center gap-2 text-red-500 text-xs">
-                        <AlertCircle size={14} />
-                        <span>{errors.otherOccupation}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* Annual Income */}
                 {formData.occupation !== "Student" && formData.occupation !== "Homemaker" && formData.occupation !== "Not Working" && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                         Annual Income <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -2906,7 +3626,7 @@ export default function UnifiedMatrimonialForm() {
                 {formData.occupation !== "Business Owner" && formData.occupation !== "Student" && formData.occupation !== "Homemaker" && formData.occupation !== "Not Working" && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                         Job Location <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -2940,7 +3660,7 @@ export default function UnifiedMatrimonialForm() {
                   {/* Father's Full Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                         Father's Full Name <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -2976,7 +3696,14 @@ export default function UnifiedMatrimonialForm() {
                       options={dropdownOptions.parentOccupation}
                       onChange={(val) => handleInputChange('fathersOccupation', val)}
                       placeholder="Select father's occupation"
+                      required={true}
                     />
+                    {errors.fathersOccupation && (
+                      <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.fathersOccupation}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Father's Business Fields */}
@@ -2984,7 +3711,7 @@ export default function UnifiedMatrimonialForm() {
                     <>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Business Name <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3009,7 +3736,7 @@ export default function UnifiedMatrimonialForm() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Business Location <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3040,7 +3767,7 @@ export default function UnifiedMatrimonialForm() {
                     <>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Designation <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3065,7 +3792,7 @@ export default function UnifiedMatrimonialForm() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Company Name <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3091,39 +3818,10 @@ export default function UnifiedMatrimonialForm() {
                     </>
                   )}
 
-                  {/* Father's Other Occupation Field */}
-                  {formData.fathersOccupation === "Other" && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 ml-1">
-                        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
-                          Other Occupation <span className="text-red-500">*</span>
-                        </label>
-                      </div>
-                      <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                        errors.fathersOtherOccupation ? 'border-red-300 bg-red-50' : 'border-slate-100'
-                      }`}>
-                        <input
-                          type="text"
-                          value={formData.fathersOtherOccupation}
-                          onChange={(e) => handleInputChange('fathersOtherOccupation', e.target.value)}
-                          className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                          placeholder="Enter other occupation"
-                          style={{ fontSize: '16px' }}
-                        />
-                      </div>
-                      {errors.fathersOtherOccupation && (
-                        <div className="flex items-center gap-2 text-red-500 text-xs">
-                          <AlertCircle size={14} />
-                          <span>{errors.fathersOtherOccupation}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {/* Mother's Full Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                         Mother's Full Name <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -3158,7 +3856,14 @@ export default function UnifiedMatrimonialForm() {
                       options={dropdownOptions.parentOccupation}
                       onChange={(val) => handleInputChange('mothersOccupation', val)}
                       placeholder="Select mother's occupation"
+                      required={true}
                     />
+                    {errors.mothersOccupation && (
+                      <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                        <AlertCircle size={14} />
+                        <span>{errors.mothersOccupation}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Mother's Business Fields */}
@@ -3166,7 +3871,7 @@ export default function UnifiedMatrimonialForm() {
                     <>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Business Name <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3191,7 +3896,7 @@ export default function UnifiedMatrimonialForm() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Business Location <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3222,7 +3927,7 @@ export default function UnifiedMatrimonialForm() {
                     <>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Designation <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3247,7 +3952,7 @@ export default function UnifiedMatrimonialForm() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
-                          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
+                          <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
                             Company Name <span className="text-red-500">*</span>
                           </label>
                         </div>
@@ -3273,41 +3978,13 @@ export default function UnifiedMatrimonialForm() {
                     </>
                   )}
 
-                  {/* Mother's Other Occupation Field */}
-                  {formData.mothersOccupation === "Other" && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 ml-1">
-                        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">
-                          Other Occupation <span className="text-red-500">*</span>
-                        </label>
-                      </div>
-                      <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
-                        errors.mothersOtherOccupation ? 'border-red-300 bg-red-50' : 'border-slate-100'
-                      }`}>
-                        <input
-                          type="text"
-                          value={formData.mothersOtherOccupation}
-                          onChange={(e) => handleInputChange('mothersOtherOccupation', e.target.value)}
-                          className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                          placeholder="Enter other occupation"
-                          style={{ fontSize: '16px' }}
-                        />
-                      </div>
-                      {errors.mothersOtherOccupation && (
-                        <div className="flex items-center gap-2 text-red-500 text-xs">
-                          <AlertCircle size={14} />
-                          <span>{errors.mothersOtherOccupation}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 {/* Brothers Section */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-black text-slate-700 uppercase">Brother Details</h3>
+                      <h3 className="text-sm font-black text-slate-700  ">Brother Details</h3>
                     </div>
                     <button
                       type="button"
@@ -3334,6 +4011,7 @@ export default function UnifiedMatrimonialForm() {
                           onRemove={removeBrother}
                           isLast={index === formData.brothers.length - 1}
                           onAdd={addBrother}
+                          errors={errors}
                         />
                       ))}
                     </div>
@@ -3344,7 +4022,7 @@ export default function UnifiedMatrimonialForm() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-black text-slate-700 uppercase">Sister Details</h3>
+                      <h3 className="text-sm font-black text-slate-700  ">Sister Details</h3>
                     </div>
                     <button
                       type="button"
@@ -3371,6 +4049,7 @@ export default function UnifiedMatrimonialForm() {
                           onRemove={removeSister}
                           isLast={index === formData.sisters.length - 1}
                           onAdd={addSister}
+                          errors={errors}
                         />
                       ))}
                     </div>
@@ -3387,7 +4066,7 @@ export default function UnifiedMatrimonialForm() {
                   {/* Birth Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Birth Name</label>
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">Birth Name</label>
                     </div>
                     <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
                       <input
@@ -3405,7 +4084,7 @@ export default function UnifiedMatrimonialForm() {
                   {/* Birth Place */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
-                      <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Birth Place</label>
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">Birth Place</label>
                     </div>
                     <div className="bg-white border border-slate-100 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm">
                       <input
@@ -3436,14 +4115,14 @@ export default function UnifiedMatrimonialForm() {
                 <div className="p-4 lg:p-6 bg-[#F8F7FF] rounded-2xl lg:rounded-[32px] border border-purple-50 space-y-4 lg:space-y-6 shadow-inner">
                   <div className="flex items-center gap-2 border-b border-purple-100 pb-3 lg:pb-4">
                     <Heart size={20} className="text-rose-400" fill="#FDA4AF" />
-                    <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest">Ideal Partner Expectations</h3>
+                    <h3 className="text-sm font-black text-slate-700   tracking-widest">Ideal Partner Expectations</h3>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Partner Age Range */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 ml-1">
-                        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-tighter">Partner's Age Range</label>
+                        <label className="text-[12px] font-bold text-slate-500   tracking-tighter">Partner's Age Range</label>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -3492,6 +4171,7 @@ export default function UnifiedMatrimonialForm() {
                         onChange={(val) => handleInputChange('partnerQualification', val)}
                         placeholder="Select qualification options"
                         required={true}
+                        maxItems={4}
                       />
                       {errors.partnerQualification && (
                         <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
@@ -3502,15 +4182,60 @@ export default function UnifiedMatrimonialForm() {
                     </div>
 
                     {/* Preferred Location */}
-                    <div>
-                      <CustomMultiSelect
-                        label="Preferred Location"
-                        value={formData.preferredLocation}
-                        options={dropdownOptions.preferredLocation}
-                        onChange={(val) => handleInputChange('preferredLocation', val)}
-                        placeholder="Select location options"
-                        required={true}
-                      />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-1">
+                        <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                          Preferred Location <span className="text-red-500">*</span>
+                        </label>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {formData.preferredLocation.map((location, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div className={`flex-1 bg-white border rounded-2xl px-4 py-3 shadow-sm ${
+                              errors.preferredLocation ? 'border-red-300 bg-red-50' : 'border-slate-100'
+                            }`}>
+                              <input
+                                type="text"
+                                value={location}
+                                onChange={(e) => {
+                                  const newLocations = [...formData.preferredLocation];
+                                  newLocations[index] = e.target.value;
+                                  handleInputChange('preferredLocation', newLocations);
+                                }}
+                                className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                                placeholder="Enter preferred location"
+                                style={{ fontSize: '16px' }}
+                              />
+                            </div>
+                            {formData.preferredLocation.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newLocations = formData.preferredLocation.filter((_, i) => i !== index);
+                                  handleInputChange('preferredLocation', newLocations);
+                                }}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newLocations = [...formData.preferredLocation, ''];
+                            handleInputChange('preferredLocation', newLocations);
+                          }}
+                          className="flex items-center gap-2 text-[#9181EE] hover:bg-[#F8F7FF] px-3 py-2 rounded-lg transition-colors text-sm font-semibold"
+                        >
+                          <Plus size={16} />
+                          Add Location
+                        </button>
+                      </div>
+                      
                       {errors.preferredLocation && (
                         <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
                           <AlertCircle size={14} />
@@ -3561,9 +4286,9 @@ export default function UnifiedMatrimonialForm() {
             <button 
               onClick={currentStep === steps.length ? handleSubmit : next}
               disabled={isSubmitting}
-              className="flex items-center gap-3 bg-[#9181EE] text-white px-4 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_-5px_rgba(145,129,238,0.5)] hover:bg-[#7b6fd6] active:scale-95 transition-all disabled:opacity-70"
+              className="flex items-center gap-3 bg-[#9181EE] text-white px-4 py-4 rounded-2xl font-black text-sm   tracking-widest shadow-[0_10px_30px_-5px_rgba(145,129,238,0.5)] hover:bg-[#7b6fd6] active:scale-95 transition-all disabled:opacity-70"
             >
-              {currentStep === steps.length ? (isSubmitting ? "Submitting..." : "Submit") : "Next"} <ChevronRight size={18} />
+              {currentStep === steps.length ? (isSubmitting ? (isEditMode ? "Creating..." : "Creating...") : (isEditMode ? "Create Profile" : "Create Profile")) : "Next"} <ChevronRight size={18} />
             </button>
           </div>
 
@@ -3588,9 +4313,9 @@ export default function UnifiedMatrimonialForm() {
               <button 
                 onClick={currentStep === steps.length ? handleSubmit : next}
                 disabled={isSubmitting}
-                className="flex items-center gap-2 bg-[#9181EE] text-white px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide shadow-lg hover:bg-[#7b6fd6] active:scale-95 transition-all disabled:opacity-70"
+                className="flex items-center gap-2 bg-[#9181EE] text-white px-4 py-3 rounded-xl font-bold text-sm   tracking-wide shadow-lg hover:bg-[#7b6fd6] active:scale-95 transition-all disabled:opacity-70"
               >
-                {currentStep === steps.length ? (isSubmitting ? "Submitting..." : "Submit") : "Next"} <ChevronRight size={16} />
+                {currentStep === steps.length ? (isSubmitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Profile" : "Create Profile")) : "Next"} <ChevronRight size={16} />
               </button>
             </div>
           </div>

@@ -4,6 +4,9 @@ import bridegroom2 from "@/assets/bride-groom2.png";
 import flower1 from "@/assets/flower1.png";
 import flower2 from "@/assets/flower2.png";
 import rectangleBg from "@/assets/Rectangle 1.png";
+import { apiFetch } from "@/lib/apiClient";
+import { setAccessToken } from "@/lib/auth";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -35,6 +38,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateField = (name: string, value: string) => {
     let error = "";
@@ -44,6 +48,11 @@ export default function SignupPage() {
         if (!value.trim()) error = "First name is required";
         else if (value.length < 2) error = "First name must be at least 2 characters";
         else if (!/^[A-Za-z\s]+$/.test(value)) error = "First name can only contain letters";
+        break;
+
+      case "middleName":
+        if (value && value.length < 2) error = "Middle name must be at least 2 characters";
+        else if (value && !/^[A-Za-z\s]+$/.test(value)) error = "Middle name can only contain letters";
         break;
 
       case "lastName":
@@ -59,9 +68,11 @@ export default function SignupPage() {
 
       case "password":
         if (!value.trim()) error = "Password is required";
-        else if (value.length < 6) error = "Password must be at least 6 characters";
+        else if (value.length < 8) error = "Password must be at least 8 characters";
         else if (!/(?=.*[A-Z])/.test(value)) error = "Password must contain at least one uppercase letter";
+        else if (!/(?=.*[a-z])/.test(value)) error = "Password must contain at least one lowercase letter";
         else if (!/(?=.*\d)/.test(value)) error = "Password must contain at least one number";
+        else if (!/(?=.*[@$!%*?&])/.test(value)) error = "Password must contain at least one special character (@$!%*?&)";
         break;
 
       case "confirmPassword":
@@ -117,16 +128,56 @@ export default function SignupPage() {
     return !Object.values(newErrors).some(error => error !== "");
   };
 
-  const handleSubmit = () => {
-    if (!validateForm()) {
-      setSubmitError("Please fix the errors above");
+  const handleSubmit = async (e?: React.FormEvent) => {
+  if (e) e.preventDefault();
+
+  if (!validateForm()) {
+    setSubmitError("Please fix the errors above");
+    return;
+  }
+
+  setIsSubmitting(true);
+  setSubmitError("");
+
+  try {
+    const response = await apiFetch("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        profile: {
+          firstName: form.firstName,
+          middleName: form.middleName,
+          lastName: form.lastName,
+        },
+      }),
+    });
+
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch {
+      // response had no JSON body
+    }
+
+    if (!response.ok) {
+      setSubmitError(data?.message || "Signup failed. Please try again.");
       return;
     }
 
-    // 🔥 API CALL GOES HERE
-    console.log("Signup Data:", form);
+    // ✅ Save access token
+    setAccessToken(data.accessToken);
+
+    // ✅ Go to next step
     navigate("/registration");
-  };
+  } catch (error) {
+    console.error("Signup error:", error);
+    setSubmitError("Unable to reach the server. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row overflow-hidden">
@@ -193,10 +244,19 @@ export default function SignupPage() {
               <h1 className="text-[24px] lg:text-[30px] font-bold">Create Your Account</h1>
               <p className="text-sm text-black/60">
                 Already a member?{" "}
-                <Link to="/" className="text-green-600 font-medium">
+                <Link to="/login" className="text-green-600 font-medium">
                   Sign in
                 </Link>
               </p>
+            </div>
+
+            {/* Google OAuth Button */}
+            <GoogleAuthButton mode="register" />
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200"></div>
+              <span className="text-sm text-gray-500">or</span>
+              <div className="flex-1 h-px bg-gray-200"></div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -286,7 +346,9 @@ export default function SignupPage() {
                   Password strength: {
                     form.password.length >= 8 && 
                     /(?=.*[A-Z])/.test(form.password) && 
-                    /(?=.*\d)/.test(form.password) 
+                    /(?=.*[a-z])/.test(form.password) && 
+                    /(?=.*\d)/.test(form.password) &&
+                    /(?=.*[@$!%*?&])/.test(form.password)
                       ? "Strong" 
                       : "Medium"
                   }
@@ -321,13 +383,18 @@ export default function SignupPage() {
               )}
             </div>
 
-            
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600">
+                {submitError}
+              </div>
+            )}
 
             <button
               onClick={handleSubmit}
-              className="w-full py-3 rounded-full bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors"
+              disabled={isSubmitting}
+              className="w-full py-3 rounded-full bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Create account
+              {isSubmitting ? "Creating account..." : "Create account"}
             </button>
 
             {/* <p className="text-center text-xs text-black/50">

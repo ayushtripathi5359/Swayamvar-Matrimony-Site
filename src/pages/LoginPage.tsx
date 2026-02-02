@@ -1,18 +1,29 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import bridegroom2 from "@/assets/bride-groom2.png";
 import flower1 from "@/assets/flower1.png";
 import flower2 from "@/assets/flower2.png";
 import rectangleBg from "@/assets/Rectangle 1.png";
 import { apiFetch } from "@/lib/apiClient";
 import { setAccessToken } from "@/lib/auth";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle OAuth errors from navigation state
+  useEffect(() => {
+    if (location.state?.error) {
+      setErrorMessage(location.state.error);
+      // Clear the error from navigation state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -143,13 +154,9 @@ export default function LoginPage() {
       </div>
 
       {/* Social Buttons */}
-      <div className="flex gap-3 lg:gap-4">
-        <button className="flex-1 py-3 lg:py-4 rounded-[32px] lg:rounded-[40px] border border-black/10 text-sm">
-          Google
-        </button>
-        <button className="flex-1 py-3 lg:py-4 rounded-[32px] lg:rounded-[40px] border border-black/10 text-sm">
-          Apple
-        </button>
+      <div className="flex ">
+        <GoogleAuthButton mode="login" className="flex-1" />
+        
       </div>
     </div>
 
@@ -185,7 +192,7 @@ export default function LoginPage() {
       </button>
       <button
         type="button"
-        onClick={() => navigate("/registration")}
+        onClick={() => navigate("/signup")}
         className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] border border-black/10 text-sm font-semibold"
       >
         Create Account
@@ -193,8 +200,8 @@ export default function LoginPage() {
     </form>
 
     <p className="text-center text-xs lg:text-sm text-black/60">
-      Don’t have an account?{" "}
-      <Link to="/registration" className="text-black font-medium">
+      Don't have an account?{" "}
+      <Link to="/signup" className="text-black font-medium">
         Sign up
       </Link>
     </p>

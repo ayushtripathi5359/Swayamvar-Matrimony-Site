@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { apiFetch } from "@/lib/apiClient";
 
@@ -14,6 +15,7 @@ const MOCK_PROFILES = Array.from({ length: 12 }).map((_, i) => ({
 }));
 
 export default function InboxListingPage() {
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState(MOCK_PROFILES);
   const [activeTab, setActiveTab] = useState("received");
   const [search, setSearch] = useState("");
@@ -48,13 +50,16 @@ export default function InboxListingPage() {
         <div className="max-w-[1300px] mx-auto px-4">
 
           {/* TITLE */}
-          <div className="text-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-semibold text-[#111827]">
-              My Matches
-            </h1>
-            <p className="text-gray-500 text-sm mt-2">
-              Discover profiles that are interested in you
-            </p>
+           <div className="text-center mb-10">
+            {/* Page Title */}
+            <div className="mb-8">
+              <h1 className="font-bold text-[28px] sm:text-[34px] lg:text-[42px] leading-tight tracking-tight text-slate-900 mb-2">
+                My <span className="text-[#ED9B59]">Matches</span>
+              </h1>
+              <p className="text-slate-600 text-base lg:text-lg">
+                Manage your personal information and preferences
+              </p>
+            </div>
           </div>
 
           {/* TABS */}
@@ -167,7 +172,10 @@ export default function InboxListingPage() {
                       </span>
                     )}
 
-                    <button className="text-gray-500">
+                    <button 
+                      onClick={() => navigate("/profile")}
+                      className="text-gray-500"
+                    >
                       View Profile
                     </button>
                   </div>

@@ -1,6 +1,6 @@
 import { clearAccessToken, getAccessToken, setAccessToken } from "./auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
 
 const refreshAccessToken = async () => {
   const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
@@ -27,6 +27,11 @@ export const apiFetch = async (
   options: RequestInit = {},
   retryOnUnauthorized = true
 ) => {
+  // Enforce relative paths only
+  if (path.startsWith("http")) {
+    throw new Error("apiFetch expects a relative path like '/api/...' not a full URL");
+  }
+
   const token = getAccessToken();
   const headers = new Headers(options.headers || {});
 
@@ -34,7 +39,19 @@ export const apiFetch = async (
     headers.set("Content-Type", "application/json");
   }
 
-  if (token) {
+  // Don't add Authorization header for auth endpoints that don't need it
+  const authEndpointsWithoutToken = [
+    '/api/auth/register',
+    '/api/auth/login',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/verify-email',
+    '/api/auth/resend-verification'
+  ];
+  
+  const needsAuth = !authEndpointsWithoutToken.some(endpoint => path.includes(endpoint));
+  
+  if (token && needsAuth) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
@@ -44,7 +61,7 @@ export const apiFetch = async (
     credentials: "include"
   });
 
-  if (response.status === 401 && retryOnUnauthorized) {
+  if (response.status === 401 && retryOnUnauthorized && needsAuth) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       return apiFetch(path, options, false);

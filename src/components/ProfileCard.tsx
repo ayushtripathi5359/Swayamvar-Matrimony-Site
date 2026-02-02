@@ -1,4 +1,12 @@
+import { useNavigate } from "react-router-dom";
+
 export default function ProfileCard() {
+  const navigate = useNavigate();
+
+  const handleViewProfile = () => {
+    navigate("/profile");
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 text-center">
 
@@ -22,7 +30,10 @@ export default function ProfileCard() {
       </p>
 
       {/* Button */}
-      <button className="w-full py-2 rounded-full bg-gray-100 text-sm font-medium hover:bg-gray-200 transition">
+      <button 
+        onClick={handleViewProfile}
+        className="w-full py-2 rounded-full bg-gray-100 text-sm font-medium hover:bg-gray-200 transition"
+      >
         View Profile
       </button>
     </div>

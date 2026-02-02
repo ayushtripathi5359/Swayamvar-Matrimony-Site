@@ -31,12 +31,16 @@ import {
   Globe,
   MessageCircle
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { apiFetch } from "@/lib/apiClient";
 
 interface ProfileData {
   _id?: string;
-  fullName?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  fullName?: string; // Keep for backward compatibility
   age?: string;
   occupation?: string;
   jobLocation?: string;
@@ -58,16 +62,48 @@ interface ProfileData {
   annualIncome?: string;
   currentEducation?: string;
   otherOccupation?: string;
+  whatsappNumber?: string;
+  emailId?: string;
+  linkedinHandle?: string;
+  instagramHandle?: string;
+  facebookHandle?: string;
+  fathersFullName?: string;
+  fathersOccupation?: string;
+  mothersFullName?: string;
+  mothersOccupation?: string;
+  brothers?: Array<{
+    name?: string;
+    occupation?: string;
+    companyName?: string;
+    currentEducation?: string;
+    otherOccupation?: string;
+  }>;
+  sisters?: Array<{
+    name?: string;
+    occupation?: string;
+    companyName?: string;
+    currentEducation?: string;
+    otherOccupation?: string;
+  }>;
+  birthName?: string;
+  birthTime?: string;
+  birthPlace?: string;
 }
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loadError, setLoadError] = useState("");
+  const [profileNotFound, setProfileNotFound] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await apiFetch("/api/profile/me");
+        const response = await apiFetch("/api/profiles");
+        if (response.status === 404) {
+          setProfileNotFound(true);
+          return;
+        }
         if (!response.ok) {
           const data = await response.json();
           setLoadError(data.message || "Unable to load profile.");
@@ -82,6 +118,12 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, []);
+
+  // If profile not found, redirect to stepwise registration
+  if (profileNotFound) {
+    navigate("/registration");
+    return null;
+  }
 
   const displayProfile = {
     fullName: profile?.fullName || "ANANYA KULKARNI",
@@ -165,7 +207,8 @@ export default function ProfilePage() {
               <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all">
                 <Star size={16} /> Shortlist
               </button>
-              <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all">
+              <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all"
+                onClick={() => navigate("/registration")}>
                 <Edit3 size={16} /> Edit Profile
               </button>
             </div>
@@ -402,7 +445,8 @@ export default function ProfilePage() {
       {/* MOBILE STICKY CTA */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-purple-100 p-3 z-50">
         <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform">
+          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform"
+            onClick={() => navigate("/registration")}>
             <Edit3 size={16} /> Edit
           </button>
           <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform">

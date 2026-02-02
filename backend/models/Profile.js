@@ -1,0 +1,377 @@
+const mongoose = require('mongoose');
+
+const profileSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  // Basic Information
+  firstName: {
+    type: String,
+    required: [true, 'First name is required'],
+    trim: true,
+    maxlength: [50, 'First name cannot exceed 50 characters']
+  },
+  middleName: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Middle name cannot exceed 50 characters']
+  },
+  lastName: {
+    type: String,
+    required: [true, 'Last name is required'],
+    trim: true,
+    maxlength: [50, 'Last name cannot exceed 50 characters']
+  },
+  gender: {
+    type: String,
+    required: [true, 'Gender is required'],
+    enum: ['Male', 'Female']
+  },
+  dateOfBirth: {
+    type: Date,
+    required: [true, 'Date of birth is required']
+  },
+  age: {
+    type: String,
+    required: true
+  },
+  maritalStatus: {
+    type: String,
+    required: [true, 'Marital status is required'],
+    enum: ['Unmarried', 'Divorced', 'Separated', 'Widowed']
+  },
+  motherTongue: {
+    type: String,
+    required: [true, 'Mother tongue is required']
+  },
+  height: {
+    type: String,
+    required: [true, 'Height is required']
+  },
+  complexion: {
+    type: String,
+    required: [true, 'Complexion is required'],
+    enum: ['Very Fair', 'Fair', 'Wheatish', 'Dark']
+  },
+  bloodGroup: {
+    type: String,
+    required: [true, 'Blood group is required'],
+    enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
+  },
+  aboutMe: {
+    type: String,
+    maxlength: [200, 'About me cannot exceed 200 characters']
+  },
+  
+  // Address Information
+  currentAddressLine1: {
+    type: String,
+    required: [true, 'Current address line 1 is required'],
+    trim: true,
+    maxlength: [100, 'Address line 1 cannot exceed 100 characters']
+  },
+  currentAddressLine2: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Address line 2 cannot exceed 100 characters']
+  },
+  currentCity: {
+    type: String,
+    required: [true, 'Current city is required'],
+    trim: true,
+    maxlength: [50, 'City name cannot exceed 50 characters']
+  },
+  currentState: {
+    type: String,
+    required: [true, 'Current state is required'],
+    trim: true,
+    maxlength: [50, 'State name cannot exceed 50 characters']
+  },
+  currentPincode: {
+    type: String,
+    required: [true, 'Current pincode is required'],
+    match: [/^\d{6}$/, 'Pincode must be exactly 6 digits']
+  },
+  permanentAddressLine1: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Address line 1 cannot exceed 100 characters']
+  },
+  permanentAddressLine2: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Address line 2 cannot exceed 100 characters']
+  },
+  permanentCity: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'City name cannot exceed 50 characters']
+  },
+  permanentState: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'State name cannot exceed 50 characters']
+  },
+  permanentPincode: {
+    type: String,
+    match: [/^\d{6}$/, 'Pincode must be exactly 6 digits']
+  },
+  sameAsPermanentAddress: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Contact Information
+  whatsappNumber: {
+    type: String,
+    required: [true, 'WhatsApp number is required']
+  },
+  countryCode: {
+    type: String,
+    required: [true, 'Country code is required'],
+    default: '+91'
+  },
+  emailId: {
+    type: String,
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+  },
+  linkedinHandle: String,
+  instagramHandle: String,
+  facebookHandle: String,
+  
+  // Education & Career
+  education: {
+    type: String,
+    required: [true, 'Education is required']
+  },
+  collegeUniversity: String,
+  occupation: {
+    type: String,
+    required: [true, 'Occupation is required']
+  },
+  organization: String,
+  designation: String,
+  currentEducation: String,
+  annualIncome: String,
+  jobLocation: String,
+  
+  // Family Details
+  fathersFullName: {
+    type: String,
+    required: [true, 'Father\'s name is required']
+  },
+  fathersOccupation: {
+    type: String,
+    required: [true, 'Father\'s occupation is required']
+  },
+  fathersBusinessName: String,
+  fathersBusinessLocation: String,
+  fathersDesignation: String,
+  fathersCompanyName: String,
+  
+  mothersFullName: {
+    type: String,
+    required: [true, 'Mother\'s name is required']
+  },
+  mothersOccupation: {
+    type: String,
+    required: [true, 'Mother\'s occupation is required']
+  },
+  mothersBusinessName: String,
+  mothersBusinessLocation: String,
+  mothersDesignation: String,
+  mothersCompanyName: String,
+  
+  brothers: [{
+    name: String,
+    maritalStatus: String,
+    occupation: String,
+    spouseName: String,
+    businessName: String,
+    businessLocation: String,
+    designation: String,
+    companyName: String,
+    currentEducation: String
+  }],
+  
+  sisters: [{
+    name: String,
+    maritalStatus: String,
+    occupation: String,
+    spouseName: String,
+    businessName: String,
+    businessLocation: String,
+    designation: String,
+    companyName: String,
+    currentEducation: String
+  }],
+  
+  // Kundali Details
+  birthName: String,
+  birthTime: String,
+  birthPlace: String,
+  firstGotra: {
+    type: String,
+    required: [true, 'First gotra is required']
+  },
+  secondGotra: {
+    type: String,
+    required: [true, 'Second gotra is required']
+  },
+  
+  // Partner Preferences
+  partnerAgeFrom: String,
+  partnerAgeTo: String,
+  partnerQualification: [String],
+  preferredLocation: [String],
+  minAnnualIncome: String,
+  
+  // Photos
+  photos: {
+    western: {
+      url: String,
+      publicId: String
+    },
+    traditional: {
+      url: String,
+      publicId: String
+    }
+  },
+  
+  // Profile Status
+  isComplete: {
+    type: Boolean,
+    default: false
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected'],
+    default: 'pending'
+  },
+  verificationNotes: String,
+  
+  // Privacy Settings
+  privacySettings: {
+    showContactInfo: {
+      type: String,
+      enum: ['everyone', 'premium-members', 'accepted-interests'],
+      default: 'accepted-interests'
+    },
+    showPhotos: {
+      type: String,
+      enum: ['everyone', 'premium-members', 'accepted-interests'],
+      default: 'premium-members'
+    },
+    allowMessages: {
+      type: String,
+      enum: ['everyone', 'premium-members', 'verified-profiles'],
+      default: 'premium-members'
+    }
+  },
+  
+  // Analytics
+  profileViews: {
+    type: Number,
+    default: 0
+  },
+  lastActive: {
+    type: Date,
+    default: Date.now
+  },
+  
+  // Search optimization
+  searchKeywords: [String]
+  
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Virtual for calculated age
+profileSchema.virtual('calculatedAge').get(function() {
+  if (!this.dateOfBirth) return null;
+  
+  const today = new Date();
+  const birthDate = new Date(this.dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+});
+
+// Virtual for full name (backward compatibility)
+profileSchema.virtual('fullName').get(function() {
+  const parts = [this.firstName, this.middleName, this.lastName].filter(Boolean);
+  return parts.join(' ');
+});
+
+// Indexes for search optimization
+profileSchema.index({ userId: 1 }, { unique: true });
+profileSchema.index({ gender: 1, maritalStatus: 1 });
+profileSchema.index({ 'calculatedAge': 1 });
+profileSchema.index({ occupation: 1 });
+profileSchema.index({ motherTongue: 1 });
+profileSchema.index({ isComplete: 1, isVerified: 1 });
+profileSchema.index({ lastActive: -1 });
+profileSchema.index({ searchKeywords: 1 });
+
+// Text index for search
+profileSchema.index({
+  fullName: 'text',
+  occupation: 'text',
+  jobLocation: 'text',
+  aboutMe: 'text'
+});
+
+// Pre-save middleware to update search keywords
+profileSchema.pre('save', function(next) {
+  // Generate search keywords
+  const keywords = [];
+  
+  if (this.fullName) keywords.push(...this.fullName.toLowerCase().split(' '));
+  if (this.occupation) keywords.push(this.occupation.toLowerCase());
+  if (this.jobLocation) keywords.push(this.jobLocation.toLowerCase());
+  if (this.motherTongue) keywords.push(this.motherTongue.toLowerCase());
+  if (this.education) keywords.push(this.education.toLowerCase());
+  
+  this.searchKeywords = [...new Set(keywords)]; // Remove duplicates
+  
+  // Update lastActive
+  this.lastActive = new Date();
+  
+  next();
+});
+
+// Method to check if profile is complete
+profileSchema.methods.checkCompleteness = function() {
+  const requiredFields = [
+    'firstName', 'lastName', 'gender', 'dateOfBirth', 'maritalStatus', 
+    'motherTongue', 'height', 'complexion', 'bloodGroup',
+    'currentAddressLine1', 'currentCity', 'currentState', 'currentPincode',
+    'whatsappNumber', 'firstGotra', 'secondGotra',
+    'education', 'occupation', 'fathersFullName', 'mothersFullName'
+  ];
+  
+  const isComplete = requiredFields.every(field => this[field]);
+  this.isComplete = isComplete;
+  return isComplete;
+};
+
+// Method to increment profile views
+profileSchema.methods.incrementViews = function() {
+  this.profileViews += 1;
+  return this.save();
+};
+
+module.exports = mongoose.model('Profile', profileSchema);

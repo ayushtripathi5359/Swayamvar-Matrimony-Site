@@ -33,7 +33,7 @@ export default function Navbar() {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center h-full gap-1">
           <NavItem label="Home" href="/home" />
-          <NavItem label="Profile" href="/profile" />
+          <NavItem label="My Profile" href="/my-profile" />
           <NavItem label="My Matches" href="/inbox" />
           <NavItem label="About Us" href="/aboutus" />
           {/* <NavItem label="Pricing" href="/pricing" /> */}
@@ -59,11 +59,11 @@ export default function Navbar() {
               Home
             </Link>
             <Link
-              to="/profile"
+              to="/my-profile"
               className="block px-4 py-2 text-slate-900 hover:text-pink-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Profile
+              My Profile
             </Link>
             <Link
               to="/inbox"
