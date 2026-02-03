@@ -26,14 +26,20 @@ import {
   Clock,
   BookOpen,
   Globe,
-  MessageCircle
+  MessageCircle,
+  Send,
+  Check,
+  Download
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { apiFetch } from "@/lib/apiClient";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ProfileData {
   _id?: string;
+  userId?: string;
   firstName?: string;
   middleName?: string;
   lastName?: string;
@@ -128,6 +134,15 @@ export default function ProfilePage() {
   const [loadError, setLoadError] = useState("");
   const [profileNotFound, setProfileNotFound] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  
+  // Interest sending states
+  const [sendingInterest, setSendingInterest] = useState(false);
+  const [interestSent, setInterestSent] = useState(false);
+  const [interestMessage, setInterestMessage] = useState("");
+  const [showInterestModal, setShowInterestModal] = useState(false);
+
+  // PDF download state
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -192,6 +207,214 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [id]);
+
+  // Send Interest functionality
+  const handleSendInterest = async () => {
+    if (!profile?.userId) return;
+    
+    try {
+      setSendingInterest(true);
+      const response = await apiFetch("/api/interests/send", {
+        method: "POST",
+        body: JSON.stringify({
+          receiverId: profile.userId, // Use userId from profile
+          message: interestMessage.trim() || "I'm interested in getting to know you better!"
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to send interest");
+      }
+
+      const data = await response.json();
+      setInterestSent(true);
+      setShowInterestModal(false);
+      setInterestMessage("");
+      
+      // Show success message
+      alert(data.mutualInterest ? 
+        "🎉 Mutual interest! You both are interested in each other!" : 
+        "✅ Interest sent successfully!"
+      );
+    } catch (error) {
+      console.error("Error sending interest:", error);
+      alert(`Failed to send interest: ${error.message}`);
+    } finally {
+      setSendingInterest(false);
+    }
+  };
+
+  const openInterestModal = () => {
+    setShowInterestModal(true);
+    setInterestMessage("");
+  };
+
+  // PDF Download functionality
+  const downloadProfileAsPDF = async () => {
+    try {
+      setDownloadingPDF(true);
+      
+      // Create a temporary container for PDF content
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.position = 'absolute';
+      pdfContainer.style.left = '-9999px';
+      pdfContainer.style.top = '0';
+      pdfContainer.style.width = '210mm'; // A4 width
+      pdfContainer.style.backgroundColor = 'white';
+      pdfContainer.style.padding = '20px';
+      pdfContainer.style.fontFamily = 'Arial, sans-serif';
+      
+      // Create PDF content
+      pdfContainer.innerHTML = `
+        <div style="max-width: 100%; margin: 0 auto;">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #9181EE; padding-bottom: 20px;">
+            <img src="${displayProfile.profilePhoto}" 
+                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid #f0f0f0;" 
+                 onerror="this.style.display='none'" />
+            <h1 style="margin: 0; font-size: 28px; color: #333; font-weight: bold;">${displayProfile.fullName}</h1>
+            <p style="margin: 5px 0; color: #9181EE; font-size: 16px; font-weight: 600;">${displayProfile.occupation}</p>
+            <p style="margin: 0; color: #666; font-size: 14px;">${displayProfile.jobLocation}</p>
+            <p style="margin: 5px 0; color: #999; font-size: 12px;">Profile ID: ${displayProfile.profileId}</p>
+          </div>
+
+          <!-- Basic Information -->
+          <div style="margin-bottom: 25px;">
+            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Personal Information</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+              <div><strong>Age:</strong> ${displayProfile.age} years</div>
+              <div><strong>Height:</strong> ${displayProfile.height}</div>
+              <div><strong>Blood Group:</strong> ${displayProfile.bloodGroup}</div>
+              <div><strong>Mother Tongue:</strong> ${displayProfile.motherTongue}</div>
+              <div><strong>Marital Status:</strong> ${displayProfile.maritalStatus}</div>
+              <div><strong>Complexion:</strong> ${displayProfile.complexion}</div>
+            </div>
+          </div>
+
+          ${displayProfile.aboutMe && displayProfile.aboutMe !== "About me information not available." ? `
+          <!-- About Me -->
+          <div style="margin-bottom: 25px;">
+            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">About Me</h2>
+            <p style="font-size: 14px; line-height: 1.6; color: #555; font-style: italic;">${displayProfile.aboutMe}</p>
+          </div>
+          ` : ''}
+
+          <!-- Education & Career -->
+          <div style="margin-bottom: 25px;">
+            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Education & Career</h2>
+            <div style="font-size: 14px; line-height: 1.8;">
+              <div><strong>Education:</strong> ${displayProfile.education}</div>
+              <div><strong>College/University:</strong> ${displayProfile.collegeUniversity}</div>
+              <div><strong>Designation:</strong> ${displayProfile.designation}</div>
+              <div><strong>Organization:</strong> ${displayProfile.organization}</div>
+              <div><strong>Annual Income:</strong> ${displayProfile.annualIncome}</div>
+            </div>
+          </div>
+
+          ${(profile?.fathersFullName || profile?.mothersFullName) ? `
+          <!-- Family Details -->
+          <div style="margin-bottom: 25px;">
+            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Family Details</h2>
+            <div style="font-size: 14px; line-height: 1.8;">
+              ${profile?.fathersFullName ? `<div><strong>Father:</strong> ${displayProfile.fathersFullName} - ${displayProfile.fathersOccupation}</div>` : ''}
+              ${profile?.mothersFullName ? `<div><strong>Mother:</strong> ${displayProfile.mothersFullName} - ${displayProfile.mothersOccupation}</div>` : ''}
+              ${profile?.brothers?.length ? `<div><strong>Brothers:</strong> ${profile.brothers.length}</div>` : ''}
+              ${profile?.sisters?.length ? `<div><strong>Sisters:</strong> ${profile.sisters.length}</div>` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          ${(profile?.birthName || profile?.birthTime || profile?.birthPlace) ? `
+          <!-- Kundali Details -->
+          <div style="margin-bottom: 25px;">
+            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Kundali Details</h2>
+            <div style="font-size: 14px; line-height: 1.8;">
+              ${profile?.birthName ? `<div><strong>Birth Name:</strong> ${displayProfile.birthName}</div>` : ''}
+              ${profile?.birthTime ? `<div><strong>Birth Time:</strong> ${displayProfile.birthTime}</div>` : ''}
+              ${profile?.birthPlace ? `<div><strong>Birth Place:</strong> ${displayProfile.birthPlace}</div>` : ''}
+              ${profile?.firstGotra ? `<div><strong>First Gotra:</strong> ${displayProfile.firstGotra}</div>` : ''}
+              ${profile?.secondGotra ? `<div><strong>Second Gotra:</strong> ${displayProfile.secondGotra}</div>` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Contact Information -->
+          ${isOwnProfile ? `
+          <div style="margin-bottom: 25px;">
+            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Contact Information</h2>
+            <div style="font-size: 14px; line-height: 1.8;">
+              ${profile?.emailId ? `<div><strong>Email:</strong> ${displayProfile.emailId}</div>` : ''}
+              ${profile?.whatsappNumber ? `<div><strong>WhatsApp:</strong> ${displayProfile.whatsappNumber}</div>` : ''}
+              ${profile?.linkedinHandle ? `<div><strong>LinkedIn:</strong> ${displayProfile.linkedinHandle}</div>` : ''}
+              ${profile?.instagramHandle ? `<div><strong>Instagram:</strong> ${displayProfile.instagramHandle}</div>` : ''}
+              ${profile?.facebookHandle ? `<div><strong>Facebook:</strong> ${displayProfile.facebookHandle}</div>` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Footer -->
+          <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px;">
+            <p>Generated from Swayamvar Profile</p>
+            <p>Downloaded on ${new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(pdfContainer);
+      
+      // Wait for images to load
+      const images = pdfContainer.querySelectorAll('img');
+      await Promise.all(Array.from(images).map(img => {
+        return new Promise((resolve) => {
+          if (img.complete) {
+            resolve(true);
+          } else {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(true);
+            // Fallback timeout
+            setTimeout(() => resolve(true), 3000);
+          }
+        });
+      }));
+      
+      // Generate PDF
+      const canvas = await html2canvas(pdfContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: pdfContainer.offsetWidth,
+        height: pdfContainer.offsetHeight
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+      
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      // Clean up
+      document.body.removeChild(pdfContainer);
+      
+      // Download the PDF
+      const fileName = `${displayProfile.fullName.replace(/\s+/g, '_')}_Profile.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -415,21 +638,80 @@ export default function ProfilePage() {
       <div className="flex flex-wrap justify-center lg:justify-start gap-3">
         {!isOwnProfile ? (
           <>
-            <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full bg-[#9181EE] hover:bg-[#7b6fd6] text-white font-medium transition-all shadow-lg active:scale-95">
-              <Heart size={16} fill="white" /> Send Interest
+            <button 
+              onClick={interestSent ? undefined : openInterestModal}
+              disabled={interestSent || sendingInterest}
+              className={`hidden lg:flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all shadow-lg active:scale-95 ${
+                interestSent 
+                  ? 'bg-green-500 text-white cursor-default' 
+                  : sendingInterest
+                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                  : 'bg-[#9181EE] hover:bg-[#7b6fd6] text-white'
+              }`}
+            >
+              {interestSent ? (
+                <>
+                  <Check size={16} fill="white" /> Interest Sent
+                </>
+              ) : sendingInterest ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Heart size={16} fill="white" /> Send Interest
+                </>
+              )}
             </button>
 
             <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all">
               <Star size={16} /> Shortlist
             </button>
+
+            <button
+              onClick={downloadProfileAsPDF}
+              disabled={downloadingPDF}
+              className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-green-100 bg-white text-slate-600 hover:bg-green-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {downloadingPDF ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Download size={16} /> Download PDF
+                </>
+              )}
+            </button>
           </>
         ) : (
-          <button
-            onClick={() => navigate("/registration")}
-            className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all"
-          >
-            <Edit3 size={16} /> Edit Profile
-          </button>
+          <>
+            <button
+              onClick={() => navigate("/registration")}
+              className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all"
+            >
+              <Edit3 size={16} /> Edit Profile
+            </button>
+
+            <button
+              onClick={downloadProfileAsPDF}
+              disabled={downloadingPDF}
+              className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full bg-[#9181EE] hover:bg-[#7b6fd6] text-white font-medium transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {downloadingPDF ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Download size={16} /> Download PDF
+                </>
+              )}
+            </button>
+          </>
         )}
       </div>
 
@@ -741,9 +1023,20 @@ export default function ProfilePage() {
                 onClick={() => navigate("/registration")}>
                 <Edit3 size={16} /> Edit Profile
               </button>
-              <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-[#9181EE] text-white font-bold shadow-lg active:scale-95 transition-transform"
-                onClick={() => navigate("/my-profile")}>
-                <User size={16} /> My Profile
+              <button 
+                onClick={downloadProfileAsPDF}
+                disabled={downloadingPDF}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-[#9181EE] text-white font-bold shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+                {downloadingPDF ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} /> PDF
+                  </>
+                )}
               </button>
             </>
           ) : (
@@ -751,13 +1044,105 @@ export default function ProfilePage() {
               <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform">
                 <Star size={16} /> Shortlist
               </button>
-              <button className="flex-[2] flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-[#9181EE] text-white font-bold shadow-lg active:scale-95 transition-transform">
-                <Heart size={18} fill="white" /> Send Interest
+              <button 
+                onClick={downloadProfileAsPDF}
+                disabled={downloadingPDF}
+                className="flex items-center justify-center gap-2 px-3 py-3 rounded-full border border-green-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+                {downloadingPDF ? (
+                  <div className="w-4 h-4 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download size={16} />
+                )}
+              </button>
+              <button 
+                onClick={interestSent ? undefined : openInterestModal}
+                disabled={interestSent || sendingInterest}
+                className={`flex-[2] flex items-center justify-center gap-2 px-4 py-3 rounded-full font-bold shadow-lg active:scale-95 transition-transform ${
+                  interestSent 
+                    ? 'bg-green-500 text-white cursor-default' 
+                    : sendingInterest
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-[#9181EE] text-white'
+                }`}
+              >
+                {interestSent ? (
+                  <>
+                    <Check size={18} fill="white" /> Interest Sent
+                  </>
+                ) : sendingInterest ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Heart size={18} fill="white" /> Send Interest
+                  </>
+                )}
               </button>
             </>
           )}
         </div>
       </div>
+      
+      {/* Interest Modal */}
+      {showInterestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-800">Send Interest</h3>
+              <button
+                onClick={() => setShowInterestModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <ChevronRight size={20} className="rotate-45 text-slate-500" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-slate-600 mb-3">
+                Send a personalized message to {displayProfile.fullName}
+              </p>
+              <textarea
+                value={interestMessage}
+                onChange={(e) => setInterestMessage(e.target.value.slice(0, 500))}
+                placeholder="Hi! I'm interested in getting to know you better. Would you like to connect?"
+                className="w-full p-3 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#9181EE] focus:border-transparent text-sm"
+                rows={4}
+              />
+              <div className="text-xs text-slate-400 mt-1 text-right">
+                {interestMessage.length}/500
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowInterestModal(false)}
+                className="flex-1 px-4 py-3 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendInterest}
+                disabled={sendingInterest}
+                className="flex-1 px-4 py-3 bg-[#9181EE] text-white rounded-lg hover:bg-[#7b6fd6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {sendingInterest ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Send Interest
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

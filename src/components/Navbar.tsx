@@ -10,24 +10,8 @@ export default function Navbar() {
       <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white/90 backdrop-blur-[30px] h-[40px] sm:h-[66px] px-3 sm:px-4">
         
         {/* Left: Logo */}
-        <Link to="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="flex-shrink-0"
-          >
-            <path
-              d="M22.2849 8.16174H15.0731V1H8.16174C8.16174 4.95649 4.95649 8.16174 1 8.16174V15.0731H8.16174V22.2348H15.0731C15.0731 18.2783 18.3284 15.0731 22.2849 15.0731V8.16174Z"
-              fill="#181818"
-            />
-          </svg>
-
-          <span className="font-medium text-base sm:text-lg lg:text-2xl text-slate-900 whitespace-nowrap">
-            Swayamvar
-          </span>
+        <Link to="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-64">
+          <img src="src\assets\swayamwar.png" alt="" />
         </Link>
 
         {/* Desktop Menu */}

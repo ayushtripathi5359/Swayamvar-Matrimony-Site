@@ -110,22 +110,78 @@ userSchema.index({ isActive: 1 });
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {
+  console.log('=== PRE-SAVE DEBUG ===');
+  console.log('Password exists:', !!this.password);
+  console.log('Password modified:', this.isModified('password'));
+  console.log('Auth provider:', this.authProvider);
+  console.log('Is new:', this.isNew);
+  
+  // Add stack trace to see where save is being called from
+  if (!this.isNew) {
+    console.log('Stack trace for non-new save:');
+    console.trace();
+  }
+  
   // Only hash password if it exists and is modified
-  if (!this.password || !this.isModified('password')) return next();
+  if (!this.password || !this.isModified('password')) {
+    console.log('Skipping password hashing');
+    console.log('=== PRE-SAVE DEBUG END ===');
+    return next();
+  }
   
   try {
+    console.log('Hashing password...');
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
-    this.password = await bcrypt.hash(this.password, saltRounds);
+    console.log('Salt rounds:', saltRounds);
+    
+    // Manually generate salt to be safe
+    const salt = await bcrypt.genSalt(saltRounds);
+    this.password = await bcrypt.hash(this.password, salt);
+    
+    console.log('Password hashed successfully');
+    console.log('Hash length:', this.password.length);
+    console.log('Hash starts with:', this.password.substring(0, 10));
+    console.log('=== PRE-SAVE DEBUG END ===');
     next();
   } catch (error) {
+    console.log('Password hashing error:', error);
+    console.log('=== PRE-SAVE DEBUG END ===');
     next(error);
   }
 });
 
 // Method to compare password
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  if (!this.password) return false; // No password set (OAuth user)
-  return await bcrypt.compare(candidatePassword, this.password);
+  console.log('=== COMPARE PASSWORD DEBUG ===');
+  console.log('Candidate password:', candidatePassword);
+  console.log('Candidate password length:', candidatePassword ? candidatePassword.length : 0);
+  console.log('Stored password exists:', !!this.password);
+  console.log('Stored password length:', this.password ? this.password.length : 0);
+  console.log('Auth provider:', this.authProvider);
+  
+  if (!this.password) {
+    console.log('No password stored (OAuth user?)');
+    console.log('=== COMPARE PASSWORD DEBUG END ===');
+    return false;
+  }
+  
+  if (!candidatePassword) {
+    console.log('No candidate password provided');
+    console.log('=== COMPARE PASSWORD DEBUG END ===');
+    return false;
+  }
+  
+  try {
+    console.log('Performing bcrypt comparison...');
+    const result = await bcrypt.compare(candidatePassword, this.password);
+    console.log('Bcrypt comparison result:', result);
+    console.log('=== COMPARE PASSWORD DEBUG END ===');
+    return result;
+  } catch (error) {
+    console.log('Bcrypt comparison error:', error.message);
+    console.log('=== COMPARE PASSWORD DEBUG END ===');
+    return false;
+  }
 };
 
 // Method to increment login attempts

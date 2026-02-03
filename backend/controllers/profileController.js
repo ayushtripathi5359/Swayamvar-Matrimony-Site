@@ -373,7 +373,7 @@ const searchProfiles = asyncHandler(async (req, res, next) => {
 // @access  Private
 const getProfileById = asyncHandler(async (req, res, next) => {
   const profile = await Profile.findById(req.params.id)
-    .select('-userId -searchKeywords');
+    .select('-searchKeywords'); // Keep userId for interest functionality
   
   if (!profile) {
     return res.status(404).json({

@@ -10,6 +10,7 @@ const {
   verifyEmail,
   resendVerification,
   getMe,
+  testPassword,
   googleAuth,
   googleCallback
 } = require('../controllers/authController');
@@ -26,12 +27,15 @@ const router = express.Router();
 
 // Public routes
 router.post('/register', register);
-router.post('/login', validateLogin, login);
+router.post('/login', login); // Temporarily remove validation
 router.post('/refresh-token', refreshToken);
 router.post('/forgot-password', validatePasswordReset, forgotPassword);
 router.put('/reset-password', validateNewPassword, resetPassword);
 router.get('/verify-email/:token', verifyEmail);
 router.post('/resend-verification', resendVerification);
+
+// Development only test route (must be before protect middleware)
+router.post('/test-password', testPassword);
 
 // Google OAuth routes
 router.get('/google', googleAuth);

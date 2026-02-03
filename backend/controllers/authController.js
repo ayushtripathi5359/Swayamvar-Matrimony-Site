@@ -23,128 +23,66 @@ const generateTokens = (id) => {
 const sendTokenResponse = (user, statusCode, res) => {
   const { accessToken, refreshToken } = generateTokens(user._id);
   
-  // Save refresh token to user
-  user.refreshTokens.push({
-    token: refreshToken,
-    createdAt: new Date()
+  // Save refresh token to user using findByIdAndUpdate to avoid triggering pre-save hook
+  // This prevents issues with password field when user document doesn't have password loaded
+  User.findByIdAndUpdate(user._id, {
+    $push: {
+      refreshTokens: {
+        token: refreshToken,
+        createdAt: new Date()
+      }
+    }
+  }).exec().catch(err => {
+    console.log('Error saving refresh token:', err.message);
   });
-  user.save();
   
-  // Remove password from output
-  user.password = undefined;
+  // Create a clean copy of user object for response (don't modify original)
+  const userResponse = user.toObject();
+  delete userResponse.password;
   
   res.status(statusCode).json({
     success: true,
     accessToken,
     refreshToken,
-    user
+    user: userResponse
   });
 };
 
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
-const register = asyncHandler(async (req, res, next) => {
-  try {
-    const { email, password, profile } = req.body;
-    
-    console.log('Registration attempt for:', email);
-    console.log('Profile data:', profile);
-    
-    // Create user
-    const user = await User.create({
-      email,
-      password,
-      authProvider: 'local'
-    });
-    
-    console.log('User created successfully:', user._id);
-    
-    // Create basic profile if profile data is provided
-    if (profile && (profile.firstName || profile.lastName)) {
-      try {
-        const newProfile = await Profile.create({
-          userId: user._id,
-          firstName: profile.firstName || '',
-          middleName: profile.middleName || '',
-          lastName: profile.lastName || '',
-          emailId: email
-        });
-        console.log('Profile created successfully:', newProfile._id);
-      } catch (profileError) {
-        console.log('Profile creation failed during registration:', profileError.message);
-        // Continue with user registration even if profile creation fails
-      }
-    }
-    
-    // Set user as email verified for manual registration (skip email verification in development)
-    if (process.env.NODE_ENV === 'development') {
-      user.isEmailVerified = true;
-      await user.save();
-      console.log('Email verification skipped in development mode');
-      
-      // Send token response for immediate authentication
-      sendTokenResponse(user, 201, res);
-      return;
-    }
-    
-    // Generate email verification token for production
+const register = asyncHandler(async (req, res) => {
+  const { email, password, profile } = req.body;
+
+  // 1. Check if user exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) return res.status(400).json({ message: 'User exists' });
+
+  // 2. Create INSTANCE (This puts the plain-text password into memory)
+  const user = new User({
+    email,
+    password, // Plain text here, will be hashed by pre-save hook
+    authProvider: 'local'
+  });
+
+  // 3. Set all additional fields on the instance BEFORE saving
+  if (process.env.NODE_ENV === 'development') {
+    user.isEmailVerified = true;
+  } else {
     const verificationToken = crypto.randomBytes(20).toString('hex');
-    user.emailVerificationToken = crypto
-      .createHash('sha256')
-      .update(verificationToken)
-      .digest('hex');
-    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-    
-    await user.save();
-    
-    // Create verification URL
-    const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
-    
-    const message = `
-      Welcome to Swayamvar! Please verify your email address by clicking the link below:
-      
-      ${verificationUrl}
-      
-      This link will expire in 24 hours.
-      
-      If you did not create an account, please ignore this email.
-    `;
-    
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Verify Your Email Address - Swayamvar',
-        message
-      });
-      
-      // Send token response for immediate authentication
-      sendTokenResponse(user, 201, res);
-    } catch (error) {
-      console.log('Email sending failed:', error.message);
-      
-      // In development, allow registration to succeed even if email fails
-      if (process.env.NODE_ENV === 'development') {
-        // Send token response for immediate authentication
-        sendTokenResponse(user, 201, res);
-      } else {
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpires = undefined;
-        await user.save();
-        
-        return res.status(500).json({
-          success: false,
-          message: 'User created but email could not be sent. Please contact support.'
-        });
-      }
-    }
-  } catch (error) {
-    console.error('Registration error:', error);
-    return res.status(400).json({
-      success: false,
-      message: error.message || 'Registration failed'
-    });
+    user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
   }
+
+  // 4. SAVE ONCE. This triggers your pre-save debug logs and bcrypt hashing.
+  await user.save(); 
+
+  // 5. Create profile separately
+  if (profile) {
+    await Profile.create({ userId: user._id, ...profile, emailId: email });
+  }
+
+  sendTokenResponse(user, 201, res);
 });
 
 // @desc    Login user
@@ -153,10 +91,73 @@ const register = asyncHandler(async (req, res, next) => {
 const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
   
-  // Check for user
+  console.log('=== LOGIN DEBUG START ===');
+  console.log('Login attempt for email:', email);
+  console.log('Password provided:', password ? 'Yes' : 'No');
+  console.log('Password length:', password ? password.length : 0);
+  
+  // Validate input
+  if (!email || !password) {
+    console.log('Login failed: Missing email or password');
+    console.log('=== LOGIN DEBUG END ===');
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide email and password'
+    });
+  }
+  
+  // Check for user - MUST include .select('+password') because password has select: false
   const user = await User.findOne({ email }).select('+password');
   
+  console.log('User found:', user ? 'Yes' : 'No');
+  
+  if (user) {
+    console.log('User ID:', user._id);
+    console.log('User has password field:', 'password' in user);
+    console.log('Password from DB exists:', !!user.password);
+    console.log('Password from DB length:', user.password ? user.password.length : 0);
+    console.log('Auth provider:', user.authProvider);
+    console.log('Password hash (first 30 chars):', user.password ? user.password.substring(0, 30) : 'N/A');
+    console.log('Is email verified:', user.isEmailVerified);
+    console.log('Login attempts:', user.loginAttempts);
+    console.log('Is locked:', user.isLocked);
+    
+    // Test bcrypt manually for debugging
+    if (user.password) {
+      try {
+        console.log('Testing bcrypt manually...');
+        const bcrypt = require('bcryptjs');
+        
+        // Test with a known hash
+        const testHash = await bcrypt.hash('test123', 12);
+        console.log('Test hash created successfully:', testHash.substring(0, 20));
+        
+        // Compare with wrong password first
+        const wrongCompare = await bcrypt.compare('wrongpassword', user.password);
+        console.log('Wrong password comparison:', wrongCompare);
+        
+        // Compare with actual password
+        console.log('Comparing actual password...');
+        console.log('Plain text password:', password);
+        console.log('Stored hash to compare with:', user.password.substring(0, 30));
+        
+        const directCompare = await bcrypt.compare(password, user.password);
+        console.log('Direct bcrypt comparison result:', directCompare);
+        
+        // Also test the model method
+        console.log('Testing model comparePassword method...');
+        const modelCompare = await user.comparePassword(password);
+        console.log('Model method comparison result:', modelCompare);
+        
+      } catch (bcryptError) {
+        console.log('Bcrypt test error:', bcryptError.message);
+      }
+    }
+  }
+  
   if (!user) {
+    console.log('Login failed: User not found');
+    console.log('=== LOGIN DEBUG END ===');
     return res.status(401).json({
       success: false,
       message: 'Invalid credentials'
@@ -165,31 +166,52 @@ const login = asyncHandler(async (req, res, next) => {
   
   // Check if account is locked
   if (user.isLocked) {
+    console.log('Login failed: Account locked until:', user.lockUntil);
+    console.log('=== LOGIN DEBUG END ===');
     return res.status(401).json({
       success: false,
       message: 'Account is temporarily locked due to multiple failed login attempts'
     });
   }
   
-  // Check password
-  const isMatch = await user.comparePassword(password);
-  
-  if (!isMatch) {
-    await user.incLoginAttempts();
+  // Check if user has a password (OAuth users might not)
+  if (!user.password && user.authProvider === 'local') {
+    console.log('Login failed: Local user has no password');
+    console.log('=== LOGIN DEBUG END ===');
     return res.status(401).json({
       success: false,
       message: 'Invalid credentials'
     });
   }
   
+  // Check password using model method
+  console.log('Using model comparePassword method...');
+  const isMatch = await user.comparePassword(password);
+  console.log('Password comparison result:', isMatch);
+  
+  if (!isMatch) {
+    console.log('Login failed: Password mismatch');
+    await user.incLoginAttempts();
+    console.log('=== LOGIN DEBUG END ===');
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid credentials'
+    });
+  }
+  
+  console.log('Login successful');
+  console.log('=== LOGIN DEBUG END ===');
+  
   // Reset login attempts on successful login
   if (user.loginAttempts > 0) {
     await user.resetLoginAttempts();
   }
   
-  // Update last login
-  user.lastLogin = new Date();
-  await user.save();
+  // Update last login WITHOUT saving the entire user document
+  // This avoids triggering the pre-save hook which could cause issues
+  await User.findByIdAndUpdate(user._id, {
+    lastLogin: new Date()
+  });
   
   sendTokenResponse(user, 200, res);
 });
@@ -525,6 +547,91 @@ const getMe = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Test password functionality (development only)
+// @route   POST /api/auth/test-password
+// @access  Public
+const testPassword = asyncHandler(async (req, res, next) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return res.status(404).json({
+      success: false,
+      message: 'Not found'
+    });
+  }
+  
+  const { email, password } = req.body;
+  
+  console.log('=== PASSWORD TEST DEBUG START ===');
+  console.log('Testing password for email:', email);
+  console.log('Password to test:', password);
+  
+  try {
+    // Find user with password field
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user) {
+      console.log('User not found');
+      console.log('=== PASSWORD TEST DEBUG END ===');
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    console.log('User found:', user._id);
+    console.log('User has password field:', 'password' in user);
+    console.log('Password exists:', !!user.password);
+    console.log('Password length:', user.password ? user.password.length : 0);
+    console.log('Password hash (first 30 chars):', user.password ? user.password.substring(0, 30) : 'N/A');
+    
+    // Test bcrypt directly
+    const bcrypt = require('bcryptjs');
+    
+    // Create a test hash
+    console.log('Creating test hash...');
+    const testHash = await bcrypt.hash(password, 12);
+    console.log('Test hash created:', testHash.substring(0, 30));
+    
+    // Compare with test hash
+    const testCompare = await bcrypt.compare(password, testHash);
+    console.log('Test hash comparison:', testCompare);
+    
+    // Compare with actual stored password
+    if (user.password) {
+      const actualCompare = await bcrypt.compare(password, user.password);
+      console.log('Actual password comparison:', actualCompare);
+      
+      // Test model method
+      const modelCompare = await user.comparePassword(password);
+      console.log('Model method comparison:', modelCompare);
+    }
+    
+    console.log('=== PASSWORD TEST DEBUG END ===');
+    
+    res.status(200).json({
+      success: true,
+      message: 'Password test completed',
+      results: {
+        userFound: true,
+        hasPassword: !!user.password,
+        passwordLength: user.password ? user.password.length : 0,
+        testHashWorks: testCompare,
+        actualPasswordWorks: user.password ? await bcrypt.compare(password, user.password) : false,
+        modelMethodWorks: user.password ? await user.comparePassword(password) : false
+      }
+    });
+    
+  } catch (error) {
+    console.log('Password test error:', error);
+    console.log('=== PASSWORD TEST DEBUG END ===');
+    
+    res.status(500).json({
+      success: false,
+      message: 'Password test failed',
+      error: error.message
+    });
+  }
+});
+
 // @desc    Google OAuth login
 // @route   GET /api/auth/google
 // @access  Public
@@ -574,6 +681,7 @@ module.exports = {
   verifyEmail,
   resendVerification,
   getMe,
+  testPassword,
   googleAuth,
   googleCallback
 };
