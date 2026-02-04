@@ -19,14 +19,14 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script_stop: true
+          timeout: 120s
           script: |
+            set -e
             cd /var/www/Swayamvar
-
             git pull origin main
-
             cd backend
             npm install
-
             pm2 restart swayamvar-backend || pm2 start server.js --name swayamvar-backend
-
             pm2 save
