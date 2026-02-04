@@ -150,6 +150,11 @@ const profileSchema = new mongoose.Schema({
   fathersBusinessLocation: String,
   fathersDesignation: String,
   fathersCompanyName: String,
+  fathersWhatsappNumber: String,
+  fathersCountryCode: {
+    type: String,
+    default: '+91'
+  },
   
   mothersFullName: {
     type: String
@@ -161,6 +166,11 @@ const profileSchema = new mongoose.Schema({
   mothersBusinessLocation: String,
   mothersDesignation: String,
   mothersCompanyName: String,
+  mothersWhatsappNumber: String,
+  mothersCountryCode: {
+    type: String,
+    default: '+91'
+  },
   
   brothers: [{
     name: String,
@@ -206,6 +216,11 @@ const profileSchema = new mongoose.Schema({
   
   // Photos
   photos: {
+    profilePhoto: {
+      url: String,
+      publicId: String
+    },
+    // Keep legacy fields for backward compatibility
     western: {
       url: String,
       publicId: String

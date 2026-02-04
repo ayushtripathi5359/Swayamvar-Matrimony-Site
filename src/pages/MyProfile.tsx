@@ -263,12 +263,16 @@ interface ProfileData {
   fathersBusinessLocation?: string;
   fathersDesignation?: string;
   fathersCompanyName?: string;
+  fathersWhatsappNumber?: string;
+  fathersCountryCode?: string;
   mothersFullName?: string;
   mothersOccupation?: string;
   mothersBusinessName?: string;
   mothersBusinessLocation?: string;
   mothersDesignation?: string;
   mothersCompanyName?: string;
+  mothersWhatsappNumber?: string;
+  mothersCountryCode?: string;
   brothers?: Array<{
     name?: string;
     occupation?: string;
@@ -303,6 +307,7 @@ interface ProfileData {
   preferredLocation?: string[];
   minAnnualIncome?: string;
   photos?: { 
+    profilePhoto?: { url?: string };
     western?: { url?: string }; 
     traditional?: { url?: string }; 
   };
@@ -323,9 +328,7 @@ const MyProfile = () => {
   // Photo upload states
   const [showCropper, setShowCropper] = useState(false);
   const [originalImage, setOriginalImage] = useState(null);
-  const [cropperMode, setCropperMode] = useState<'western' | 'traditional' | null>(null);
-  const [westernPhoto, setWesternPhoto] = useState<string | null>(null);
-  const [traditionalPhoto, setTraditionalPhoto] = useState<string | null>(null);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   // Dropdown options matching StepwiseRegistration
   const dropdownOptions = {
@@ -410,11 +413,15 @@ const MyProfile = () => {
         setProfile(data.profile || data);
         
         // Set photo states from profile data
-        if (data.profile?.photos?.western?.url || data.photos?.western?.url) {
-          setWesternPhoto(data.profile?.photos?.western?.url || data.photos?.western?.url);
-        }
-        if (data.profile?.photos?.traditional?.url || data.photos?.traditional?.url) {
-          setTraditionalPhoto(data.profile?.photos?.traditional?.url || data.photos?.traditional?.url);
+        if (data.profile?.photos?.western?.url || data.profile?.photos?.traditional?.url || data.profile?.photos?.profilePhoto?.url) {
+          setProfilePhoto(
+            data.profile?.photos?.profilePhoto?.url || 
+            data.profile?.photos?.western?.url || 
+            data.profile?.photos?.traditional?.url ||
+            data.photos?.profilePhoto?.url ||
+            data.photos?.western?.url || 
+            data.photos?.traditional?.url
+          );
         }
       } catch (error) {
         console.error("Profile fetch error:", error);
@@ -489,11 +496,11 @@ const MyProfile = () => {
           errors.push(`Enter a valid ${country?.country || 'phone'} number (${lengthText} digits)`);
         }
         
-        // Validate dynamic social media links
+        // Validate dynamic social media links (none required)
         (editData.socialMediaLinks || []).forEach((link, index) => {
-          if (!link.url?.trim()) {
-            errors.push(`Social media profile ${index + 1} URL is required`);
-          } else {
+          if (link.platform && !link.url?.trim()) {
+            errors.push(`Social media profile ${index + 1} URL is required when platform is selected`);
+          } else if (link.url?.trim()) {
             let isValid = false;
             switch (link.platform) {
               case 'LinkedIn':
@@ -523,15 +530,6 @@ const MyProfile = () => {
         
         if (editData.facebookHandle && !validateFacebookURL(editData.facebookHandle)) {
           errors.push('Please enter a valid Facebook profile URL');
-        }
-        
-        // Check if at least one social media profile is provided
-        const hasSocialMedia = (editData.socialMediaLinks || []).length > 0 || 
-                              editData.linkedinHandle?.trim() || 
-                              editData.instagramHandle?.trim() || 
-                              editData.facebookHandle?.trim();
-        if (!hasSocialMedia) {
-          errors.push('At least one social media profile is required');
         }
         
         if (errors.length > 0) {
@@ -598,13 +596,12 @@ const MyProfile = () => {
   };
 
   // Photo upload handlers
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, photoType: 'western' | 'traditional') => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setOriginalImage(reader.result as string);
-        setCropperMode(photoType);
         setShowCropper(true);
       };
       reader.readAsDataURL(file);
@@ -612,45 +609,30 @@ const MyProfile = () => {
   };
 
   const handleCropComplete = (croppedImageUrl: string) => {
-    if (cropperMode === 'western') {
-      setWesternPhoto(croppedImageUrl);
-      // Save with the new western photo
-      savePhotoUpdate(croppedImageUrl, traditionalPhoto);
-    } else if (cropperMode === 'traditional') {
-      setTraditionalPhoto(croppedImageUrl);
-      // Save with the new traditional photo
-      savePhotoUpdate(westernPhoto, croppedImageUrl);
-    }
+    setProfilePhoto(croppedImageUrl);
+    // Save with the new photo
+    savePhotoUpdate(croppedImageUrl);
     setShowCropper(false);
     setOriginalImage(null);
-    setCropperMode(null);
   };
 
   const handleCropCancel = () => {
     setShowCropper(false);
     setOriginalImage(null);
-    setCropperMode(null);
   };
 
-  const removePhoto = (photoType: 'western' | 'traditional') => {
-    if (photoType === 'western') {
-      setWesternPhoto(null);
-      // Save with western photo removed
-      savePhotoUpdate(null, traditionalPhoto);
-    } else if (photoType === 'traditional') {
-      setTraditionalPhoto(null);
-      // Save with traditional photo removed
-      savePhotoUpdate(westernPhoto, null);
-    }
+  const removePhoto = () => {
+    setProfilePhoto(null);
+    // Save with photo removed
+    savePhotoUpdate(null);
   };
 
-  const savePhotoUpdate = async (newWesternPhoto?: string | null, newTraditionalPhoto?: string | null) => {
+  const savePhotoUpdate = async (newPhoto?: string | null) => {
     try {
       setSaving(true);
       const photoData = {
         photos: {
-          western: newWesternPhoto ? { url: newWesternPhoto, publicId: '' } : undefined,
-          traditional: newTraditionalPhoto ? { url: newTraditionalPhoto, publicId: '' } : undefined
+          profilePhoto: newPhoto ? { url: newPhoto, publicId: '' } : undefined
         }
       };
 
@@ -661,13 +643,13 @@ const MyProfile = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update photos");
+        throw new Error(errorData.message || "Failed to update photo");
       }
 
       const data = await response.json();
       setProfile(data.profile || data);
     } catch (error) {
-      console.error("Error saving photos:", error);
+      console.error("Error saving photo:", error);
       alert("Failed to save photo changes. Please try again.");
     } finally {
       setSaving(false);
@@ -832,8 +814,8 @@ const MyProfile = () => {
                   <div className="relative mb-6">
                     <div className="w-36 h-36 mx-auto rounded-[24px] overflow-hidden shadow-2xl ring-4 ring-white relative group">
                       <img
-                        src={traditionalPhoto || 
-                             westernPhoto || 
+                        src={profilePhoto || 
+                             profile?.photos?.profilePhoto?.url ||
                              profile?.photos?.traditional?.url || 
                              profile?.photos?.western?.url || 
                              profile?.profilePhotos?.traditional || 
@@ -845,63 +827,26 @@ const MyProfile = () => {
                       
                       {/* Photo Upload Overlay */}
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <div className="flex gap-2">
-                          <label className="cursor-pointer bg-white/90 hover:bg-white p-2 rounded-full transition-colors">
-                            <Camera size={20} className="text-slate-700" />
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*" 
-                              onChange={(e) => handleFileUpload(e, 'traditional')} 
-                            />
-                          </label>
-                          <label className="cursor-pointer bg-white/90 hover:bg-white p-2 rounded-full transition-colors">
-                            <Upload size={20} className="text-slate-700" />
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*" 
-                              onChange={(e) => handleFileUpload(e, 'western')} 
-                            />
-                          </label>
-                        </div>
+                        <label className="cursor-pointer bg-white/90 hover:bg-white p-3 rounded-full transition-colors">
+                          <Camera size={24} className="text-slate-700" />
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={handleFileUpload} 
+                          />
+                        </label>
                       </div>
                     </div>
                     
-                    {/* Photo Type Indicator */}
-                    <div className="flex justify-center mt-2 gap-2">
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        traditionalPhoto || profile?.photos?.traditional?.url || profile?.profilePhotos?.traditional
-                          ? 'bg-orange-100 text-orange-600' 
-                          : 'bg-slate-100 text-slate-400'
-                      }`}>
-                        Traditional
-                      </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        westernPhoto || profile?.photos?.western?.url || profile?.profilePhotos?.western
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-slate-100 text-slate-400'
-                      }`}>
-                        Western
-                      </div>
-                    </div>
-                    
-                    {/* Photo Management Buttons */}
-                    <div className="flex justify-center mt-3 gap-2">
-                      {(traditionalPhoto || profile?.photos?.traditional?.url || profile?.profilePhotos?.traditional) && (
+                    {/* Photo Management Button */}
+                    <div className="flex justify-center mt-3">
+                      {(profilePhoto || profile?.photos?.profilePhoto?.url || profile?.photos?.traditional?.url || profile?.photos?.western?.url || profile?.profilePhotos?.traditional || profile?.profilePhotos?.western) && (
                         <button
-                          onClick={() => removePhoto('traditional')}
-                          className="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-full transition-colors"
+                          onClick={removePhoto}
+                          className="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-full transition-colors"
                         >
-                          Remove Traditional
-                        </button>
-                      )}
-                      {(westernPhoto || profile?.photos?.western?.url || profile?.profilePhotos?.western) && (
-                        <button
-                          onClick={() => removePhoto('western')}
-                          className="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-full transition-colors"
-                        >
-                          Remove Western
+                          Remove Photo
                         </button>
                       )}
                     </div>
@@ -921,7 +866,7 @@ const MyProfile = () => {
                         type="text"
                         value={editData.middleName || ''}
                         onChange={(value) => handleInputChange('middleName', value)}
-                        placeholder="Enter your middle name (optional)"
+                        placeholder="Enter your middle name "
                       />
                       <EditableField
                         label="Last Name"
@@ -1215,90 +1160,110 @@ const MyProfile = () => {
                         <div className="space-y-4">
                           <div className="text-center">
                             <h4 className="text-md font-bold text-slate-900 mb-2">Social Media Profiles</h4>
-                            <p className="text-sm text-slate-600">Add up to 3 social media profiles (at least 1 required)</p>
+                            <p className="text-sm text-slate-600">Add up to 3 social media profiles (optional)</p>
                           </div>
                           
                           {/* Dynamic Social Media Links */}
                           <div className="space-y-4">
-                            {(editData.socialMediaLinks || []).map((link, index) => (
-                              <div key={index} className="bg-slate-50 rounded-lg p-4 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <h5 className="text-sm font-bold text-slate-700">Profile {index + 1}</h5>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newLinks = (editData.socialMediaLinks || []).filter((_, i) => i !== index);
-                                      handleInputChange('socialMediaLinks', newLinks);
-                                    }}
-                                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
-                                  >
-                                    <X size={16} />
-                                  </button>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  {/* Platform Dropdown */}
-                                  <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Platform</label>
-                                    <select
-                                      value={link.platform}
-                                      onChange={(e) => {
-                                        const newLinks = [...(editData.socialMediaLinks || [])];
-                                        newLinks[index] = { ...link, platform: e.target.value as 'LinkedIn' | 'Instagram' | 'Facebook' };
+                            {(editData.socialMediaLinks || []).map((link, index) => {
+                              // Get available platforms (exclude already selected ones)
+                              const selectedPlatforms = (editData.socialMediaLinks || []).map(l => l.platform).filter(p => p);
+                              const availablePlatforms = ['LinkedIn', 'Instagram', 'Facebook'].filter(platform => 
+                                !selectedPlatforms.includes(platform) || platform === link.platform
+                              );
+                              
+                              return (
+                                <div key={index} className="bg-slate-50 rounded-lg p-4 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <h5 className="text-sm font-bold text-slate-700">Profile {index + 1}</h5>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newLinks = (editData.socialMediaLinks || []).filter((_, i) => i !== index);
                                         handleInputChange('socialMediaLinks', newLinks);
                                       }}
-                                      className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm"
+                                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
                                     >
-                                      <option value="">Select Platform</option>
-                                      <option value="LinkedIn">🔗 LinkedIn</option>
-                                      <option value="Instagram">📷 Instagram</option>
-                                      <option value="Facebook">👥 Facebook</option>
-                                    </select>
+                                      <X size={16} />
+                                    </button>
                                   </div>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {/* Platform Dropdown */}
+                                    <div className="space-y-2">
+                                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Platform</label>
+                                      <select
+                                        value={link.platform}
+                                        onChange={(e) => {
+                                          const newLinks = [...(editData.socialMediaLinks || [])];
+                                          newLinks[index] = { ...link, platform: e.target.value as 'LinkedIn' | 'Instagram' | 'Facebook', url: '' };
+                                          handleInputChange('socialMediaLinks', newLinks);
+                                        }}
+                                        className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm"
+                                      >
+                                        <option value="">Select Platform</option>
+                                        {availablePlatforms.map(platform => (
+                                          <option key={platform} value={platform}>
+                                            {platform === 'LinkedIn' && '🔗 LinkedIn'}
+                                            {platform === 'Instagram' && '📷 Instagram'}
+                                            {platform === 'Facebook' && '📘 Facebook'}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
 
-                                  {/* URL Input */}
-                                  <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Profile URL</label>
-                                    <input
-                                      type="url"
-                                      value={link.url}
-                                      onChange={(e) => {
-                                        const newLinks = [...(editData.socialMediaLinks || [])];
-                                        newLinks[index] = { ...link, url: e.target.value };
-                                        handleInputChange('socialMediaLinks', newLinks);
-                                      }}
-                                      placeholder={
-                                        link.platform === 'LinkedIn' ? 'https://linkedin.com/in/yourname' :
-                                        link.platform === 'Instagram' ? 'https://instagram.com/yourname' :
-                                        link.platform === 'Facebook' ? 'https://facebook.com/yourname' :
-                                        'Enter profile URL'
-                                      }
-                                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm transition-colors ${
-                                        link.url && (
-                                          (link.platform === 'LinkedIn' && !validateLinkedInURL(link.url)) ||
-                                          (link.platform === 'Instagram' && !validateInstagramURL(link.url)) ||
-                                          (link.platform === 'Facebook' && !validateFacebookURL(link.url))
-                                        ) ? 'border-red-300 bg-red-50' : 'border-slate-200 hover:border-slate-300'
-                                      }`}
-                                    />
-                                    {link.url && (
-                                      (link.platform === 'LinkedIn' && !validateLinkedInURL(link.url)) ||
-                                      (link.platform === 'Instagram' && !validateInstagramURL(link.url)) ||
-                                      (link.platform === 'Facebook' && !validateFacebookURL(link.url))
-                                    ) && (
-                                      <p className="text-xs text-red-500">Please enter a valid {link.platform} URL</p>
-                                    )}
+                                    {/* URL Input */}
+                                    <div className="space-y-2">
+                                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Profile URL</label>
+                                      <input
+                                        type="url"
+                                        value={link.url}
+                                        onChange={(e) => {
+                                          const newLinks = [...(editData.socialMediaLinks || [])];
+                                          newLinks[index] = { ...link, url: e.target.value };
+                                          handleInputChange('socialMediaLinks', newLinks);
+                                        }}
+                                        placeholder={
+                                          link.platform === 'LinkedIn' ? 'https://linkedin.com/in/yourname' :
+                                          link.platform === 'Instagram' ? 'https://instagram.com/yourname' :
+                                          link.platform === 'Facebook' ? 'https://facebook.com/yourname' :
+                                          'Enter profile URL'
+                                        }
+                                        disabled={!link.platform}
+                                        className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm transition-colors ${
+                                          link.url && (
+                                            (link.platform === 'LinkedIn' && !validateLinkedInURL(link.url)) ||
+                                            (link.platform === 'Instagram' && !validateInstagramURL(link.url)) ||
+                                            (link.platform === 'Facebook' && !validateFacebookURL(link.url))
+                                          ) ? 'border-red-300 bg-red-50' : 'border-slate-200 hover:border-slate-300'
+                                        }`}
+                                      />
+                                      {link.url && (
+                                        (link.platform === 'LinkedIn' && !validateLinkedInURL(link.url)) ||
+                                        (link.platform === 'Instagram' && !validateInstagramURL(link.url)) ||
+                                        (link.platform === 'Facebook' && !validateFacebookURL(link.url))
+                                      ) && (
+                                        <p className="text-xs text-red-500">Please enter a valid {link.platform} URL</p>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
 
                             {/* Add Social Media Button */}
                             {(editData.socialMediaLinks || []).length < 3 && (
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const newLinks = [...(editData.socialMediaLinks || []), { platform: 'LinkedIn' as const, url: '' }];
+                                  // Find the first available platform
+                                  const selectedPlatforms = (editData.socialMediaLinks || []).map(l => l.platform).filter(p => p);
+                                  const availablePlatforms = ['LinkedIn', 'Instagram', 'Facebook'].filter(platform => 
+                                    !selectedPlatforms.includes(platform)
+                                  );
+                                  const defaultPlatform = availablePlatforms[0] || '';
+                                  
+                                  const newLinks = [...(editData.socialMediaLinks || []), { platform: defaultPlatform as 'LinkedIn' | 'Instagram' | 'Facebook', url: '' }];
                                   handleInputChange('socialMediaLinks', newLinks);
                                 }}
                                 className="w-full bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 text-slate-500 hover:text-[#ED9B59] hover:border-[#ED9B59] transition-all flex items-center justify-center gap-2 font-semibold"
@@ -1772,6 +1737,32 @@ const MyProfile = () => {
                                 />
                               </>
                             )}
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Father's WhatsApp Number</label>
+                              <div className="flex gap-2">
+                                <select
+                                  value={editData.fathersCountryCode || '+91'}
+                                  onChange={(e) => handleInputChange('fathersCountryCode', e.target.value)}
+                                  className="w-32 p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm"
+                                >
+                                  {countryCodes.map((country) => (
+                                    <option key={country.code} value={country.code}>
+                                      {country.flag} {country.code}
+                                    </option>
+                                  ))}
+                                </select>
+                                <input
+                                  type="tel"
+                                  value={editData.fathersWhatsappNumber || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, '');
+                                    handleInputChange('fathersWhatsappNumber', value);
+                                  }}
+                                  placeholder="Enter father's WhatsApp number"
+                                  className="flex-1 p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm"
+                                />
+                              </div>
+                            </div>
                           </div>
 
                           <div className="space-y-4">
@@ -1827,6 +1818,32 @@ const MyProfile = () => {
                                 />
                               </>
                             )}
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Mother's WhatsApp Number</label>
+                              <div className="flex gap-2">
+                                <select
+                                  value={editData.mothersCountryCode || '+91'}
+                                  onChange={(e) => handleInputChange('mothersCountryCode', e.target.value)}
+                                  className="w-32 p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm"
+                                >
+                                  {countryCodes.map((country) => (
+                                    <option key={country.code} value={country.code}>
+                                      {country.flag} {country.code}
+                                    </option>
+                                  ))}
+                                </select>
+                                <input
+                                  type="tel"
+                                  value={editData.mothersWhatsappNumber || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, '');
+                                    handleInputChange('mothersWhatsappNumber', value);
+                                  }}
+                                  placeholder="Enter mother's WhatsApp number"
+                                  className="flex-1 p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED9B59] focus:border-transparent text-slate-700 bg-white shadow-sm"
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -1963,6 +1980,12 @@ const MyProfile = () => {
                               <p className="text-xs font-medium text-blue-800">Occupation</p>
                               <p className="text-sm text-blue-900">{getFatherOccupationDetails()}</p>
                             </div>
+                            {profile.fathersWhatsappNumber && (
+                              <div className="mt-2 p-3 bg-slate-50 rounded-md">
+                                <p className="text-xs font-medium text-slate-600">Contact</p>
+                                <p className="text-sm text-slate-800">📱 {profile.fathersCountryCode || '+91'} {profile.fathersWhatsappNumber}</p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Mother */}
@@ -1978,6 +2001,12 @@ const MyProfile = () => {
                               <p className="text-xs font-medium text-pink-800">Occupation</p>
                               <p className="text-sm text-pink-900">{getMotherOccupationDetails()}</p>
                             </div>
+                            {profile.mothersWhatsappNumber && (
+                              <div className="mt-2 p-3 bg-slate-50 rounded-md">
+                                <p className="text-xs font-medium text-slate-600">Contact</p>
+                                <p className="text-sm text-slate-800">📱 {profile.mothersCountryCode || '+91'} {profile.mothersWhatsappNumber}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
 

@@ -45,6 +45,7 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
     profile?.occupation || "Graphic & UI/UX designer";
 
   const photoSrc =
+    profile?.photos?.profilePhoto?.url ||
     profile?.photos?.traditional?.url ||
     profile?.photos?.western?.url ||
     profile?.profilePhotos?.traditional ||

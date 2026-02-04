@@ -8,6 +8,7 @@ interface InterestProfile {
   fullName?: string;
   firstName?: string;
   lastName?: string;
+  middleName?: string;
   age?: string;
   occupation?: string;
   jobLocation?: string;
@@ -50,9 +51,31 @@ export default function InboxListingPage() {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [stats, setStats] = useState<InterestStats | null>(null);
   const [activeTab, setActiveTab] = useState("received");
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Helper function to get display name
+  const getDisplayName = (profile?: InterestProfile): string => {
+    if (!profile) return 'Unknown User';
+    
+    // Try fullName first
+    if (profile.fullName && profile.fullName.trim()) {
+      return profile.fullName.trim();
+    }
+    
+    // Fallback to firstName + middleName + lastName
+    const nameParts = [
+      profile.firstName?.trim(),
+      profile.middleName?.trim(), 
+      profile.lastName?.trim()
+    ].filter(Boolean);
+    
+    if (nameParts.length > 0) {
+      return nameParts.join(' ');
+    }
+    
+    return 'Unknown User';
+  };
 
   // Fetch interests and stats
   useEffect(() => {
@@ -69,12 +92,28 @@ export default function InboxListingPage() {
         }
 
         // Fetch interests based on active tab
-        const endpoint = activeTab === "received" || activeTab === "accepted" || activeTab === "declined"
-          ? "/api/interests/received"
-          : "/api/interests/sent";
+        let endpoint: string;
+        let status: string = "";
         
-        const status = activeTab === "received" ? "sent" : activeTab;
-        const response = await apiFetch(`${endpoint}?status=${status}&limit=50`);
+        if (activeTab === "received") {
+          endpoint = "/api/interests/received";
+          status = "sent"; // Show pending received interests
+        } else if (activeTab === "accepted") {
+          endpoint = "/api/interests/received";
+          status = "accepted"; // Show accepted received interests
+        } else if (activeTab === "declined") {
+          endpoint = "/api/interests/received";
+          status = "declined"; // Show declined received interests
+        } else if (activeTab === "my-accepted") {
+          endpoint = "/api/interests/sent";
+          status = "accepted"; // Show sent interests that were accepted
+        } else {
+          endpoint = "/api/interests/sent";
+          status = ""; // Show all sent interests
+        }
+        
+        const queryParams = status ? `?status=${status}&limit=50` : "?limit=50";
+        const response = await apiFetch(`${endpoint}${queryParams}`);
         
         if (!response.ok) {
           throw new Error("Failed to fetch interests");
@@ -156,18 +195,9 @@ export default function InboxListingPage() {
   const counts = {
     received: stats?.received.pending || 0,
     accepted: stats?.received.accepted || 0,
-    sent: stats?.sent.pending || 0,
+    sent: stats?.sent.total || 0,
     declined: stats?.received.declined || 0,
   };
-
-  /* ---------------- FILTERED LIST ---------------- */
-  const filteredInterests = interests.filter(interest => {
-    const profile = activeTab === "sent" ? interest.receiverProfileId : interest.senderProfileId;
-    const name = profile?.fullName || `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || '';
-    
-    return name.toLowerCase().includes(search.toLowerCase()) ||
-           interest._id.includes(search);
-  });
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -191,66 +221,38 @@ export default function InboxListingPage() {
         <div className="max-w-[1300px] mx-auto px-4">
 
           {/* TITLE */}
-           <div className="text-center mb-10">
-            {/* Page Title */}
-            <div className="mb-8">
-              <h1 className="font-bold text-[28px] sm:text-[34px] lg:text-[42px] leading-tight tracking-tight text-slate-900 mb-2">
-                My <span className="text-[#ED9B59]">Matches</span>
-              </h1>
-              <p className="text-slate-600 text-base lg:text-lg">
-                Manage your personal information and preferences
-              </p>
-            </div>
+          <div className="text-center mb-8">
+            <h1 className="font-bold text-[28px] sm:text-[34px] lg:text-[42px] leading-tight tracking-tight text-slate-900 mb-2">
+              My <span className="text-[#ED9B59]">Inbox</span>
+            </h1>
+            <p className="text-slate-600 text-base lg:text-lg">
+              Manage your interests and connections
+            </p>
           </div>
 
           {/* TABS */}
           <div className="flex justify-center mb-8">
-            <div className="flex bg-[#F4F5FF] rounded-full p-1 gap-1">
+            <div className="flex bg-[#F4F5FF] rounded-full p-1 gap-1 flex-wrap">
               {[
-                ["received", `Received (${counts.received})`],
-                ["accepted", `Accepted (${counts.accepted})`],
-                ["sent", `Sent (${counts.sent})`],
-                ["declined", `Declined (${counts.declined})`],
+                ["received", `📥 Received (${counts.received})`],
+                ["sent", `📤 Sent (${counts.sent})`],
+                ["my-accepted", `💚 My Accepted (${stats?.sent?.accepted || 0})`],
+                ["accepted", `✅ I Accepted (${counts.accepted})`],
+                ["declined", `❌ Declined (${counts.declined})`],
               ].map(([key, label]) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`px-4 py-2 text-sm rounded-full transition ${
+                  className={`px-4 py-2 text-sm rounded-full transition whitespace-nowrap ${
                     activeTab === key
                       ? "bg-white text-[#5B6CFF] shadow font-medium"
-                      : "text-gray-500"
+                      : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* FILTER BAR */}
-          <div className="bg-white shadow-sm rounded-full px-4 py-3 flex flex-wrap gap-3 items-center justify-center mb-12">
-            <input
-              type="text"
-              placeholder="Search by Name or ID"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="px-4 py-2 rounded-full border text-sm outline-none"
-            />
-
-            {["Location", "Education", "Profession", "Last Active"].map(
-              (item, i) => (
-                <button
-                  key={i}
-                  className="px-4 py-2 rounded-full border text-sm text-gray-600 hover:bg-gray-50"
-                >
-                  {item}
-                </button>
-              )
-            )}
-
-            <button className="px-6 py-2 rounded-full bg-[#5B6CFF] text-white text-sm font-medium">
-              Search
-            </button>
           </div>
 
           {/* PROFILE GRID */}
@@ -270,52 +272,57 @@ export default function InboxListingPage() {
                 Try Again
               </button>
             </div>
-          ) : filteredInterests.length === 0 ? (
+          ) : interests.length === 0 ? (
             <div className="text-center text-gray-400 py-20">
               <div className="text-6xl mb-4">💌</div>
               <h3 className="text-xl font-semibold text-gray-600 mb-2">
                 {activeTab === "received" ? "No interests received yet" :
                  activeTab === "sent" ? "No interests sent yet" :
+                 activeTab === "my-accepted" ? "No one has accepted your requests yet" :
+                 activeTab === "accepted" ? "You haven't accepted any interests yet" :
                  `No ${activeTab} interests`}
               </h3>
               <p className="text-gray-500">
                 {activeTab === "sent" 
                   ? "Start browsing profiles and send interests to connect with potential matches!"
-                  : "Interests will appear here when other members show interest in your profile."
+                  : activeTab === "my-accepted"
+                  ? "When someone accepts your interest request, they will appear here."
+                  : activeTab === "received"
+                  ? "Interests will appear here when other members show interest in your profile."
+                  : "Interests will appear here based on your activity."
                 }
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredInterests.map(interest => {
-                const profile = activeTab === "sent" ? interest.receiverProfileId : interest.senderProfileId;
-                const displayName = profile?.fullName || 
-                                  `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || 
-                                  'Unknown User';
-                const photoUrl = profile?.photos?.traditional?.url || 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {interests.map(interest => {
+                const profile = (activeTab === "sent" || activeTab === "my-accepted") ? interest.receiverProfileId : interest.senderProfileId;
+                const displayName = getDisplayName(profile);
+                const photoUrl = profile?.photos?.profilePhoto?.url ||
+                               profile?.photos?.traditional?.url || 
                                profile?.photos?.western?.url || 
                                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200";
 
                 return (
                   <div
                     key={interest._id}
-                    className="bg-white rounded-3xl p-5 shadow-md hover:shadow-lg transition-shadow"
+                    className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
                   >
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                       <img
                         src={photoUrl}
                         alt="profile"
-                        className="w-14 h-14 rounded-xl object-cover"
+                        className="w-12 h-12 rounded-xl object-cover"
                       />
 
-                      <div className="flex-1">
-                        <h3 className="font-medium text-[#111827] text-sm">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-[#111827] text-sm truncate">
                           {displayName}
                         </h3>
                         <p className="text-xs text-gray-500">
-                          {profile?.age && `(${profile.age})`} {profile?.jobLocation && `, ${profile.jobLocation}`}
+                          {profile?.age && `${profile.age} years`} {profile?.jobLocation && `, ${profile.jobLocation}`}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-gray-400 mt-1 truncate">
                           {profile?.occupation || 'Occupation not specified'}
                         </p>
                         <p className="text-xs text-blue-500 mt-1">
@@ -323,17 +330,6 @@ export default function InboxListingPage() {
                         </p>
                       </div>
                     </div>
-
-                    {/* Message Preview */}
-                    {interest.message && (
-                      <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-600 italic">
-                          "{interest.message.length > 100 ? 
-                            `${interest.message.substring(0, 100)}...` : 
-                            interest.message}"
-                        </p>
-                      </div>
-                    )}
 
                     {/* Status Badge */}
                     <div className="mt-3">
@@ -348,19 +344,39 @@ export default function InboxListingPage() {
                       </span>
                     </div>
 
+                    {/* Message Preview */}
+                    {interest.message && (
+                      <div className="mt-3 p-2 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 italic line-clamp-2">
+                          "{interest.message.length > 80 ? 
+                            `${interest.message.substring(0, 80)}...` : 
+                            interest.message}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Special message for my-accepted tab */}
+                    {activeTab === "my-accepted" && (
+                      <div className="mt-3 p-2 bg-green-50 rounded-lg border-l-2 border-green-300">
+                        <p className="text-xs text-green-700 font-medium">
+                          🎉 {displayName} accepted your interest!
+                        </p>
+                      </div>
+                    )}
+
                     {/* ACTIONS */}
-                    <div className="flex justify-between mt-4 text-sm">
+                    <div className="flex gap-2 mt-4">
                       {activeTab === "received" && interest.status === 'sent' && (
                         <>
                           <button
                             onClick={() => handleInterestResponse(interest._id, 'accepted')}
-                            className="text-[#5B6CFF] font-medium hover:underline"
+                            className="flex-1 bg-[#5B6CFF] text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-[#4A5AE8] transition-colors"
                           >
                             Accept
                           </button>
                           <button
                             onClick={() => handleInterestResponse(interest._id, 'declined')}
-                            className="text-gray-500 hover:underline"
+                            className="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
                           >
                             Decline
                           </button>
@@ -370,18 +386,36 @@ export default function InboxListingPage() {
                       {activeTab === "sent" && interest.status === 'sent' && (
                         <button
                           onClick={() => handleWithdrawInterest(interest._id)}
-                          className="text-red-500 hover:underline text-xs"
+                          className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors"
                         >
                           Withdraw
                         </button>
                       )}
 
-                      <button 
-                        onClick={() => navigate(`/profile/${profile?._id}`)}
-                        className="text-gray-500 hover:underline ml-auto"
-                      >
-                        View Profile
-                      </button>
+                      {activeTab === "my-accepted" && (
+                        <>
+                          <button 
+                            onClick={() => navigate(`/profile/${profile?._id}`)}
+                            className="flex-1 bg-[#5B6CFF] text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-[#4A5AE8] transition-colors"
+                          >
+                            View Profile
+                          </button>
+                          <button 
+                            className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
+                          >
+                            Chat
+                          </button>
+                        </>
+                      )}
+
+                      {(activeTab === "accepted" || activeTab === "declined") && (
+                        <button 
+                          onClick={() => navigate(`/profile/${profile?._id}`)}
+                          className="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+                        >
+                          View Profile
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

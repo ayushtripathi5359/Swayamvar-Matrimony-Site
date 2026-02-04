@@ -83,8 +83,16 @@ const sendInterest = asyncHandler(async (req, res, next) => {
   });
   
   await interest.populate([
-    { path: 'senderProfileId', select: 'fullName photos' },
-    { path: 'receiverProfileId', select: 'fullName photos' }
+    { 
+      path: 'senderProfileId', 
+      select: 'firstName middleName lastName fullName photos',
+      options: { virtuals: true }
+    },
+    { 
+      path: 'receiverProfileId', 
+      select: 'firstName middleName lastName fullName photos',
+      options: { virtuals: true }
+    }
   ]);
   
   res.status(201).json({
@@ -110,7 +118,11 @@ const getReceivedInterests = asyncHandler(async (req, res, next) => {
   }
   
   const interests = await Interest.find(query)
-    .populate('senderProfileId', 'fullName age occupation jobLocation photos')
+    .populate({
+      path: 'senderProfileId', 
+      select: 'firstName middleName lastName fullName age occupation jobLocation photos',
+      options: { virtuals: true }
+    })
     .sort({ sentAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
@@ -145,7 +157,11 @@ const getSentInterests = asyncHandler(async (req, res, next) => {
   }
   
   const interests = await Interest.find(query)
-    .populate('receiverProfileId', 'fullName age occupation jobLocation photos')
+    .populate({
+      path: 'receiverProfileId', 
+      select: 'firstName middleName lastName fullName age occupation jobLocation photos',
+      options: { virtuals: true }
+    })
     .sort({ sentAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
@@ -198,8 +214,16 @@ const respondToInterest = asyncHandler(async (req, res, next) => {
   await interest.save();
   
   await interest.populate([
-    { path: 'senderProfileId', select: 'fullName photos' },
-    { path: 'receiverProfileId', select: 'fullName photos' }
+    { 
+      path: 'senderProfileId', 
+      select: 'firstName middleName lastName fullName photos',
+      options: { virtuals: true }
+    },
+    { 
+      path: 'receiverProfileId', 
+      select: 'firstName middleName lastName fullName photos',
+      options: { virtuals: true }
+    }
   ]);
   
   res.status(200).json({

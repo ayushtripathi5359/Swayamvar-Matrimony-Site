@@ -29,8 +29,9 @@ router.route('/')
 
 // Photo upload routes
 router.post('/photos', upload.fields([
-  { name: 'western', maxCount: 1 },
-  { name: 'traditional', maxCount: 1 }
+  { name: 'profilePhoto', maxCount: 1 },
+  { name: 'western', maxCount: 1 }, // Keep for backward compatibility
+  { name: 'traditional', maxCount: 1 } // Keep for backward compatibility
 ]), uploadPhotos);
 
 router.delete('/photos/:type', deletePhoto);

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/profile";
 import MyProfile from "./pages/MyProfile";
@@ -29,6 +30,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/home" element={<Landing />} />
           <Route path="/registration" element={<StepwiseRegistration />} />
           <Route path="/profile" element={<ProfilePage />} />

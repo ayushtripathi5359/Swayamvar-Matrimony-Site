@@ -29,7 +29,12 @@ import {
   MessageCircle,
   Send,
   Check,
-  Download
+  Download,
+  Share2,
+  Copy,
+  Twitter,
+  MessageSquare,
+  X
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -48,6 +53,7 @@ interface ProfileData {
   occupation?: string;
   jobLocation?: string;
   photos?: { 
+    profilePhoto?: { url?: string };
     western?: { url?: string }; 
     traditional?: { url?: string }; 
   };
@@ -77,8 +83,12 @@ interface ProfileData {
   facebookHandle?: string;
   fathersFullName?: string;
   fathersOccupation?: string;
+  fathersWhatsappNumber?: string;
+  fathersCountryCode?: string;
   mothersFullName?: string;
   mothersOccupation?: string;
+  mothersWhatsappNumber?: string;
+  mothersCountryCode?: string;
   brothers?: Array<{
     name?: string;
     occupation?: string;
@@ -143,6 +153,9 @@ export default function ProfilePage() {
 
   // PDF download state
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -312,13 +325,13 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          ${(profile?.fathersFullName || profile?.mothersFullName) ? `
+          ${(profile?.fathersFullName || profile?.mothersFullName || profile?.fathersWhatsappNumber || profile?.mothersWhatsappNumber) ? `
           <!-- Family Details -->
           <div style="margin-bottom: 25px;">
             <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Family Details</h2>
             <div style="font-size: 14px; line-height: 1.8;">
-              ${profile?.fathersFullName ? `<div><strong>Father:</strong> ${displayProfile.fathersFullName} - ${displayProfile.fathersOccupation}</div>` : ''}
-              ${profile?.mothersFullName ? `<div><strong>Mother:</strong> ${displayProfile.mothersFullName} - ${displayProfile.mothersOccupation}</div>` : ''}
+              ${profile?.fathersFullName ? `<div><strong>Father:</strong> ${displayProfile.fathersFullName} - ${displayProfile.fathersOccupation}${profile?.fathersWhatsappNumber ? ` | 📱 ${displayProfile.fathersCountryCode} ${displayProfile.fathersWhatsappNumber}` : ''}</div>` : ''}
+              ${profile?.mothersFullName ? `<div><strong>Mother:</strong> ${displayProfile.mothersFullName} - ${displayProfile.mothersOccupation}${profile?.mothersWhatsappNumber ? ` | 📱 ${displayProfile.mothersCountryCode} ${displayProfile.mothersWhatsappNumber}` : ''}</div>` : ''}
               ${profile?.brothers?.length ? `<div><strong>Brothers:</strong> ${profile.brothers.length}</div>` : ''}
               ${profile?.sisters?.length ? `<div><strong>Sisters:</strong> ${profile.sisters.length}</div>` : ''}
             </div>
@@ -413,6 +426,54 @@ export default function ProfilePage() {
       alert('Failed to generate PDF. Please try again.');
     } finally {
       setDownloadingPDF(false);
+    }
+  };
+
+  // Share functionality
+  const getProfileUrl = () => {
+    return `${window.location.origin}/profile/${profile?._id || profile?.userId}`;
+  };
+
+  const handleShare = (platform: string) => {
+    const profileUrl = getProfileUrl();
+    const shareText = `Check out ${displayProfile.fullName}'s profile on Swayamvar`;
+    
+    switch (platform) {
+      case 'copy':
+        navigator.clipboard.writeText(profileUrl).then(() => {
+          alert('Profile link copied to clipboard!');
+          setShowShareModal(false);
+        }).catch(() => {
+          alert('Failed to copy link. Please try again.');
+        });
+        break;
+        
+      case 'whatsapp':
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${profileUrl}`)}`;
+        window.open(whatsappUrl, '_blank');
+        setShowShareModal(false);
+        break;
+        
+      case 'facebook':
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}`;
+        window.open(facebookUrl, '_blank');
+        setShowShareModal(false);
+        break;
+        
+      case 'twitter':
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(profileUrl)}`;
+        window.open(twitterUrl, '_blank');
+        setShowShareModal(false);
+        break;
+        
+      case 'email':
+        const emailUrl = `mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(`${shareText}\n\n${profileUrl}`)}`;
+        window.location.href = emailUrl;
+        setShowShareModal(false);
+        break;
+        
+      default:
+        break;
     }
   };
 
@@ -512,6 +573,7 @@ export default function ProfilePage() {
     occupation: profile?.occupation || "Occupation not specified",
     jobLocation: profile?.jobLocation || "Location not specified",
     profilePhoto:
+      profile?.photos?.profilePhoto?.url ||
       profile?.photos?.traditional?.url ||
       profile?.photos?.western?.url ||
       profile?.profilePhotos?.traditional ||
@@ -543,8 +605,12 @@ export default function ProfilePage() {
     facebookHandle: profile?.facebookHandle || "Facebook not available",
     fathersFullName: profile?.fathersFullName || "Father's name not specified",
     fathersOccupation: profile?.fathersOccupation || "Father's occupation not specified",
+    fathersWhatsappNumber: profile?.fathersWhatsappNumber || "",
+    fathersCountryCode: profile?.fathersCountryCode || "+91",
     mothersFullName: profile?.mothersFullName || "Mother's name not specified",
     mothersOccupation: profile?.mothersOccupation || "Mother's occupation not specified",
+    mothersWhatsappNumber: profile?.mothersWhatsappNumber || "",
+    mothersCountryCode: profile?.mothersCountryCode || "+91",
     birthName: profile?.birthName || "Birth name not specified",
     birthTime: profile?.birthTime || "Birth time not specified",
     birthPlace: profile?.birthPlace || "Birth place not specified"
@@ -606,7 +672,7 @@ export default function ProfilePage() {
     </button>
   )}
 
-  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 pt-8">
+  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 pt-8 relative">
     {/* Profile Image */}
     <img
       src={displayProfile?.profilePhoto}
@@ -670,6 +736,13 @@ export default function ProfilePage() {
             </button>
 
             <button
+              onClick={() => setShowShareModal(true)}
+              className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-blue-100 bg-white text-slate-600 hover:bg-blue-50 transition-all"
+            >
+              <Share2 size={16} /> Share
+            </button>
+
+            <button
               onClick={downloadProfileAsPDF}
               disabled={downloadingPDF}
               className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-green-100 bg-white text-slate-600 hover:bg-green-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -681,7 +754,7 @@ export default function ProfilePage() {
                 </>
               ) : (
                 <>
-                  <Download size={16} /> Download PDF
+                  <Download size={16} /> Download
                 </>
               )}
             </button>
@@ -696,6 +769,13 @@ export default function ProfilePage() {
             </button>
 
             <button
+              onClick={() => setShowShareModal(true)}
+              className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-blue-100 bg-white text-slate-600 hover:bg-blue-50 transition-all"
+            >
+              <Share2 size={16} /> Share
+            </button>
+
+            <button
               onClick={downloadProfileAsPDF}
               disabled={downloadingPDF}
               className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full bg-[#9181EE] hover:bg-[#7b6fd6] text-white font-medium transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -707,7 +787,7 @@ export default function ProfilePage() {
                 </>
               ) : (
                 <>
-                  <Download size={16} /> Download PDF
+                  <Download size={16} /> Download
                 </>
               )}
             </button>
@@ -731,6 +811,58 @@ export default function ProfilePage() {
         </span>
       </div>
     </div>
+
+    {/* Social Media Icons - Vertical on Right */}
+    {(profile?.socialMedia?.length || profile?.linkedinHandle || profile?.instagramHandle || profile?.facebookHandle) && (
+      <div className="hidden lg:flex flex-col gap-3 absolute right-0 top-8">
+        {profile?.socialMedia?.map((social, index) => (
+          <a
+            key={index}
+            href={social.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-full bg-white shadow-md border border-slate-100 hover:shadow-lg transition-all hover:scale-110"
+          >
+            {social.platform === 'LinkedIn' && <Linkedin size={18} className="text-blue-600" />}
+            {social.platform === 'Instagram' && <Instagram size={18} className="text-pink-600" />}
+            {social.platform === 'Facebook' && <Facebook size={18} className="text-blue-700" />}
+          </a>
+        )) || (
+          <>
+            {profile?.linkedinHandle && (
+              <a
+                href={profile.linkedinHandle.startsWith('http') ? profile.linkedinHandle : `https://linkedin.com/in/${profile.linkedinHandle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-white shadow-md border border-slate-100 hover:shadow-lg transition-all hover:scale-110"
+              >
+                <Linkedin size={18} className="text-blue-600" />
+              </a>
+            )}
+            {profile?.instagramHandle && (
+              <a
+                href={profile.instagramHandle.startsWith('http') ? profile.instagramHandle : `https://instagram.com/${profile.instagramHandle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-white shadow-md border border-slate-100 hover:shadow-lg transition-all hover:scale-110"
+              >
+                <Instagram size={18} className="text-pink-600" />
+              </a>
+            )}
+            {profile?.facebookHandle && (
+              <a
+                href={profile.facebookHandle.startsWith('http') ? profile.facebookHandle : `https://facebook.com/${profile.facebookHandle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-white shadow-md border border-slate-100 hover:shadow-lg transition-all hover:scale-110"
+              >
+                <Facebook size={18} className="text-blue-700" />
+              </a>
+            )}
+          </>
+        )}
+      </div>
+    )}
   </div>
 </div>
 
@@ -802,11 +934,11 @@ export default function ProfilePage() {
               </Section>
             )}
 
-            {(profile?.fathersFullName || profile?.mothersFullName || profile?.brothers?.length || profile?.sisters?.length) && (
+            {(profile?.fathersFullName || profile?.mothersFullName || profile?.fathersWhatsappNumber || profile?.mothersWhatsappNumber || profile?.brothers?.length || profile?.sisters?.length) && (
               <Section title="Family Details" glow={glowStyle}>
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {(profile?.fathersFullName || profile?.fathersOccupation) && (
+                    {(profile?.fathersFullName || profile?.fathersOccupation || profile?.fathersWhatsappNumber) && (
                       <div className="bg-slate-50 p-4 rounded-xl border-l-4 border-indigo-200 shadow-sm">
                         <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Father</p>
                         <p className="font-bold text-slate-800 text-base uppercase tracking-tight">
@@ -815,6 +947,11 @@ export default function ProfilePage() {
                         <p className="text-xs text-slate-600 leading-relaxed mt-2">
                           {displayProfile.fathersOccupation}
                         </p>
+                        {profile?.fathersWhatsappNumber && (
+                          <p className="text-xs text-slate-600 mt-1">
+                            📱 {displayProfile.fathersCountryCode} {displayProfile.fathersWhatsappNumber}
+                          </p>
+                        )}
                         {profile?.fathersOccupation && (
                           <div className="mt-2 grid grid-cols-2 gap-2">
                             <Info label="Occupation" value={displayProfile.fathersOccupation} icon={<Briefcase size={10}/>} />
@@ -822,7 +959,7 @@ export default function ProfilePage() {
                         )}
                       </div>
                     )}
-                    {(profile?.mothersFullName || profile?.mothersOccupation) && (
+                    {(profile?.mothersFullName || profile?.mothersOccupation || profile?.mothersWhatsappNumber) && (
                       <div className="bg-slate-50 p-4 rounded-xl border-l-4 border-rose-200 shadow-sm">
                         <p className="text-[10px] font-bold text-rose-400 uppercase mb-1">Mother</p>
                         <p className="font-bold text-slate-800 text-base uppercase tracking-tight">
@@ -831,6 +968,11 @@ export default function ProfilePage() {
                         <p className="text-xs text-slate-600 mt-2 font-medium italic tracking-tight">
                           {displayProfile.mothersOccupation}
                         </p>
+                        {profile?.mothersWhatsappNumber && (
+                          <p className="text-xs text-slate-600 mt-1">
+                            📱 {displayProfile.mothersCountryCode} {displayProfile.mothersWhatsappNumber}
+                          </p>
+                        )}
                         {profile?.mothersOccupation && (
                           <div className="mt-2 grid grid-cols-2 gap-2">
                             <Info label="Occupation" value={displayProfile.mothersOccupation} icon={<Briefcase size={10}/>} />
@@ -908,42 +1050,7 @@ export default function ProfilePage() {
                     </div>
                   )}
                   
-                  {(profile?.socialMedia?.length || profile?.linkedinHandle || profile?.instagramHandle || profile?.facebookHandle) && (
-                    <div className="pt-3 border-t border-slate-100">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-2">Social Media</p>
-                      <div className="space-y-2">
-                        {profile?.socialMedia?.map((social, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            {social.platform === 'LinkedIn' && <Linkedin size={14} className="text-blue-600" />}
-                            {social.platform === 'Instagram' && <Instagram size={14} className="text-pink-600" />}
-                            {social.platform === 'Facebook' && <Facebook size={14} className="text-blue-700" />}
-                            <span className="text-xs text-slate-600">{social.url}</span>
-                          </div>
-                        )) || (
-                          <>
-                            {profile?.linkedinHandle && (
-                              <div className="flex items-center gap-2">
-                                <Linkedin size={14} className="text-blue-600" />
-                                <span className="text-xs text-slate-600">{displayProfile.linkedinHandle}</span>
-                              </div>
-                            )}
-                            {profile?.instagramHandle && (
-                              <div className="flex items-center gap-2">
-                                <Instagram size={14} className="text-pink-600" />
-                                <span className="text-xs text-slate-600">{displayProfile.instagramHandle}</span>
-                              </div>
-                            )}
-                            {profile?.facebookHandle && (
-                              <div className="flex items-center gap-2">
-                                <Facebook size={14} className="text-blue-700" />
-                                <span className="text-xs text-slate-600">{displayProfile.facebookHandle}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  
                   
                   {!isOwnProfile && (
                     <button className="w-full bg-[#9181EE] text-white py-3 rounded-xl font-bold text-xs shadow-lg active:scale-95 transition-all uppercase tracking-widest mt-2">
@@ -1023,6 +1130,12 @@ export default function ProfilePage() {
                 onClick={() => navigate("/registration")}>
                 <Edit3 size={16} /> Edit Profile
               </button>
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center justify-center gap-2 px-3 py-3 rounded-full border border-blue-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform"
+              >
+                <Share2 size={16} />
+              </button>
               <button 
                 onClick={downloadProfileAsPDF}
                 disabled={downloadingPDF}
@@ -1043,6 +1156,12 @@ export default function ProfilePage() {
             <>
               <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-purple-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform">
                 <Star size={16} /> Shortlist
+              </button>
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center justify-center gap-2 px-3 py-3 rounded-full border border-blue-100 bg-white text-slate-600 shadow-sm active:scale-95 transition-transform"
+              >
+                <Share2 size={16} />
               </button>
               <button 
                 onClick={downloadProfileAsPDF}
@@ -1143,6 +1262,103 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-800">Share Profile</h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-slate-600 mb-4">
+                Share {displayProfile.fullName}'s profile with others
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleShare('copy')}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="bg-slate-100 p-2 rounded-lg">
+                    <Copy size={16} className="text-slate-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">Copy Link</p>
+                    <p className="text-xs text-slate-500">Copy profile link to clipboard</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleShare('whatsapp')}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="bg-green-100 p-2 rounded-lg">
+                    <MessageSquare size={16} className="text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">WhatsApp</p>
+                    <p className="text-xs text-slate-500">Share via WhatsApp</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleShare('facebook')}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Facebook size={16} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">Facebook</p>
+                    <p className="text-xs text-slate-500">Share on Facebook</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleShare('twitter')}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="bg-sky-100 p-2 rounded-lg">
+                    <Twitter size={16} className="text-sky-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">Twitter</p>
+                    <p className="text-xs text-slate-500">Share on Twitter</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleShare('email')}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="bg-rose-100 p-2 rounded-lg">
+                    <Mail size={16} className="text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">Email</p>
+                    <p className="text-xs text-slate-500">Share via email</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="w-full px-4 py-3 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1167,7 +1383,7 @@ function Info({ label, value, icon }) {
   return (
     <div className="flex flex-col group">
       <p className="text-[10px] text-slate-400 font-black uppercase mb-1 flex items-center gap-1 group-hover:text-rose-400 transition-colors tracking-tight">
-        {icon} {label}
+         {label}
       </p>
       <p className="font-bold text-slate-700 text-sm leading-tight tracking-tight">
         {value}

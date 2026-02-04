@@ -1,51 +1,37 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import bridegroom2 from "@/assets/bride-groom2.png";
 import flower1 from "@/assets/flower1.png";
 import flower2 from "@/assets/flower2.png";
 import rectangleBg from "@/assets/Rectangle 1.png";
 import { apiFetch } from "@/lib/apiClient";
-import { setAccessToken } from "@/lib/auth";
-import GoogleAuthButton from "@/components/GoogleAuthButton";
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle OAuth errors from navigation state
-  useEffect(() => {
-    if (location.state?.error) {
-      setErrorMessage(location.state.error);
-      // Clear the error from navigation state
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.state, navigate, location.pathname]);
-
-  const handleLogin = async (event: React.FormEvent) => {
+  const handleForgotPassword = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorMessage("");
+    setMessage("");
     setIsSubmitting(true);
 
     try {
-      const response = await apiFetch("/api/auth/login", {
+      const response = await apiFetch("/api/auth/forgot-password", {
         method: "POST",
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email })
       });
 
       const data = await response.json();
       if (!response.ok) {
-        setErrorMessage(data.message || "Login failed. Please try again.");
+        setErrorMessage(data.message || "Failed to send reset email. Please try again.");
         return;
       }
 
-      setAccessToken(data.accessToken);
-      navigate("/home");
+      setMessage("Password reset link has been sent to your email address. Please check your inbox.");
     } catch (error) {
       setErrorMessage("Unable to reach the server. Please try again.");
     } finally {
@@ -59,8 +45,7 @@ export default function LoginPage() {
       {/* ================= MOBILE ILLUSTRATION ================= */}
       <div className="relative block lg:hidden bg-[#F6DCDD]  h-[280px] md:h-[380px] overflow-hidden">
 
-        {/* Top bar */}
-        
+       
 
         {/* Flowers */}
         <img
@@ -135,7 +120,7 @@ export default function LoginPage() {
             />
           </div>
         </div>
-      {/* RIGHT SECTION - SIGN IN FORM */}
+      {/* RIGHT SECTION - FORGOT PASSWORD FORM */}
       <div className="w-full lg:w-[40%] bg-white flex items-center justify-center px-4 py-6 lg:p-0">
   <div className="w-full max-w-[280px] lg:max-w-[328px] flex flex-col gap-4 lg:gap-10">
 
@@ -143,26 +128,16 @@ export default function LoginPage() {
     <div className="flex flex-col gap-4 lg:gap-6">
       <div className="flex flex-col gap-1 lg:gap-2">
         <h1 className="text-[22px] lg:text-[30px] font-bold text-black font-jakarta">
-          Sign In
+          Forgot Password
         </h1>
-        
-      </div>
-
-      {/* Social Buttons */}
-      <div className="flex ">
-        <GoogleAuthButton mode="login" className="flex-1" />
-      </div>
-
-      {/* OR Divider */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-black/10"></div>
-        <span className="text-sm text-black/60 font-medium">OR</span>
-        <div className="flex-1 h-px bg-black/10"></div>
+        <p className="text-sm lg:text-base text-black/60 font-urbanist">
+          Enter your email to reset your password
+        </p>
       </div>
     </div>
 
     {/* Form */}
-    <form className="flex flex-col gap-3 lg:gap-4" onSubmit={handleLogin}>
+    <form className="flex flex-col gap-3 lg:gap-4" onSubmit={handleForgotPassword}>
       {/* Email Field */}
       <div className="space-y-1">
         <label className="text-xs font-semibold text-gray-600 ml-2">Email Address</label>
@@ -175,61 +150,38 @@ export default function LoginPage() {
           required
         />
       </div>
-      
-      {/* Password Field */}
-      <div className="space-y-1">
-        <label className="text-xs font-semibold text-gray-600 ml-2">Password</label>
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Enter your password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="w-full px-4 py-3 lg:px-5 lg:py-4 pr-12 rounded-[24px] lg:rounded-[32px] border border-black/10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-black/40 hover:text-black/60 transition-colors"
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-        </div>
-        <div className="flex justify-end">
-          <Link 
-            to="/forgot-password" 
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Forgot Password?
-          </Link>
-        </div>
-      </div>
 
       {errorMessage && (
         <p className="text-xs text-red-500 font-medium">{errorMessage}</p>
       )}
+
+      {message && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-xs text-green-600 font-medium">{message}</p>
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={isSubmitting}
         className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] bg-blue-600 text-white font-semibold text-sm disabled:opacity-70 hover:bg-blue-700 transition-colors"
       >
-        {isSubmitting ? "Signing in..." : "Sign In"}
+        {isSubmitting ? "Sending..." : "Send Reset Link"}
       </button>
       
-      {/* <button
+      <button
         type="button"
-        onClick={() => navigate("/signup")}
+        onClick={() => navigate("/login")}
         className="py-2.5 lg:py-3 rounded-[20px] lg:rounded-[24px] border border-black/10 text-sm font-semibold hover:bg-gray-50 transition-colors"
       >
-        Create Account
-      </button> */}
+        Back to Sign In
+      </button>
     </form>
 
     <p className="text-center text-xs lg:text-sm text-black/60">
-      Don't have an account?{" "}
-      <Link to="/signup" className="text-black font-medium">
-        Sign up
+      Remember your password?{" "}
+      <Link to="/login" className="text-black font-medium">
+        Sign in
       </Link>
     </p>
 

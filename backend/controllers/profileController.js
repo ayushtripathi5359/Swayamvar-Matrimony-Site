@@ -96,10 +96,13 @@ const deleteProfile = asyncHandler(async (req, res, next) => {
   }
   
   // Delete photos from cloudinary if they exist
-  if (profile.photos.western.publicId) {
+  if (profile.photos.profilePhoto?.publicId) {
+    await cloudinary.uploader.destroy(profile.photos.profilePhoto.publicId);
+  }
+  if (profile.photos.western?.publicId) {
     await cloudinary.uploader.destroy(profile.photos.western.publicId);
   }
-  if (profile.photos.traditional.publicId) {
+  if (profile.photos.traditional?.publicId) {
     await cloudinary.uploader.destroy(profile.photos.traditional.publicId);
   }
   
@@ -127,7 +130,30 @@ const uploadPhotos = asyncHandler(async (req, res, next) => {
   const uploadPromises = [];
   const photoUpdates = {};
   
-  // Upload western photo
+  // Upload profile photo (single photo)
+  if (req.files.profilePhoto) {
+    const profilePhotoFile = req.files.profilePhoto[0];
+    uploadPromises.push(
+      cloudinary.uploader.upload_stream(
+        {
+          folder: 'swayamvar/profiles',
+          transformation: [
+            { width: 400, height: 400, crop: 'fill' },
+            { quality: 'auto' }
+          ]
+        },
+        (error, result) => {
+          if (error) throw error;
+          photoUpdates['photos.profilePhoto'] = {
+            url: result.secure_url,
+            publicId: result.public_id
+          };
+        }
+      ).end(profilePhotoFile.buffer)
+    );
+  }
+  
+  // Keep legacy support for western/traditional photos
   if (req.files.western) {
     const westernFile = req.files.western[0];
     uploadPromises.push(
@@ -150,7 +176,6 @@ const uploadPhotos = asyncHandler(async (req, res, next) => {
     );
   }
   
-  // Upload traditional photo
   if (req.files.traditional) {
     const traditionalFile = req.files.traditional[0];
     uploadPromises.push(
@@ -199,7 +224,7 @@ const uploadPhotos = asyncHandler(async (req, res, next) => {
 const deletePhoto = asyncHandler(async (req, res, next) => {
   const { type } = req.params;
   
-  if (!['western', 'traditional'].includes(type)) {
+  if (!['western', 'traditional', 'profilePhoto'].includes(type)) {
     return res.status(400).json({
       success: false,
       message: 'Invalid photo type'
@@ -217,7 +242,7 @@ const deletePhoto = asyncHandler(async (req, res, next) => {
   
   const photo = profile.photos[type];
   
-  if (!photo.publicId) {
+  if (!photo || !photo.publicId) {
     return res.status(404).json({
       success: false,
       message: 'Photo not found'

@@ -254,118 +254,98 @@ const CustomMultiSelect = ({
   }, [isOpen, options.length]);
 
   const handleSelect = (option) => {
-    if (value.includes(option)) {
-      // Remove item
-      const newValue = value.filter(item => item !== option);
-      onChange(newValue);
-    } else {
+    if (!value.includes(option)) {
       // Add item only if under maxItems limit
       if (!maxItems || value.length < maxItems) {
         const newValue = [...value, option];
         onChange(newValue);
       }
     }
+    setIsOpen(false);
   };
 
-  const displayText = value.length === 0 
-    ? placeholder 
-    : value.length === 1 
-      ? value[0] 
-      : `${value.length} selected${maxItems ? ` (max ${maxItems})` : ''}`;
+  const handleRemove = (option) => {
+    const newValue = value.filter(item => item !== option);
+    onChange(newValue);
+  };
+
+  // Filter out already selected options
+  const availableOptions = options.filter(option => !value.includes(option));
 
   return (
-    <div className={`group relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
+    <div className={`group relative ${className}`} ref={dropdownRef}>
       <div className="flex items-center gap-2 ml-1">
         <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
-          {maxItems && <span className="text-slate-400 ml-1">(max {maxItems})</span>}
         </label>
       </div>
       
-      <div 
-        ref={triggerRef}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`bg-white mt-2 border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
-          isOpen 
-            ? "border-[#9181EE] shadow-[0_0_0_3px_rgba(145,129,238,0.1)]" 
-            : "border-slate-100 hover:border-[#9181EE]/30"
-        } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
-        style={{ position: 'relative', zIndex: isOpen ? 10000 : 0 }}
-      >
-        <div className="flex items-center gap-2 flex-1">
-          <span className={`font-bold ${value.length > 0 ? "text-black" : "text-slate-400"} text-base truncate`}>
-            {displayText}
-          </span>
-          {value.length > 0 && (
-            <div className="flex flex-wrap gap-1 max-w-[200px] overflow-hidden">
-              {value.slice(0, 3).map((item, idx) => (
-                <span key={idx} className="bg-[#F8F7FF] text-[#9181EE] px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1">
-                  {item.length > 8 ? `${item.substring(0, 8)}...` : item}
-                  <X 
-                    size={12} 
-                    className="cursor-pointer hover:text-red-500" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelect(item);
-                    }}
-                  />
-                </span>
-              ))}
-              {value.length > 3 && (
-                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-xs font-semibold">
-                  +{value.length - 3}
-                </span>
-              )}
+      {/* Selected Items Display */}
+      <div className="space-y-2 mt-2">
+        {value.map((item, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <div className="flex-1 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm">
+              <span className="font-bold text-black text-sm lg:text-base">{item}</span>
             </div>
-          )}
-        </div>
-        <ChevronDown 
-          size={18} 
-          className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#9181EE]" : "text-slate-300"}`} 
-        />
-      </div>
-
-      {isOpen && options.length > 0 && (
-        <div 
-          className={`absolute z-[9999] w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 ${
-            position === "top" ? "bottom-full mb-1" : "top-full mt-1"
-          }`}
-          style={{
-            maxHeight: 'min(240px, 50vh)',
-            minWidth: '200px'
-          }}
-        >
-          <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: 'inherit' }}>
-            {options.map((option, index) => {
-              const isSelected = value.includes(option);
-              const isDisabled = !isSelected && maxItems && value.length >= maxItems;
-              
-              return (
-                <div
-                  key={index}
-                  onClick={() => !isDisabled && handleSelect(option)}
-                  className={`px-4 lg:px-5 py-3 font-bold transition-colors border-b border-slate-50 last:border-0 text-base flex items-center justify-between ${
-                    isDisabled 
-                      ? "text-slate-300 cursor-not-allowed bg-slate-50" 
-                      : isSelected 
-                        ? "bg-[#F8F7FF] text-[#9181EE] cursor-pointer" 
-                        : "text-black hover:bg-[#F8F7FF] hover:text-[#9181EE] cursor-pointer"
-                  }`}
-                >
-                  <span>{option}</span>
-                  {isSelected && (
-                    <Check size={16} className="text-[#9181EE]" />
-                  )}
-                  {isDisabled && !isSelected && (
-                    <span className="text-xs text-slate-400">Max reached</span>
-                  )}
-                </div>
-              );
-            })}
+            <button
+              type="button"
+              onClick={() => handleRemove(item)}
+              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <X size={16} />
+            </button>
           </div>
-        </div>
-      )}
+        ))}
+        
+        {/* Add New Item Dropdown */}
+        {availableOptions.length > 0 && (!maxItems || value.length < maxItems) && (
+          <div style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
+            <div 
+              ref={triggerRef}
+              onClick={() => !disabled && setIsOpen(!isOpen)}
+              className={`bg-white border rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
+                isOpen 
+                  ? "border-[#9181EE] shadow-[0_0_0_3px_rgba(145,129,238,0.1)]" 
+                  : "border-slate-100 hover:border-[#9181EE]/30"
+              } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+              style={{ position: 'relative', zIndex: isOpen ? 10000 : 0 }}
+            >
+              <span className="font-bold text-slate-400 text-base">
+                {value.length === 0 ? placeholder : "Add another qualification"}
+              </span>
+              <ChevronDown 
+                size={18} 
+                className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#9181EE]" : "text-slate-300"}`} 
+              />
+            </div>
+
+            {isOpen && availableOptions.length > 0 && (
+              <div 
+                className={`absolute z-[9999] w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 ${
+                  position === "top" ? "bottom-full mb-1" : "top-full mt-1"
+                }`}
+                style={{
+                  maxHeight: 'min(240px, 50vh)',
+                  minWidth: '200px'
+                }}
+              >
+                <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: 'inherit' }}>
+                  {availableOptions.map((option, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleSelect(option)}
+                      className="px-4 lg:px-5 py-3 font-bold transition-colors border-b border-slate-50 last:border-0 text-base flex items-center justify-between text-black hover:bg-[#F8F7FF] hover:text-[#9181EE] cursor-pointer"
+                    >
+                      <span>{option}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -656,6 +636,11 @@ const CustomTimePicker = ({ value, onChange, label }) => {
 
   const [time, setTime] = useState(parseTime(value));
 
+  // Sync internal state when value prop changes
+  useEffect(() => {
+    setTime(parseTime(value));
+  }, [value]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (timeRef.current && !timeRef.current.contains(event.target) && 
@@ -687,22 +672,40 @@ const CustomTimePicker = ({ value, onChange, label }) => {
     onChange(timeStr);
   };
 
+  // Initialize with current time if no value is set
+  const initializeTime = () => {
+    if (!value) {
+      const now = new Date();
+      const currentTime = {
+        hours: now.getHours() === 0 ? 12 : now.getHours() > 12 ? now.getHours() - 12 : now.getHours(),
+        minutes: now.getMinutes(),
+        isPM: now.getHours() >= 12
+      };
+      handleTimeChange(currentTime);
+    }
+  };
+
   const displayTime = `${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')} ${time.isPM ? 'PM' : 'AM'}`;
 
   return (
     <div className="space-y-2 relative">
       <div className="flex items-center gap-2 ml-1">
-        <label className="text-[12px] font-bold text-slate-500  ">{label}</label>
+        <label className="text-[12px] font-bold text-slate-500">{label}</label>
       </div>
 
       <div
         ref={triggerRef}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!value) {
+            initializeTime();
+          }
+          setIsOpen(!isOpen);
+        }}
         className="bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all active:scale-95"
         style={{ minHeight: '44px' }}
       >
         <span className={`font-bold ${value ? "text-black" : "text-slate-400"} text-sm lg:text-base`}>
-          {value ? displayTime : "HH:MM AM/PM"}
+          {value ? displayTime : "Select time"}
         </span>
         <Clock size={16} className="text-[#9181EE] opacity-60" />
       </div>
@@ -715,7 +718,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
           <div className="flex items-center justify-center gap-2">
             {/* Hours */}
             <div className="flex flex-col items-center gap-2">
-              <label className="text-xs font-bold text-slate-500  ">Hours</label>
+              <label className="text-xs font-bold text-slate-500">Hours</label>
               <button
                 onClick={() => handleTimeChange({ ...time, hours: time.hours === 1 ? 12 : time.hours - 1 })}
                 className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
@@ -732,7 +735,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
                   const h = Math.min(12, Math.max(1, parseInt(e.target.value) || 1));
                   handleTimeChange({ ...time, hours: h });
                 }}
-                className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg"
+                className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9181EE] focus:border-transparent"
                 style={{ fontSize: '16px' }}
               />
               <button
@@ -749,7 +752,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
 
             {/* Minutes */}
             <div className="flex flex-col items-center gap-2">
-              <label className="text-xs font-bold text-slate-500  ">Minutes</label>
+              <label className="text-xs font-bold text-slate-500">Minutes</label>
               <button
                 onClick={() => handleTimeChange({ ...time, minutes: time.minutes === 0 ? 59 : time.minutes - 1 })}
                 className="p-2 hover:bg-slate-50 rounded-lg transition-colors active:scale-95"
@@ -766,7 +769,7 @@ const CustomTimePicker = ({ value, onChange, label }) => {
                   const m = Math.min(59, Math.max(0, parseInt(e.target.value) || 0));
                   handleTimeChange({ ...time, minutes: m });
                 }}
-                className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg"
+                className="w-16 px-3 py-2 text-center text-lg font-bold border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9181EE] focus:border-transparent"
                 style={{ fontSize: '16px' }}
               />
               <button
@@ -780,20 +783,20 @@ const CustomTimePicker = ({ value, onChange, label }) => {
 
             {/* AM/PM Toggle */}
             <div className="flex flex-col items-center gap-2">
-              <label className="text-xs font-bold text-slate-500  ">Period</label>
+              <label className="text-xs font-bold text-slate-500">Period</label>
               <button
-                onClick={() => handleTimeChange({ ...time, isPM: !time.isPM })}
+                onClick={() => handleTimeChange({ ...time, isPM: false })}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95 ${
-                  time.isPM 
-                    ? 'bg-slate-100 text-slate-700' 
-                    : 'bg-[#9181EE] text-white'
+                  !time.isPM 
+                    ? 'bg-[#9181EE] text-white' 
+                    : 'bg-slate-100 text-slate-700'
                 }`}
                 style={{ minHeight: '44px' }}
               >
                 AM
               </button>
               <button
-                onClick={() => handleTimeChange({ ...time, isPM: !time.isPM })}
+                onClick={() => handleTimeChange({ ...time, isPM: true })}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95 ${
                   time.isPM 
                     ? 'bg-[#9181EE] text-white' 
@@ -806,13 +809,30 @@ const CustomTimePicker = ({ value, onChange, label }) => {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsOpen(false)}
-            className="mt-4 w-full bg-[#9181EE] text-white py-3 rounded-lg font-bold text-sm   transition-all active:scale-95"
-            style={{ minHeight: '44px' }}
-          >
-            Done
-          </button>
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => {
+                const now = new Date();
+                const currentTime = {
+                  hours: now.getHours() === 0 ? 12 : now.getHours() > 12 ? now.getHours() - 12 : now.getHours(),
+                  minutes: now.getMinutes(),
+                  isPM: now.getHours() >= 12
+                };
+                handleTimeChange(currentTime);
+              }}
+              className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-lg font-bold text-sm transition-all active:scale-95"
+              style={{ minHeight: '44px' }}
+            >
+              Now
+            </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="flex-1 bg-[#9181EE] text-white py-3 rounded-lg font-bold text-sm transition-all active:scale-95"
+              style={{ minHeight: '44px' }}
+            >
+              Done
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -969,7 +989,7 @@ const ImageCropper = ({
               className="px-6 py-3 bg-[#9181EE] text-white rounded-xl font-semibold hover:bg-[#7b6fd6] transition-all flex items-center gap-2"
             >
               <CropIcon size={16} />
-              Apply Square Crop
+              Crop
             </button>
           </div>
         </div>
@@ -1331,12 +1351,16 @@ interface FormData {
   fathersBusinessLocation: string;
   fathersDesignation: string;
   fathersCompanyName: string;
+  fathersWhatsappNumber: string;
+  fathersCountryCode: string;
   mothersFullName: string;
   mothersOccupation:string;
   mothersBusinessName: string;
   mothersBusinessLocation: string;
   mothersDesignation: string;
   mothersCompanyName: string;
+  mothersWhatsappNumber: string;
+  mothersCountryCode: string;
   brothers: Record<string, string>[];
   sisters: Record<string, string>[];
   whatsappNumber: string;
@@ -1400,17 +1424,12 @@ const validateStep1 = (formData: FormData) => {
     errors.whatsappNumber = `Enter a valid ${country?.country || 'phone'} number (${lengthText} digits)`;
   }
   
-  // Social media validation with URL format checking
-  const hasSocialMedia = formData.socialMediaLinks.length > 0 || 
-                         formData.linkedinHandle?.trim() || 
-                         formData.instagramHandle?.trim() || 
-                         formData.facebookHandle?.trim();
-  
-  // Validate dynamic social media links
+  // Social media validation with URL format checking (none required)
+  // Validate dynamic social media links only if they exist
   formData.socialMediaLinks.forEach((link, index) => {
-    if (!link.url?.trim()) {
-      errors[`socialMediaLink_${index}_url`] = "URL is required";
-    } else {
+    if (link.platform && !link.url?.trim()) {
+      errors[`socialMediaLink_${index}_url`] = "URL is required when platform is selected";
+    } else if (link.url?.trim()) {
       let isValid = false;
       switch (link.platform) {
         case 'LinkedIn':
@@ -1440,11 +1459,6 @@ const validateStep1 = (formData: FormData) => {
   
   if (formData.facebookHandle?.trim() && !validateFacebookURL(formData.facebookHandle)) {
     errors.facebookHandle = "Please enter a valid Facebook profile URL (e.g., https://facebook.com/yourname)";
-  }
-  
-  // At least one social media handle is required
-  if (!hasSocialMedia) {
-    errors.socialMedia = "At least one social media profile is required";
   }
   
   return errors;
@@ -1596,8 +1610,7 @@ const validateStep4 = (formData: FormData) => {
 export default function UnifiedMatrimonialForm() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [westernPhoto, setWesternPhoto] = useState(null);
-  const [traditionalPhoto, setTraditionalPhoto] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1608,7 +1621,6 @@ export default function UnifiedMatrimonialForm() {
   // Image cropper states
   const [showCropper, setShowCropper] = useState(false);
   const [originalImage, setOriginalImage] = useState(null);
-  const [cropperMode, setCropperMode] = useState(null); // 'western' or 'traditional'
   
   // Date picker state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -1659,12 +1671,16 @@ export default function UnifiedMatrimonialForm() {
     fathersBusinessLocation: "",
     fathersDesignation: "",
     fathersCompanyName: "",
+    fathersWhatsappNumber: "",
+    fathersCountryCode: "+91",
     mothersFullName: "",
     mothersOccupation:"",
     mothersBusinessName: "",
     mothersBusinessLocation: "",
     mothersDesignation: "",
     mothersCompanyName: "",
+    mothersWhatsappNumber: "",
+    mothersCountryCode: "+91",
     brothers: [],
     sisters: [],
     
@@ -1749,11 +1765,8 @@ export default function UnifiedMatrimonialForm() {
             }));
             
             // Set photos if they exist
-            if (profile.photos?.western?.url) {
-              setWesternPhoto(profile.photos.western.url);
-            }
-            if (profile.photos?.traditional?.url) {
-              setTraditionalPhoto(profile.photos.traditional.url);
+            if (profile.photos?.western?.url || profile.photos?.traditional?.url) {
+              setProfilePhoto(profile.photos?.western?.url || profile.photos?.traditional?.url);
             }
           } else {
             // No profile exists - create mode, but prefill email and names if available
@@ -1778,18 +1791,7 @@ export default function UnifiedMatrimonialForm() {
     fetchUserDataAndProfile();
   }, []);
 
-  // Initialize with at least one social media link if none exist
-  useEffect(() => {
-    if (formData.socialMediaLinks.length === 0 && 
-        !formData.linkedinHandle && 
-        !formData.instagramHandle && 
-        !formData.facebookHandle) {
-      setFormData(prev => ({
-        ...prev,
-        socialMediaLinks: [{ platform: 'LinkedIn', url: '' }]
-      }));
-    }
-  }, [formData.socialMediaLinks, formData.linkedinHandle, formData.instagramHandle, formData.facebookHandle]);
+  // No automatic initialization of social media links since none are mandatory
 
   const steps = [
     { id: 1, title: "Personal Information", icon: <User size={18} /> },
@@ -2218,9 +2220,9 @@ export default function UnifiedMatrimonialForm() {
     
     if (currentStep === 1) {
       stepErrors = validateStep1(formData);
-      // Check if at least one photo is uploaded
-      if (!westernPhoto && !traditionalPhoto) {
-        stepErrors.photos = "Please upload at least one photo (Western or Traditional)";
+      // Check if profile photo is uploaded
+      if (!profilePhoto) {
+        stepErrors.photos = "Please upload a profile photo";
       }
     } else if (currentStep === 2) {
       stepErrors = validateStep2(formData);
@@ -2291,13 +2293,12 @@ export default function UnifiedMatrimonialForm() {
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   };
 
-  const handleFileUpload = (e, photoType) => {
+  const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setOriginalImage(reader.result);
-        setCropperMode(photoType); // 'western' or 'traditional'
         setShowCropper(true);
       };
       reader.readAsDataURL(file);
@@ -2305,28 +2306,18 @@ export default function UnifiedMatrimonialForm() {
   };
 
   const handleCropComplete = (croppedImageUrl) => {
-    if (cropperMode === 'western') {
-      setWesternPhoto(croppedImageUrl);
-    } else if (cropperMode === 'traditional') {
-      setTraditionalPhoto(croppedImageUrl);
-    }
+    setProfilePhoto(croppedImageUrl);
     setShowCropper(false);
     setOriginalImage(null);
-    setCropperMode(null);
   };
 
   const handleCropCancel = () => {
     setShowCropper(false);
     setOriginalImage(null);
-    setCropperMode(null);
   };
 
-  const removePhoto = (photoType) => {
-    if (photoType === 'western') {
-      setWesternPhoto(null);
-    } else if (photoType === 'traditional') {
-      setTraditionalPhoto(null);
-    }
+  const removePhoto = () => {
+    setProfilePhoto(null);
   };
 
   // Sibling management functions
@@ -2422,18 +2413,15 @@ export default function UnifiedMatrimonialForm() {
         linkedinHandle: formData.socialMediaLinks.find(link => link.platform === 'LinkedIn')?.url || formData.linkedinHandle || '',
         instagramHandle: formData.socialMediaLinks.find(link => link.platform === 'Instagram')?.url || formData.instagramHandle || '',
         facebookHandle: formData.socialMediaLinks.find(link => link.platform === 'Facebook')?.url || formData.facebookHandle || '',
-        // Fix photo structure to match backend model
+        // Fix photo structure to match backend model - single photo
         photos: {
-          western: westernPhoto ? { url: westernPhoto, publicId: '' } : undefined,
-          traditional: traditionalPhoto ? { url: traditionalPhoto, publicId: '' } : undefined
+          profilePhoto: profilePhoto ? { url: profilePhoto, publicId: '' } : undefined
         }
       };
 
       console.log('=== STEPWISE REGISTRATION SUBMIT DEBUG ===');
-      console.log('Western photo exists:', !!westernPhoto);
-      console.log('Traditional photo exists:', !!traditionalPhoto);
-      console.log('Western photo length:', westernPhoto ? westernPhoto.length : 0);
-      console.log('Traditional photo length:', traditionalPhoto ? traditionalPhoto.length : 0);
+      console.log('Profile photo exists:', !!profilePhoto);
+      console.log('Profile photo length:', profilePhoto ? profilePhoto.length : 0);
       console.log('Photos object being sent:', submitData.photos);
       console.log('=== STEPWISE REGISTRATION SUBMIT DEBUG END ===');
 
@@ -2587,73 +2575,51 @@ export default function UnifiedMatrimonialForm() {
               ))}
             </div>
           
-          {/* Photos Section - Western and Traditional */}
-          <div className="flex flex-col items-center mb-6 lg:mb-10">
-            <div className="flex flex-row items-center justify-center gap-10 mb-4">
-              {/* Western Photo */}
-              <div className="relative">
-                <div className="w-24 h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
-                  {westernPhoto ? (
-                    <img src={westernPhoto} className="w-full h-full object-cover" alt="Western Photo" />
-                  ) : (
-                    <User size={48} className="text-slate-300" />
+          {/* Photos Section - Single Profile Photo (Only on Personal Information step) */}
+          {currentStep === 1 && (
+            <div className="flex flex-col items-center mb-6 lg:mb-10">
+              <div className="flex flex-col items-center justify-center mb-4">
+                {/* Profile Photo */}
+                <div className="relative">
+                  <div className="w-32 h-32 md:w-40 md:h-40 lg:w-44 lg:h-44 rounded-full border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+                    {profilePhoto ? (
+                      <img src={profilePhoto} className="w-full h-full object-cover" alt="Profile Photo" />
+                    ) : (
+                      <User size={64} className="text-slate-300" />
+                    )}
+                  </div>
+                  <label className="absolute bottom-2 right-2 bg-[#9181EE] p-3 lg:p-4 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
+                    <Camera size={18} className="lg:size-5" />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                  </label>
+                  {profilePhoto && (
+                    <button
+                      onClick={removePhoto}
+                      className="absolute top-2 right-2 bg-red-500 p-2 lg:p-3 rounded-full text-white hover:bg-red-600 transition-colors"
+                    >
+                      <X size={16} className="lg:size-4" />
+                    </button>
                   )}
+                  <p className="text-center text-xs lg:text-sm font-bold text-slate-600 mt-3">Profile Photo</p>
                 </div>
-                <label className="absolute bottom-2 right-2 bg-[#9181EE] p-2 lg:p-3 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
-                  <Camera size={16} className="lg:size-5" />
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'western')} />
-                </label>
-                {westernPhoto && (
-                  <button
-                    onClick={() => removePhoto('western')}
-                    className="absolute top-2 right-2 bg-red-500 p-1 lg:p-2 rounded-full text-white hover:bg-red-600 transition-colors"
-                  >
-                    <X size={14} className="lg:size-4" />
-                  </button>
-                )}
-                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2  ">Western</p>
               </div>
 
-              {/* Traditional Photo */}
-              <div className="relative">
-                <div className="w-24 h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full border-4 lg:border-[5px] border-white shadow-lg lg:shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
-                  {traditionalPhoto ? (
-                    <img src={traditionalPhoto} className="w-full h-full object-cover" alt="Traditional Photo" />
-                  ) : (
-                    <User size={48} className="text-slate-300" />
-                  )}
+              {errors.photos && (
+                <div className="flex items-center gap-2 text-red-500 text-xs mb-4">
+                  <AlertCircle size={14} />
+                  <span>{errors.photos}</span>
                 </div>
-                <label className="absolute bottom-2 right-2 bg-[#9181EE] p-2 lg:p-3 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
-                  <Camera size={16} className="lg:size-5" />
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'traditional')} />
-                </label>
-                {traditionalPhoto && (
-                  <button
-                    onClick={() => removePhoto('traditional')}
-                    className="absolute top-2 right-2 bg-red-500 p-1 lg:p-2 rounded-full text-white hover:bg-red-600 transition-colors"
-                  >
-                    <X size={14} className="lg:size-4" />
-                  </button>
-                )}
-                <p className="text-center text-[10px] lg:text-[11px] font-bold text-slate-600 mt-2  ">Traditional</p>
-              </div>
+              )}
             </div>
-
-            {errors.photos && (
-              <div className="flex items-center gap-2 text-red-500 text-xs mb-4">
-                <AlertCircle size={14} />
-                <span>{errors.photos}</span>
-              </div>
-            )}
+          )}
             
-            <div className="text-center space-y-1">
-              <h1 className="text-lg md:text-xl lg:text-2xl font-extrabold text-[#2D2D2D]   tracking-tight">
-                {(formData.firstName || formData.lastName) ? `${formData.firstName} ${formData.lastName}`.trim() : (isEditMode ? "Edit Profile" : "Create Profile")}
-              </h1>
-              <p className="text-[10px] lg:text-[11px] font-bold text-[#9181EE]   tracking-[1px]">
-                {isEditMode ? "Update" : "Complete"} Step {currentStep} of {steps.length} : <span className="text-[#9181EE]">{steps[currentStep-1].title}</span>
-              </p>
-            </div>
+          <div className="text-center space-y-1 mb-6 lg:mb-10">
+            <h1 className="text-lg md:text-xl lg:text-2xl font-extrabold text-[#2D2D2D]   tracking-tight">
+              {(formData.firstName || formData.lastName) ? `${formData.firstName} ${formData.lastName}`.trim() : (isEditMode ? "Edit Profile" : "Create Profile")}
+            </h1>
+            <p className="text-[10px] lg:text-[11px] font-bold text-[#9181EE]   tracking-[1px]">
+              {isEditMode ? "Update" : "Complete"} Step {currentStep} of {steps.length} : <span className="text-[#9181EE]">{steps[currentStep-1].title}</span>
+            </p>
           </div>
 
           {/* Form Grid */}
@@ -2711,7 +2677,7 @@ export default function UnifiedMatrimonialForm() {
                         handleInputChange('middleName', filteredValue);
                       }}
                       className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                      placeholder="Enter your middle name (optional)"
+                      placeholder="Enter your middle name "
                       style={{ fontSize: '16px' }} 
                     />
                   </div>
@@ -2898,88 +2864,108 @@ export default function UnifiedMatrimonialForm() {
                 <div className="md:col-span-2 space-y-6">
                   <div className="text-center">
                     <h3 className="text-lg font-bold text-slate-900 mb-2">Add Your Social Media</h3>
-                    <p className="text-sm text-slate-600">Add up to 3 social media profiles (at least 1 required)</p>
+                    <p className="text-sm text-slate-600">Add up to 3 social media profiles </p>
                   </div>
 
                   {/* Dynamic Social Media Links */}
                   <div className="space-y-4">
-                    {formData.socialMediaLinks.map((link, index) => (
-                      <div key={index} className="bg-slate-50 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-bold text-slate-700">Social Media Profile {index + 1}</h4>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newLinks = formData.socialMediaLinks.filter((_, i) => i !== index);
-                              handleInputChange('socialMediaLinks', newLinks);
-                            }}
-                            className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {/* Platform Dropdown */}
-                          <div className="space-y-2">
-                            <label className="text-[12px] font-bold text-slate-500 tracking-tighter">Platform</label>
-                            <select
-                              value={link.platform}
-                              onChange={(e) => {
-                                const newLinks = [...formData.socialMediaLinks];
-                                newLinks[index] = { ...link, platform: e.target.value as 'LinkedIn' | 'Instagram' | 'Facebook' };
+                    {formData.socialMediaLinks.map((link, index) => {
+                      // Get available platforms (exclude already selected ones)
+                      const selectedPlatforms = formData.socialMediaLinks.map(l => l.platform).filter(p => p);
+                      const availablePlatforms = ['LinkedIn', 'Instagram', 'Facebook'].filter(platform => 
+                        !selectedPlatforms.includes(platform) || platform === link.platform
+                      );
+                      
+                      return (
+                        <div key={index} className="bg-slate-50 rounded-2xl p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold text-slate-700">Social Media Profile {index + 1}</h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newLinks = formData.socialMediaLinks.filter((_, i) => i !== index);
                                 handleInputChange('socialMediaLinks', newLinks);
                               }}
-                              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
+                              className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
                             >
-                              <option value="">Select Platform</option>
-                              <option value="LinkedIn">🔗 LinkedIn</option>
-                              <option value="Instagram">📷 Instagram</option>
-                              <option value="Facebook">� Facebook</option>
-                            </select>
+                              <X size={16} />
+                            </button>
                           </div>
-
-                          {/* URL Input */}
-                          <div className="space-y-2">
-                            <label className="text-[12px] font-bold text-slate-500 tracking-tighter">Profile URL</label>
-                            <div className={`bg-white border rounded-xl px-4 py-3 shadow-sm transition-all ${
-                              errors[`socialMediaLink_${index}_url`] ? 'border-red-300 bg-red-50' : 'border-slate-200 focus-within:border-[#9181EE] focus-within:ring-2 focus-within:ring-[#9181EE]/20'
-                            }`}>
-                              <input
-                                type="url"
-                                value={link.url}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {/* Platform Dropdown */}
+                            <div className="space-y-2">
+                              <label className="text-[12px] font-bold text-slate-500 tracking-tighter">Platform</label>
+                              <select
+                                value={link.platform}
                                 onChange={(e) => {
                                   const newLinks = [...formData.socialMediaLinks];
-                                  newLinks[index] = { ...link, url: e.target.value };
+                                  newLinks[index] = { ...link, platform: e.target.value as 'LinkedIn' | 'Instagram' | 'Facebook', url: '' };
                                   handleInputChange('socialMediaLinks', newLinks);
                                 }}
-                                className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                                placeholder={
-                                  link.platform === 'LinkedIn' ? 'https://linkedin.com/in/yourname' :
-                                  link.platform === 'Instagram' ? 'https://instagram.com/yourname' :
-                                  link.platform === 'Facebook' ? 'https://facebook.com/yourname' :
-                                  'Enter profile URL'
-                                }
-                                style={{ fontSize: '16px' }}
-                              />
+                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
+                              >
+                                <option value="">Select Platform</option>
+                                {availablePlatforms.map(platform => (
+                                  <option key={platform} value={platform}>
+                                    {platform === 'LinkedIn' && '🔗 LinkedIn'}
+                                    {platform === 'Instagram' && '📷 Instagram'}
+                                    {platform === 'Facebook' && '📘 Facebook'}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
-                            {errors[`socialMediaLink_${index}_url`] && (
-                              <div className="flex items-center gap-2 text-red-500 text-xs">
-                                <AlertCircle size={14} />
-                                <span>{errors[`socialMediaLink_${index}_url`]}</span>
+
+                            {/* URL Input */}
+                            <div className="space-y-2">
+                              <label className="text-[12px] font-bold text-slate-500 tracking-tighter">Profile URL</label>
+                              <div className={`bg-white border rounded-xl px-4 py-3 shadow-sm transition-all ${
+                                errors[`socialMediaLink_${index}_url`] ? 'border-red-300 bg-red-50' : 'border-slate-200 focus-within:border-[#9181EE] focus-within:ring-2 focus-within:ring-[#9181EE]/20'
+                              }`}>
+                                <input
+                                  type="url"
+                                  value={link.url}
+                                  onChange={(e) => {
+                                    const newLinks = [...formData.socialMediaLinks];
+                                    newLinks[index] = { ...link, url: e.target.value };
+                                    handleInputChange('socialMediaLinks', newLinks);
+                                  }}
+                                  className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                                  placeholder={
+                                    link.platform === 'LinkedIn' ? 'https://linkedin.com/in/yourname' :
+                                    link.platform === 'Instagram' ? 'https://instagram.com/yourname' :
+                                    link.platform === 'Facebook' ? 'https://facebook.com/yourname' :
+                                    'Enter profile URL'
+                                  }
+                                  style={{ fontSize: '16px' }}
+                                  disabled={!link.platform}
+                                />
                               </div>
-                            )}
+                              {errors[`socialMediaLink_${index}_url`] && (
+                                <div className="flex items-center gap-2 text-red-500 text-xs">
+                                  <AlertCircle size={14} />
+                                  <span>{errors[`socialMediaLink_${index}_url`]}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Add Social Media Button */}
                     {formData.socialMediaLinks.length < 3 && (
                       <button
                         type="button"
                         onClick={() => {
-                          const newLinks = [...formData.socialMediaLinks, { platform: 'LinkedIn' as const, url: '' }];
+                          // Find the first available platform
+                          const selectedPlatforms = formData.socialMediaLinks.map(l => l.platform).filter(p => p);
+                          const availablePlatforms = ['LinkedIn', 'Instagram', 'Facebook'].filter(platform => 
+                            !selectedPlatforms.includes(platform)
+                          );
+                          const defaultPlatform = availablePlatforms[0] || '';
+                          
+                          const newLinks = [...formData.socialMediaLinks, { platform: defaultPlatform as 'LinkedIn' | 'Instagram' | 'Facebook', url: '' }];
                           handleInputChange('socialMediaLinks', newLinks);
                         }}
                         className="w-full bg-white border-2 border-dashed border-slate-300 rounded-2xl p-6 text-slate-500 hover:text-[#9181EE] hover:border-[#9181EE] transition-all flex items-center justify-center gap-2 font-semibold"
@@ -2989,20 +2975,9 @@ export default function UnifiedMatrimonialForm() {
                       </button>
                     )}
 
-                    {/* Social Media Requirement Notice */}
-                    {errors.socialMedia && (
-                      <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                        <div className="flex items-center gap-2 text-red-600 text-sm">
-                          <AlertCircle size={16} />
-                          <span className="font-semibold">At least one social media profile is required</span>
-                        </div>
-                        <p className="text-red-500 text-xs mt-1 ml-6">Please add at least one social media profile.</p>
-                      </div>
-                    )}
-
                     <div className="text-center">
                       <p className="text-xs text-slate-500">
-                        <span className="text-red-500">*</span> At least one social media profile is required • Maximum 3 profiles
+                        Social media profiles are optional • Maximum 3 profiles
                       </p>
                     </div>
                   </div>
@@ -3850,6 +3825,57 @@ export default function UnifiedMatrimonialForm() {
                     </>
                   )}
 
+                  {/* Father's WhatsApp Number */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                        Father's WhatsApp Number
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      {/* Country Code Dropdown */}
+                      <div className="w-32">
+                        <select
+                          value={formData.fathersCountryCode}
+                          onChange={(e) => handleInputChange('fathersCountryCode', e.target.value)}
+                          className="w-full bg-white border border-slate-100 rounded-2xl px-3 py-3 lg:py-4 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
+                          style={{ fontSize: '16px' }}
+                        >
+                          {countryCodes.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.flag} {country.code}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {/* Phone Number Input */}
+                      <div className="flex-1">
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.fathersWhatsappNumber ? 'border-red-300 bg-red-50' : 'border-slate-100 focus-within:border-[#9181EE] focus-within:ring-2 focus-within:ring-[#9181EE]/20'
+                        } transition-all`}>
+                          <input
+                            type="tel"
+                            value={formData.fathersWhatsappNumber}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+                              handleInputChange('fathersWhatsappNumber', value);
+                            }}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter father's WhatsApp number"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.fathersWhatsappNumber && (
+                          <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.fathersWhatsappNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Mother's Full Name */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 ml-1">
@@ -4009,6 +4035,57 @@ export default function UnifiedMatrimonialForm() {
                       </div>
                     </>
                   )}
+
+                  {/* Mother's WhatsApp Number */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 ml-1">
+                      <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+                        Mother's WhatsApp Number
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      {/* Country Code Dropdown */}
+                      <div className="w-32">
+                        <select
+                          value={formData.mothersCountryCode}
+                          onChange={(e) => handleInputChange('mothersCountryCode', e.target.value)}
+                          className="w-full bg-white border border-slate-100 rounded-2xl px-3 py-3 lg:py-4 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
+                          style={{ fontSize: '16px' }}
+                        >
+                          {countryCodes.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.flag} {country.code}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {/* Phone Number Input */}
+                      <div className="flex-1">
+                        <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm ${
+                          errors.mothersWhatsappNumber ? 'border-red-300 bg-red-50' : 'border-slate-100 focus-within:border-[#9181EE] focus-within:ring-2 focus-within:ring-[#9181EE]/20'
+                        } transition-all`}>
+                          <input
+                            type="tel"
+                            value={formData.mothersWhatsappNumber}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+                              handleInputChange('mothersWhatsappNumber', value);
+                            }}
+                            className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
+                            placeholder="Enter mother's WhatsApp number"
+                            style={{ fontSize: '16px' }}
+                          />
+                        </div>
+                        {errors.mothersWhatsappNumber && (
+                          <div className="flex items-center gap-2 mt-2 text-red-500 text-xs">
+                            <AlertCircle size={14} />
+                            <span>{errors.mothersWhatsappNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
                 </div>
 
