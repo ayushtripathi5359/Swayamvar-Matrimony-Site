@@ -26,13 +26,16 @@ jobs:
           script: |
             set -eux
 
-            # FIX for git "dubious ownership" error
+            # Fix git security warning
             git config --global --add safe.directory /var/www/Swayamvar
 
-            # Deployment steps
+            # Always sync server exactly with GitHub (NO conflicts)
             cd /var/www/Swayamvar
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
 
+            # Backend deploy
             cd backend
             npm install
 
