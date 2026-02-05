@@ -21,12 +21,20 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           timeout: 200s
+          command_timeout: 15m
           script_stop: true
           script: |
             set -eux
+
+            # FIX for git "dubious ownership" error
+            git config --global --add safe.directory /var/www/Swayamvar
+
+            # Deployment steps
             cd /var/www/Swayamvar
             git pull origin main
+
             cd backend
             npm install
+
             pm2 restart swayamvar-backend || pm2 start server.js --name swayamvar-backend
             pm2 save
