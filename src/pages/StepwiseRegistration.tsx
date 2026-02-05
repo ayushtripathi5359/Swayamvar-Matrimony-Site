@@ -1412,7 +1412,7 @@ const SiblingField = ({
   };
 
   const maritalStatusOptions = ["Unmarried", "Married"];
-  const occupationOptions = ["Business", "Job/Salaried", "Student", "Homemaker", "Not Working", "Other"];
+  const occupationOptions = ["Business", "Job", "Student", "Homemaker", "Not Working", "Other"];
 
   return (
     <div className="space-y-4 p-4 bg-slate-50 rounded-2xl">
@@ -1447,8 +1447,12 @@ const SiblingField = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Name Field */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-slate-500  ">Name</label>
-          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+          <label className="text-xs font-semibold text-slate-500  ">
+            Name <span className="text-red-500">*</span>
+          </label>
+          <div className={`bg-white border rounded-2xl px-4 py-3 ${
+            errors[`${type}_${index}_name`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+          }`}>
             <input
               type="text"
               value={siblingData.name}
@@ -1457,13 +1461,23 @@ const SiblingField = ({
               placeholder="Enter name"
             />
           </div>
+          {errors[`${type}_${index}_name`] && (
+            <div className="flex items-center gap-2 text-red-500 text-xs">
+              <AlertCircle size={14} />
+              <span>{errors[`${type}_${index}_name`]}</span>
+            </div>
+          )}
         </div>
 
         {/* Marital Status - Custom Dropdown */}
         <div className="space-y-2 relative" ref={maritalStatusRef}>
-          <label className="text-xs font-semibold text-slate-500  ">Marital Status</label>
+          <label className="text-xs font-semibold text-slate-500  ">
+            Marital Status <span className="text-red-500">*</span>
+          </label>
           <div 
-            className="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all"
+            className={`bg-white border rounded-2xl px-4 py-3 flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all ${
+              errors[`${type}_${index}_maritalStatus`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+            }`}
             onClick={() => setMaritalStatusOpen(!maritalStatusOpen)}
           >
             <span className={`font-semibold ${siblingData.maritalStatus ? "text-slate-700" : "text-slate-400"} text-sm`}>
@@ -1493,13 +1507,23 @@ const SiblingField = ({
               ))}
             </div>
           )}
+          {errors[`${type}_${index}_maritalStatus`] && (
+            <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+              <AlertCircle size={14} />
+              <span>{errors[`${type}_${index}_maritalStatus`]}</span>
+            </div>
+          )}
         </div>
 
         {/* Occupation - Custom Dropdown */}
         <div className="space-y-2 relative" ref={occupationRef}>
-          <label className="text-xs font-semibold text-slate-500  ">Occupation</label>
+          <label className="text-xs font-semibold text-slate-500  ">
+            Occupation <span className="text-red-500">*</span>
+          </label>
           <div 
-            className="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all"
+            className={`bg-white border rounded-2xl px-4 py-3 flex items-center justify-between cursor-pointer hover:border-[#9181EE]/30 transition-all ${
+              errors[`${type}_${index}_occupation`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+            }`}
             onClick={() => setOccupationOpen(!occupationOpen)}
           >
             <span className={`font-semibold ${siblingData.occupation ? "text-slate-700" : "text-slate-400"} text-sm`}>
@@ -1529,13 +1553,23 @@ const SiblingField = ({
               ))}
             </div>
           )}
+          {errors[`${type}_${index}_occupation`] && (
+            <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+              <AlertCircle size={14} />
+              <span>{errors[`${type}_${index}_occupation`]}</span>
+            </div>
+          )}
         </div>
 
         {/* Spouse Name (only if married) */}
         {siblingData.maritalStatus === 'Married' && (
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-500  ">Married to (Spouse Name)</label>
-            <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+            <label className="text-xs font-semibold text-slate-500  ">
+              Married to (Spouse Name) <span className="text-red-500">*</span>
+            </label>
+            <div className={`bg-white border rounded-2xl px-4 py-3 ${
+              errors[`${type}_${index}_spouseName`] ? 'border-red-300 bg-red-50' : 'border-slate-200'
+            }`}>
               <input
                 type="text"
                 value={siblingData.spouseName}
@@ -1544,6 +1578,12 @@ const SiblingField = ({
                 placeholder="Enter spouse name"
               />
             </div>
+            {errors[`${type}_${index}_spouseName`] && (
+              <div className="flex items-center gap-2 text-red-500 text-xs">
+                <AlertCircle size={14} />
+                <span>{errors[`${type}_${index}_spouseName`]}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -1597,8 +1637,8 @@ const SiblingField = ({
           </>
         )}
 
-        {/* Job/Salaried Fields */}
-        {siblingData.occupation === 'Job/Salaried' && (
+        {/* Job Fields */}
+        {siblingData.occupation === 'Job' && (
           <>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-500  ">
@@ -1899,8 +1939,25 @@ const validateStep3 = (formData: FormData) => {
     // Remove validation for other occupation
   }
   
-  // Sibling validation - validate each brother's job fields when visible
+  // Sibling validation - validate each brother
   formData.brothers?.forEach((brother, index) => {
+    // Basic required fields for all brothers
+    if (!brother.name?.trim()) {
+      errors[`brother_${index}_name`] = "Brother's name is required";
+    }
+    if (!brother.maritalStatus?.trim()) {
+      errors[`brother_${index}_maritalStatus`] = "Marital status is required";
+    }
+    if (!brother.occupation?.trim()) {
+      errors[`brother_${index}_occupation`] = "Occupation is required";
+    }
+    
+    // Spouse name required if married
+    if (brother.maritalStatus === "Married" && !brother.spouseName?.trim()) {
+      errors[`brother_${index}_spouseName`] = "Spouse name is required";
+    }
+    
+    // Occupation-specific validation
     if (brother.occupation === "Business") {
       if (!brother.businessName?.trim()) {
         errors[`brother_${index}_businessName`] = "Business name is required";
@@ -1908,7 +1965,7 @@ const validateStep3 = (formData: FormData) => {
       if (!brother.businessLocation?.trim()) {
         errors[`brother_${index}_businessLocation`] = "Business location is required";
       }
-    } else if (brother.occupation === "Job/Salaried") {
+    } else if (brother.occupation === "Job") {
       if (!brother.designation?.trim()) {
         errors[`brother_${index}_designation`] = "Designation is required";
       }
@@ -1918,8 +1975,25 @@ const validateStep3 = (formData: FormData) => {
     }
   });
   
-  // Sibling validation - validate each sister's job fields when visible
+  // Sibling validation - validate each sister
   formData.sisters?.forEach((sister, index) => {
+    // Basic required fields for all sisters
+    if (!sister.name?.trim()) {
+      errors[`sister_${index}_name`] = "Sister's name is required";
+    }
+    if (!sister.maritalStatus?.trim()) {
+      errors[`sister_${index}_maritalStatus`] = "Marital status is required";
+    }
+    if (!sister.occupation?.trim()) {
+      errors[`sister_${index}_occupation`] = "Occupation is required";
+    }
+    
+    // Spouse name required if married
+    if (sister.maritalStatus === "Married" && !sister.spouseName?.trim()) {
+      errors[`sister_${index}_spouseName`] = "Spouse name is required";
+    }
+    
+    // Occupation-specific validation
     if (sister.occupation === "Business") {
       if (!sister.businessName?.trim()) {
         errors[`sister_${index}_businessName`] = "Business name is required";
@@ -1927,7 +2001,7 @@ const validateStep3 = (formData: FormData) => {
       if (!sister.businessLocation?.trim()) {
         errors[`sister_${index}_businessLocation`] = "Business location is required";
       }
-    } else if (sister.occupation === "Job/Salaried") {
+    } else if (sister.occupation === "Job") {
       if (!sister.designation?.trim()) {
         errors[`sister_${index}_designation`] = "Designation is required";
       }
@@ -2348,7 +2422,7 @@ export default function UnifiedMatrimonialForm() {
       "Open to Relocation"
     ],
     minAnnualIncome: ["Not Reqired","5LPA+","₹10 LPA +", "₹15 LPA +", "₹20 LPA +", "₹25 LPA +", "₹30 LPA +", "₹40 LPA +", "₹50 LPA +"],
-    parentOccupation: ["Business", "Job/Salaried", "Retired", "Homemaker", "Not Working", "Other"],
+    parentOccupation: ["Business", "Job", "Retired", "Homemaker", "Not Working", "Other"],
     gotra: [
       "Aankul",
       "Abhimanchkul",
@@ -2708,6 +2782,12 @@ export default function UnifiedMatrimonialForm() {
   const handleCropComplete = (croppedImageUrl) => {
     if (croppedImageUrl) {
       setProfilePhoto(croppedImageUrl);
+      // Clear photo error when photo is successfully uploaded
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.photos;
+        return newErrors;
+      });
     }
     setShowCropper(false);
     setOriginalImage(null);
@@ -3017,10 +3097,12 @@ export default function UnifiedMatrimonialForm() {
             
           <div className="text-center space-y-1 mb-6 lg:mb-10">
             <h1 className="text-lg md:text-xl lg:text-2xl font-extrabold text-[#2D2D2D]   tracking-tight">
-              {(formData.firstName || formData.lastName) ? `${formData.firstName} ${formData.lastName}`.trim() : (isEditMode ? "Edit Profile" : "Create Profile")}
+              {currentStep === 1 && (formData.firstName || formData.lastName) 
+                ? `${formData.firstName} ${formData.lastName}`.trim() 
+                : (isEditMode ? "" : "Create Profile")}
             </h1>
             <p className="text-[10px] lg:text-[11px] font-bold text-[#9181EE]   tracking-[1px]">
-              {isEditMode ? "Update" : "Complete"} Step {currentStep} of {steps.length} : <span className="text-[#9181EE]">{steps[currentStep-1].title}</span>
+               <span className="text-[#9181EE]">{steps[currentStep-1].title}</span>
             </p>
           </div>
 
@@ -3210,13 +3292,6 @@ export default function UnifiedMatrimonialForm() {
                           }
                         }}
                         className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                        placeholder={(() => {
-                          const country = countryCodes.find(c => c.code === formData.countryCode);
-                          if (country?.code === '+91') return "9876543210";
-                          if (country?.code === '+1') return "2345678901";
-                          if (country?.code === '+44') return "7700900123";
-                          return "Enter phone number";
-                        })()}
                         style={{ fontSize: '16px' }}
                       />
                     </div>
@@ -3227,15 +3302,7 @@ export default function UnifiedMatrimonialForm() {
                       <span>{errors.whatsappNumber}</span>
                     </div>
                   )}
-                  <div className="text-xs text-slate-500 ml-1">
-                    {(() => {
-                      const country = countryCodes.find(c => c.code === formData.countryCode);
-                      const lengthText = Array.isArray(country?.length) 
-                        ? `${country.length[0]}-${country.length[country.length.length - 1]}` 
-                        : country?.length;
-                      return `Enter ${lengthText} digit ${country?.country} phone number`;
-                    })()}
-                  </div>
+                 
                 </div>
 
                 {/* Email Address - Read Only */}
@@ -3248,7 +3315,6 @@ export default function UnifiedMatrimonialForm() {
                       {formData.emailId || userEmail || "Loading..."}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 ml-1">This is your registered email address</p>
                 </div>
 
                 {/* Dynamic Social Media Profiles Section */}
@@ -3923,7 +3989,7 @@ export default function UnifiedMatrimonialForm() {
                   </div>
                 )}
 
-                {/* Job/Salaried Fields */}
+                {/* Job Fields */}
                 {formData.occupation === "Salaried" && (
                   <>
                     <div className="space-y-2">
@@ -4152,8 +4218,8 @@ export default function UnifiedMatrimonialForm() {
                     </>
                   )}
 
-                  {/* Father's Job/Salaried Fields */}
-                  {formData.fathersOccupation === "Job/Salaried" && (
+                  {/* Father's Job Fields */}
+                  {formData.fathersOccupation === "Job" && (
                     <>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
@@ -4236,7 +4302,6 @@ export default function UnifiedMatrimonialForm() {
                               handleInputChange('fathersWhatsappNumber', value);
                             }}
                             className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                            placeholder="Enter father's WhatsApp number"
                             style={{ fontSize: '16px' }}
                           />
                         </div>
@@ -4354,8 +4419,8 @@ export default function UnifiedMatrimonialForm() {
                     </>
                   )}
 
-                  {/* Mother's Job/Salaried Fields */}
-                  {formData.mothersOccupation === "Job/Salaried" && (
+                  {/* Mother's Job Fields */}
+                  {formData.mothersOccupation === "Job" && (
                     <>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 ml-1">
@@ -4438,7 +4503,6 @@ export default function UnifiedMatrimonialForm() {
                               handleInputChange('mothersWhatsappNumber', value);
                             }}
                             className="w-full font-bold text-black text-sm lg:text-base outline-none bg-transparent"
-                            placeholder="Enter mother's WhatsApp number"
                             style={{ fontSize: '16px' }}
                           />
                         </div>
@@ -4768,17 +4832,17 @@ export default function UnifiedMatrimonialForm() {
 
           {/* Mobile Sticky Navigation - Only visible on mobile */}
           <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-40 shadow-lg">
-            <div className="flex items-center justify-between max-w-md mx-auto">
+            <div className="flex items-center justify-between max-w-md mx-auto relative">
               <button 
                 onClick={back}
                 className={`flex items-center gap-2 px-4 py-3 rounded-xl font-bold transition-all ${
-                  currentStep === 1 ? "opacity-0 pointer-events-none" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                  currentStep === 1 ? "invisible" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <ChevronLeft size={18} /> Previous
               </button>
 
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+              <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 text-xs font-bold text-slate-500">
                 <span>{currentStep}</span>
                 <span>/</span>
                 <span>{steps.length}</span>

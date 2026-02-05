@@ -672,7 +672,7 @@ const MyProfile = () => {
     switch (profile.fathersOccupation) {
       case "Business":
         return `Business${profile.fathersBusinessName ? ` - ${profile.fathersBusinessName}` : ''}${profile.fathersBusinessLocation ? ` (${profile.fathersBusinessLocation})` : ''}`;
-      case "Job/Salaried":
+      case "Job":
         return `${profile.fathersDesignation || 'Employee'}${profile.fathersCompanyName ? ` at ${profile.fathersCompanyName}` : ''}`;
       case "Other":
         return "Other occupation";
@@ -687,7 +687,7 @@ const MyProfile = () => {
     switch (profile.mothersOccupation) {
       case "Business":
         return `Business${profile.mothersBusinessName ? ` - ${profile.mothersBusinessName}` : ''}${profile.mothersBusinessLocation ? ` (${profile.mothersBusinessLocation})` : ''}`;
-      case "Job/Salaried":
+      case "Job":
         return `${profile.mothersDesignation || 'Employee'}${profile.mothersCompanyName ? ` at ${profile.mothersCompanyName}` : ''}`;
       case "Other":
         return "Other occupation";
@@ -1708,7 +1708,7 @@ const MyProfile = () => {
                               type="select"
                               value={editData.fathersOccupation || ''}
                               onChange={(value) => handleInputChange('fathersOccupation', value)}
-                              options={["Business", "Job/Salaried", "Retired", "Homemaker", "Not Working", "Other"]}
+                              options={["Business", "Job", "Retired", "Homemaker", "Not Working", "Other"]}
                               required
                             />
                             {editData.fathersOccupation === "Business" && (
@@ -1729,7 +1729,7 @@ const MyProfile = () => {
                                 />
                               </>
                             )}
-                            {editData.fathersOccupation === "Job/Salaried" && (
+                            {editData.fathersOccupation === "Job" && (
                               <>
                                 <EditableField
                                   label="Designation"
@@ -1789,7 +1789,7 @@ const MyProfile = () => {
                               type="select"
                               value={editData.mothersOccupation || ''}
                               onChange={(value) => handleInputChange('mothersOccupation', value)}
-                              options={["Business", "Job/Salaried", "Retired", "Homemaker", "Not Working", "Other"]}
+                              options={["Business", "Job", "Retired", "Homemaker", "Not Working", "Other"]}
                               required
                             />
                             {editData.mothersOccupation === "Business" && (
@@ -1810,7 +1810,7 @@ const MyProfile = () => {
                                 />
                               </>
                             )}
-                            {editData.mothersOccupation === "Job/Salaried" && (
+                            {editData.mothersOccupation === "Job" && (
                               <>
                                 <EditableField
                                   label="Designation"
