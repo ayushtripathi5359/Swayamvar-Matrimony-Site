@@ -131,10 +131,21 @@ const ImageCropper = ({
                     const x = (width - size) / 2;
                     const y = (height - size) / 2;
                     
-                    setCrop({
-                      unit: 'px',
+                    const initialCrop = {
+                      unit: 'px' as const,
                       width: size,
                       height: size, // Ensure square
+                      x: x,
+                      y: y
+                    };
+                    
+                    setCrop(initialCrop);
+                    
+                    // Also set the completed crop so it's ready for cropping without user interaction
+                    setCompletedCrop({
+                      unit: 'px' as const,
+                      width: size,
+                      height: size,
                       x: x,
                       y: y
                     });
@@ -356,8 +367,7 @@ const MyProfile = () => {
       "Below 10th",
     ],
     occupation: [
-      "Salaried (Private)",
-      "Salaried (Government)",
+      "Salaried",
       "Self-Employed",
       "Business Owner",
       "Freelancer",
@@ -764,7 +774,7 @@ const MyProfile = () => {
           <Navbar />
           
           {/* Header Section */}
-          <div className="px-5 sm:px-8 md:px-12 lg:px-16 pt-20 pb-6">
+          <div className="px-5 sm:px-8 md:px-12 lg:px-16 pt-32 pb-6">
             {/* Page Title */}
             <div className="mb-8">
               <h1 className="font-bold text-[28px] sm:text-[34px] lg:text-[42px] leading-tight tracking-tight text-slate-900 mb-2">
@@ -804,7 +814,7 @@ const MyProfile = () => {
                   ) : (
                     <button
                       onClick={() => startEditing('leftCard')}
-                      className="absolute top-6 right-6 p-2 text-slate-400 hover:text-[#ED9B59] hover:bg-white rounded-full transition-all shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-orange-200"
+                      className="absolute z-10 top-6 right-6 p-2 text-slate-400 hover:text-[#ED9B59] hover:bg-white rounded-full transition-all shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-orange-200"
                     >
                       <Pencil size={18} />
                     </button>

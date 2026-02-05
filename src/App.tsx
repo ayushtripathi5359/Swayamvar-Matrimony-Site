@@ -18,6 +18,7 @@ import Pricing from "./pages/Pricing";
 import AboutUsPage from "./pages/AboutUsPage";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
+import MelavaEvents from "./pages/MelavaEvents";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/aboutus" element={<AboutUsPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/melava-events" element={<MelavaEvents />} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

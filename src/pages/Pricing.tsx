@@ -4,36 +4,33 @@ import { Check, Crown, Heart, Star, Users, Zap } from "lucide-react";
 
 export default function Pricing() {
   const basicFeatures = [
-    "Create detailed profile",
-    "Browse unlimited profiles",
-    "Send up to 10 interests per month",
-    "Basic search filters",
-    "View contact details of accepted matches",
-    "Email support"
+    "Personal Profile Setup & Editing",
+    "Basic Match Discovery Filters",
+    "Limited Interest Expressions",
+    "Restricted Contact Visibility",
+    "Privacy-Protected Profile Access"
+  ];
+
+  const standardFeatures = [
+    "All features of Basic Plan, plus:",
+    "Profile Highlight",
+    "12-Month Membership Validity",
+    "Dedicated Customer Support",
+    "Preference-Based Profile Visibility",
+    "Limited Horoscope Matching"
   ];
 
   const premiumFeatures = [
-    "All Basic features",
-    "Unlimited interests & messages",
-    "Advanced search filters",
-    "See who viewed your profile",
-    "Priority listing in search results",
-    "Verified badge on profile",
-    "Dedicated relationship manager",
-    "Phone support",
-    "Profile highlighting"
-  ];
-
-  const eliteFeatures = [
-    "All Premium features",
-    "Personalized matchmaking service",
-    "Professional photo shoot assistance",
-    "Profile writing assistance",
-    "Background verification",
-    "Exclusive elite member directory",
-    "Personal consultation sessions",
-    "24/7 priority support",
-    "Custom match recommendations"
+    "All features of Basic & Standard, plus:",
+    "Monthly List of Newly Added Members via Email / WhatsApp",
+    "Priority WhatsApp Customer Support",
+    "Priority Listing in Search Results",
+    "Maximum Profile Visibility Based on Partner Preferences",
+    "Profile Highlighted as \"Premium Member\"",
+    "First 50 Biodata Prints Free",
+    "Membership Valid Until Marriage",
+    "Unlimited Horoscope Matching",
+    "Exclusive Discounts on Melawa Programs"
   ];
 
   return (
@@ -68,8 +65,8 @@ export default function Pricing() {
                 <Users size={16} />
                 Basic
               </div>
-              <div className="text-4xl font-bold text-gray-900 mb-2">₹999</div>
-              <div className="text-gray-500">per month</div>
+              <div className="text-4xl font-bold text-gray-900 mb-2">Free</div>
+              <div className="text-gray-500">forever</div>
             </div>
             
             <ul className="space-y-4 mb-8">
@@ -82,7 +79,32 @@ export default function Pricing() {
             </ul>
             
             <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
-              Get Started
+              Get Started Free
+            </button>
+          </div>
+
+          {/* Standard Plan */}
+          <div className="bg-white rounded-3xl shadow-lg border border-gray-200 p-8 relative">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
+                <Star size={16} />
+                Standard
+              </div>
+              <div className="text-4xl font-bold text-gray-900 mb-2">₹1,000</div>
+              <div className="text-gray-500">12 months validity</div>
+            </div>
+            
+            <ul className="space-y-4 mb-8">
+              {standardFeatures.map((feature, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Check size={20} className="text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">{feature}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+              Choose Standard
             </button>
           </div>
 
@@ -96,12 +118,12 @@ export default function Pricing() {
             
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
-                <Star size={16} />
+                <Crown size={16} />
                 Premium
               </div>
-              <div className="text-4xl font-bold text-gray-900 mb-2">₹2,499</div>
-              <div className="text-gray-500">per month</div>
-              <div className="text-sm text-green-600 font-medium mt-1">Save 30% annually</div>
+              <div className="text-4xl font-bold text-gray-900 mb-2">₹2,500</div>
+              <div className="text-gray-500">valid until marriage</div>
+              <div className="text-sm text-green-600 font-medium mt-1">Best Value</div>
             </div>
             
             <ul className="space-y-4 mb-8">
@@ -115,31 +137,6 @@ export default function Pricing() {
             
             <button className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all">
               Choose Premium
-            </button>
-          </div>
-
-          {/* Elite Plan */}
-          <div className="bg-white rounded-3xl shadow-lg border border-gray-200 p-8 relative">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
-                <Crown size={16} />
-                Elite
-              </div>
-              <div className="text-4xl font-bold text-gray-900 mb-2">₹4,999</div>
-              <div className="text-gray-500">per month</div>
-            </div>
-            
-            <ul className="space-y-4 mb-8">
-              {eliteFeatures.map((feature, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <Check size={20} className="text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-700">{feature}</span>
-                </li>
-              ))}
-            </ul>
-            
-            <button className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
-              Go Elite
             </button>
           </div>
         </div>

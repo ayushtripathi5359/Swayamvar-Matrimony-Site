@@ -6,67 +6,64 @@ const SUBSCRIPTION_PLANS = {
   basic: {
     name: 'Basic',
     price: {
-      monthly: 999,
-      annual: 9999
+      monthly: 0,
+      annual: 0
     },
     features: [
-      'Create detailed profile',
-      'Browse unlimited profiles',
-      'Send up to 10 interests per month',
-      'Basic search filters',
-      'View contact details of accepted matches',
-      'Email support'
+      'Personal Profile Setup & Editing',
+      'Basic Match Discovery Filters',
+      'Limited Interest Expressions',
+      'Restricted Contact Visibility',
+      'Privacy-Protected Profile Access'
     ],
     limits: {
-      dailyInterests: 10,
+      dailyInterests: 5,
       monthlyInterests: 10,
-      profileViews: 50
+      profileViews: 20
+    }
+  },
+  standard: {
+    name: 'Standard',
+    price: {
+      monthly: 1000,
+      annual: 1000
+    },
+    features: [
+      'All features of Basic Plan, plus:',
+      'Profile Highlight',
+      '12-Month Membership Validity',
+      'Dedicated Customer Support',
+      'Preference-Based Profile Visibility',
+      'Limited Horoscope Matching'
+    ],
+    limits: {
+      dailyInterests: 20,
+      monthlyInterests: 100,
+      profileViews: 200
     }
   },
   premium: {
     name: 'Premium',
     price: {
-      monthly: 2499,
-      annual: 24999
+      monthly: 2500,
+      annual: 2500
     },
     features: [
-      'All Basic features',
-      'Unlimited interests & messages',
-      'Advanced search filters',
-      'See who viewed your profile',
-      'Priority listing in search results',
-      'Verified badge on profile',
-      'Dedicated relationship manager',
-      'Phone support',
-      'Profile highlighting'
-    ],
-    limits: {
-      dailyInterests: 50,
-      monthlyInterests: 1500,
-      profileViews: 500
-    }
-  },
-  elite: {
-    name: 'Elite',
-    price: {
-      monthly: 4999,
-      annual: 49999
-    },
-    features: [
-      'All Premium features',
-      'Personalized matchmaking service',
-      'Professional photo shoot assistance',
-      'Profile writing assistance',
-      'Background verification',
-      'Exclusive elite member directory',
-      'Personal consultation sessions',
-      '24/7 priority support',
-      'Custom match recommendations'
+      'All features of Basic & Standard, plus:',
+      'Monthly List of Newly Added Members via Email / WhatsApp',
+      'Priority WhatsApp Customer Support',
+      'Priority Listing in Search Results',
+      'Maximum Profile Visibility Based on Partner Preferences',
+      'Profile Highlighted as "Premium Member"',
+      'First 50 Biodata Prints Free',
+      'Membership Valid Until Marriage',
+      'Unlimited Horoscope Matching',
+      'Exclusive Discounts on Melawa Programs'
     ],
     limits: {
       dailyInterests: 100,
-      monthlyInterests: 3000,
-      profileViews: 1000
+      monthlyInterests: 'unlimited',
+      profileViews: 'unlimited'
     }
   }
 };
@@ -105,15 +102,26 @@ const createSubscription = asyncHandler(async (req, res, next) => {
   const planDetails = SUBSCRIPTION_PLANS[plan];
   const amount = planDetails.price[duration];
 
+  // Calculate end date based on plan
+  let endDate;
+  if (plan === 'basic') {
+    endDate = null; // Free plan doesn't expire
+  } else if (plan === 'standard') {
+    endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 12 months
+  } else if (plan === 'premium') {
+    // Premium is valid until marriage - set a far future date
+    endDate = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000); // 10 years
+  }
+
   // Here you would integrate with payment gateway (Razorpay, Stripe, etc.)
   // For now, we'll simulate a successful payment
   
   const subscriptionData = {
     plan,
     startDate: new Date(),
-    endDate: new Date(Date.now() + (duration === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000),
+    endDate,
     isActive: true,
-    autoRenew: req.body.autoRenew || false
+    autoRenew: plan === 'premium' ? false : (req.body.autoRenew || false) // Premium doesn't auto-renew
   };
 
   user.subscription = subscriptionData;

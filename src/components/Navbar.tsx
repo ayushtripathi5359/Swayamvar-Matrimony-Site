@@ -7,10 +7,10 @@ export default function Navbar() {
 
   return (
     <nav className="absolute top-3 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-[900px]">
-      <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white/90 backdrop-blur-[30px] h-[40px] sm:h-[66px] px-3 sm:px-4">
+      <div className="flex items-center justify-between rounded-full md:border md:border-slate-200 bg-white/90 md:backdrop-blur-[30px] h-[40px] sm:h-[66px] px-3 sm:px-4">
         
         {/* Left: Logo */}
-        <Link to="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-64">
+        <Link to="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-44 md:w-64">
           <img src="src\assets\swayamwar.png" alt="" />
         </Link>
 
@@ -19,6 +19,7 @@ export default function Navbar() {
           <NavItem label="Home" href="/home" />
           <NavItem label="My Profile" href="/my-profile" />
           <NavItem label="My Matches" href="/inbox" />
+          <NavItem label="Upcoming Melava" href="/melava-events" />
           <NavItem label="About Us" href="/aboutus" />
           {/* <NavItem label="Pricing" href="/pricing" /> */}
         </div>
@@ -55,6 +56,13 @@ export default function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               My Matches
+            </Link>
+            <Link
+              to="/melava-events"
+              className="block px-4 py-2 text-slate-900 hover:text-pink-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Upcoming Melava
             </Link>
             <Link
               to="/aboutus"

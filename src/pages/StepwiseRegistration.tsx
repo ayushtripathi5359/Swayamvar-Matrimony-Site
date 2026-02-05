@@ -30,7 +30,11 @@ import {
   AlertCircle,
   ChevronUp,
   Crop as CropIcon,
-  RotateCcw
+  RotateCcw,
+  Linkedin,
+  Instagram,
+  Facebook,
+  Search
 } from "lucide-react";
 import { apiFetch } from "@/lib/apiClient";
 import { setAccessToken } from "@/lib/auth";
@@ -346,6 +350,313 @@ const CustomMultiSelect = ({
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+// Country Code Dropdown Component
+const CountryCodeDropdown = ({ value, onChange, error }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedCountry = countryCodes.find(c => c.code === value) || countryCodes[0];
+
+  return (
+    <div className="relative flex-shrink-0" ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1, width: '85px' }}>
+      <div 
+        ref={triggerRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`bg-white border rounded-2xl px-3 lg:px-4 py-3 lg:py-4 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
+          isOpen 
+            ? "border-[#9181EE] shadow-[0_0_0_3px_rgba(145,129,238,0.1)]" 
+            : error 
+            ? "border-red-300 bg-red-50"
+            : "border-slate-100 hover:border-[#9181EE]/30"
+        }`}
+        style={{ position: 'relative', zIndex: isOpen ? 10000 : 0 }}
+      >
+        <span className="font-bold text-black text-sm lg:text-base whitespace-nowrap">
+          {selectedCountry.flag} {selectedCountry.code}
+        </span>
+        <ChevronDown 
+          size={16} 
+          className={`flex-shrink-0 transition-transform duration-300 ml-1 ${isOpen ? "rotate-180 text-[#9181EE]" : "text-slate-300"}`} 
+        />
+      </div>
+
+      {isOpen && (
+        <div 
+          className="absolute z-[9999] w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 top-full mt-1"
+          style={{
+            maxHeight: '240px',
+            minWidth: '200px'
+          }}
+        >
+          <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: 'inherit' }}>
+            {countryCodes.map((country) => (
+              <div
+                key={country.code}
+                onClick={() => {
+                  onChange(country.code);
+                  setIsOpen(false);
+                }}
+                className={`px-4 py-3 font-bold hover:bg-[#F8F7FF] hover:text-[#9181EE] transition-colors cursor-pointer border-b border-slate-50 last:border-0 text-sm lg:text-base ${
+                  value === country.code ? "bg-[#F8F7FF] text-[#9181EE]" : "text-black"
+                }`}
+              >
+                {country.flag} {country.code} {country.country}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Social Media Platform Dropdown Component
+const SocialMediaPlatformDropdown = ({ value, onChange, availablePlatforms, error }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getPlatformIcon = (platform) => {
+    switch (platform) {
+      case 'LinkedIn':
+        return <Linkedin size={18} className="text-[#0A66C2]" />;
+      case 'Instagram':
+        return <Instagram size={18} className="text-[#E4405F]" />;
+      case 'Facebook':
+        return <Facebook size={18} className="text-[#1877F2]" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
+      <div 
+        ref={triggerRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
+          isOpen 
+            ? "border-[#9181EE] shadow-[0_0_0_3px_rgba(145,129,238,0.1)]" 
+            : error 
+            ? "border-red-300 bg-red-50"
+            : "border-slate-100 hover:border-[#9181EE]/30"
+        }`}
+        style={{ position: 'relative', zIndex: isOpen ? 10000 : 0 }}
+      >
+        <div className="flex items-center gap-2">
+          {value ? (
+            <>
+              {getPlatformIcon(value)}
+              <span className="font-bold text-black text-base">{value}</span>
+            </>
+          ) : (
+            <span className="font-bold text-slate-400 text-base">Select Platform</span>
+          )}
+        </div>
+        <ChevronDown 
+          size={18} 
+          className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#9181EE]" : "text-slate-300"}`} 
+        />
+      </div>
+
+      {isOpen && availablePlatforms.length > 0 && (
+        <div 
+          className="absolute z-[9999] w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 top-full mt-1"
+          style={{
+            maxHeight: 'min(240px, 50vh)',
+            minWidth: '200px'
+          }}
+        >
+          <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: 'inherit' }}>
+            {availablePlatforms.map((platform) => (
+              <div
+                key={platform}
+                onClick={() => {
+                  onChange(platform);
+                  setIsOpen(false);
+                }}
+                className={`px-4 lg:px-5 py-3 font-bold hover:bg-[#F8F7FF] hover:text-[#9181EE] transition-colors cursor-pointer border-b border-slate-50 last:border-0 text-base flex items-center gap-3 ${
+                  value === platform ? "bg-[#F8F7FF] text-[#9181EE]" : "text-black"
+                }`}
+              >
+                {getPlatformIcon(platform)}
+                <span>{platform}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Searchable Select Component (for Gotra dropdowns)
+const SearchableSelect = ({ 
+  label, 
+  value, 
+  options = [], 
+  onChange, 
+  placeholder = "Select option",
+  disabled = false,
+  className = "",
+  required = false
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [position, setPosition] = useState("bottom");
+  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - triggerRect.bottom;
+      const spaceAbove = triggerRect.top;
+      const dropdownHeight = 280; // Fixed height for search dropdown
+      
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        setPosition("top");
+      } else {
+        setPosition("bottom");
+      }
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      // Focus search input when dropdown opens
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const filteredOptions = options.filter(option =>
+    option.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (option) => {
+    onChange(option);
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+
+  return (
+    <div className={`group relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 10000 : 1 }}>
+      <div className="flex items-center gap-2 ml-1">
+        <label className="text-[12px] font-bold text-slate-500   tracking-tighter">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      </div>
+      
+      <div 
+        ref={triggerRef}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`bg-white mt-2 border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex items-center justify-between cursor-pointer transition-all duration-200 ${
+          isOpen 
+            ? "border-[#9181EE] shadow-[0_0_0_3px_rgba(145,129,238,0.1)]" 
+            : "border-slate-100 hover:border-[#9181EE]/30"
+        } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+        style={{ position: 'relative', zIndex: isOpen ? 10000 : 0 }}
+      >
+        <div className="flex items-center gap-2">
+          <span className={`font-bold ${value ? "text-black" : "text-slate-400"} text-base truncate`}>
+            {value || placeholder}
+          </span>
+        </div>
+        <ChevronDown 
+          size={18} 
+          className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#9181EE]" : "text-slate-300"}`} 
+        />
+      </div>
+
+      {isOpen && (
+        <div 
+          className={`absolute z-[9999] w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 ${
+            position === "top" ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+          style={{ minWidth: '200px' }}
+        >
+          {/* Search Input */}
+          <div className="p-3 border-b border-slate-100 bg-slate-50">
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-9 pr-3 py-2 text-sm font-semibold text-black bg-white border border-slate-200 rounded-xl outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+
+          {/* Options List */}
+          <div 
+            className="overflow-y-auto overscroll-contain" 
+            style={{ maxHeight: '240px' }}
+          >
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option, index) => (
+                <div
+                  key={index}
+                  onClick={() => handleSelect(option)}
+                  className={`px-4 lg:px-5 py-3 font-bold text-black hover:bg-[#F8F7FF] hover:text-[#9181EE] transition-colors cursor-pointer border-b border-slate-50 last:border-0 text-base ${
+                    value === option ? "bg-[#F8F7FF] text-[#9181EE]" : ""
+                  }`}
+                >
+                  {option}
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-slate-400 text-sm">
+                No results found for "{searchTerm}"
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -857,6 +1168,20 @@ const ImageCropper = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Reset crop when image changes
+  useEffect(() => {
+    if (imageSrc && imgRef.current) {
+      setCrop({
+        unit: '%',
+        width: 80,
+        height: 80,
+        x: 10,
+        y: 10
+      });
+      setCompletedCrop(undefined);
+    }
+  }, [imageSrc]);
+
   const getCroppedImg = (image: HTMLImageElement, crop: PixelCrop): Promise<string> => {
     const canvas = canvasRef.current;
     if (!canvas || !crop.width || !crop.height) {
@@ -873,7 +1198,7 @@ const ImageCropper = ({
 
     // Make canvas square with the crop dimensions
     const size = Math.max(crop.width, crop.height);
-    const pixelRatio = window.devicePixelRatio;
+    const pixelRatio = window.devicePixelRatio || 1;
     canvas.width = size * pixelRatio;
     canvas.height = size * pixelRatio;
 
@@ -903,11 +1228,16 @@ const ImageCropper = ({
     return new Promise((resolve) => {
       canvas.toBlob((blob) => {
         if (!blob) {
+          console.error('Failed to create blob from canvas');
           resolve('');
           return;
         }
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => {
+          console.error('Failed to read blob');
+          resolve('');
+        };
         reader.readAsDataURL(blob);
       }, 'image/jpeg', 0.95);
     });
@@ -915,32 +1245,44 @@ const ImageCropper = ({
 
   const handleCropComplete = async () => {
     if (imgRef.current && completedCrop?.width && completedCrop?.height) {
-      const croppedImageUrl = await getCroppedImg(imgRef.current, completedCrop);
-      onCropComplete(croppedImageUrl);
+      try {
+        const croppedImageUrl = await getCroppedImg(imgRef.current, completedCrop);
+        if (croppedImageUrl) {
+          onCropComplete(croppedImageUrl);
+        } else {
+          alert('Failed to crop image. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error cropping image:', error);
+        alert('Failed to crop image. Please try again.');
+      }
+    } else {
+      alert('Please select a crop area before applying.');
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-auto">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4" style={{ touchAction: 'none' }}>
+      <div className="bg-white rounded-2xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-slate-700">Crop Your Photo</h3>
+          <h3 className="text-base md:text-lg font-bold text-slate-700">Crop Your Photo</h3>
           <button
             onClick={onCancel}
             className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            type="button"
           >
             <X size={20} className="text-slate-500" />
           </button>
         </div>
 
         <div className="space-y-4">
-          <div className="text-center text-sm text-slate-600 mb-4">
+          <div className="text-center text-xs md:text-sm text-slate-600 mb-4">
             Drag to adjust the square crop area for your profile photo
           </div>
           
-          <div className="flex justify-center bg-slate-50 p-4 rounded-xl">
+          <div className="flex justify-center bg-slate-50 p-2 md:p-4 rounded-xl touch-none">
             <ReactCrop
               crop={crop}
               onChange={(c) => setCrop(c)}
@@ -955,7 +1297,7 @@ const ImageCropper = ({
                 ref={imgRef}
                 src={imageSrc}
                 alt="Crop preview"
-                className="max-w-full max-h-96 object-contain"
+                className="max-w-full max-h-[50vh] md:max-h-96 object-contain"
                 onLoad={() => {
                   // Set initial square crop to center
                   if (imgRef.current) {
@@ -964,10 +1306,21 @@ const ImageCropper = ({
                     const x = (width - size) / 2;
                     const y = (height - size) / 2;
                     
-                    setCrop({
-                      unit: 'px',
+                    const initialCrop = {
+                      unit: 'px' as const,
                       width: size,
                       height: size, // Ensure square
+                      x: x,
+                      y: y
+                    };
+                    
+                    setCrop(initialCrop);
+                    
+                    // Also set the completed crop so it's ready for cropping without user interaction
+                    setCompletedCrop({
+                      unit: 'px' as const,
+                      width: size,
+                      height: size,
                       x: x,
                       y: y
                     });
@@ -977,19 +1330,21 @@ const ImageCropper = ({
             </ReactCrop>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 gap-2">
             <button
               onClick={onCancel}
-              className="px-6 py-3 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl font-semibold transition-all"
+              type="button"
+              className="px-4 md:px-6 py-2 md:py-3 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl font-semibold transition-all text-sm md:text-base"
             >
               Cancel
             </button>
             <button
               onClick={handleCropComplete}
-              className="px-6 py-3 bg-[#9181EE] text-white rounded-xl font-semibold hover:bg-[#7b6fd6] transition-all flex items-center gap-2"
+              type="button"
+              className="px-4 md:px-6 py-2 md:py-3 bg-[#9181EE] text-white rounded-xl font-semibold hover:bg-[#7b6fd6] transition-all flex items-center gap-2 text-sm md:text-base"
             >
               <CropIcon size={16} />
-              Crop
+              Apply Crop
             </button>
           </div>
         </div>
@@ -1500,7 +1855,7 @@ const validateStep2 = (formData: FormData) => {
     }
     
     // Designation validation for salaried employees
-    if ((formData.occupation === "Salaried (Private)" || formData.occupation === "Salaried (Government)") && !formData.designation?.trim()) {
+    if (formData.occupation === "Salaried" && !formData.designation?.trim()) {
       errors.designation = "Designation is required";
     }
   }
@@ -1553,7 +1908,7 @@ const validateStep3 = (formData: FormData) => {
       if (!brother.businessLocation?.trim()) {
         errors[`brother_${index}_businessLocation`] = "Business location is required";
       }
-    } else if (brother.occupation === "Private Job" || brother.occupation === "Government Job") {
+    } else if (brother.occupation === "Job/Salaried") {
       if (!brother.designation?.trim()) {
         errors[`brother_${index}_designation`] = "Designation is required";
       }
@@ -1572,7 +1927,7 @@ const validateStep3 = (formData: FormData) => {
       if (!sister.businessLocation?.trim()) {
         errors[`sister_${index}_businessLocation`] = "Business location is required";
       }
-    } else if (sister.occupation === "Private Job" || sister.occupation === "Government Job") {
+    } else if (sister.occupation === "Job/Salaried") {
       if (!sister.designation?.trim()) {
         errors[`sister_${index}_designation`] = "Designation is required";
       }
@@ -1710,6 +2065,30 @@ export default function UnifiedMatrimonialForm() {
     minAnnualIncome: ""
   });
 
+  // Helper function to convert ISO date or YYYY-MM-DD to DD-MM-YYYY format
+  const formatDateForDisplay = (dateStr: string) => {
+    if (!dateStr) return "";
+    
+    // If already in DD-MM-YYYY format, return as is
+    if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
+      return dateStr;
+    }
+    
+    try {
+      // Handle ISO format (2000-10-13T00:00:00.000Z) or YYYY-MM-DD
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr; // Invalid date, return original
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}-${month}-${year}`;
+    } catch {
+      return dateStr; // Return original if conversion fails
+    }
+  };
+
   // Fetch current user's email and existing profile on component mount
   useEffect(() => {
     const fetchUserDataAndProfile = async () => {
@@ -1757,6 +2136,8 @@ export default function UnifiedMatrimonialForm() {
               firstName: profile.firstName || userData.user.profile?.firstName || '',
               middleName: profile.middleName || userData.user.profile?.middleName || '',
               lastName: profile.lastName || userData.user.profile?.lastName || '',
+              // Format date of birth to DD-MM-YYYY for display
+              dateOfBirth: formatDateForDisplay(profile.dateOfBirth),
               // Handle arrays properly
               brothers: profile.brothers || [],
               sisters: profile.sisters || [],
@@ -1828,8 +2209,7 @@ export default function UnifiedMatrimonialForm() {
       "Below 10th",
     ],
     occupation: [
-      "Salaried (Private)",
-      "Salaried (Government)",
+      "Salaried",
       "Self-Employed",
       "Business Owner",
       "Freelancer",
@@ -2294,19 +2674,41 @@ export default function UnifiedMatrimonialForm() {
   };
 
   const handleFileUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        e.target.value = ''; // Reset input
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image size should be less than 10MB');
+        e.target.value = ''; // Reset input
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onloadend = () => {
         setOriginalImage(reader.result);
         setShowCropper(true);
       };
+      reader.onerror = () => {
+        alert('Failed to read image file. Please try again.');
+        e.target.value = ''; // Reset input
+      };
       reader.readAsDataURL(file);
     }
+    // Reset the input value to allow selecting the same file again
+    e.target.value = '';
   };
 
   const handleCropComplete = (croppedImageUrl) => {
-    setProfilePhoto(croppedImageUrl);
+    if (croppedImageUrl) {
+      setProfilePhoto(croppedImageUrl);
+    }
     setShowCropper(false);
     setOriginalImage(null);
   };
@@ -2588,7 +2990,7 @@ export default function UnifiedMatrimonialForm() {
                       <User size={64} className="text-slate-300" />
                     )}
                   </div>
-                  <label className="absolute bottom-2 right-2 bg-[#9181EE] p-3 lg:p-4 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
+                  <label className="absolute bottom-5 md:bottom-7 right-3 md:right-6 bg-[#9181EE] p-3 lg:p-4 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition-transform">
                     <Camera size={18} className="lg:size-5" />
                     <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                   </label>
@@ -2777,28 +3179,17 @@ export default function UnifiedMatrimonialForm() {
                   </div>
                   <div className="flex gap-2">
                     {/* Country Code Dropdown */}
-                    <div className={`bg-white border rounded-2xl shadow-sm flex-shrink-0 ${
-                      errors.countryCode ? 'border-red-300 bg-red-50' : 'border-slate-100'
-                    }`}>
-                      <select
-                        value={formData.countryCode}
-                        onChange={(e) => {
-                          handleInputChange('countryCode', e.target.value);
-                          // Clear phone number when country changes to avoid confusion
-                          if (formData.whatsappNumber) {
-                            handleInputChange('whatsappNumber', '');
-                          }
-                        }}
-                        className="px-3 py-3 lg:py-4 font-bold text-black text-sm lg:text-base outline-none bg-transparent rounded-2xl min-w-[120px]"
-                        style={{ fontSize: '16px' }}
-                      >
-                        {countryCodes.map((country) => (
-                          <option key={country.code} value={country.code}>
-                            {country.flag} {country.code}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <CountryCodeDropdown
+                      value={formData.countryCode}
+                      onChange={(code) => {
+                        handleInputChange('countryCode', code);
+                        // Clear phone number when country changes to avoid confusion
+                        if (formData.whatsappNumber) {
+                          handleInputChange('whatsappNumber', '');
+                        }
+                      }}
+                      error={errors.countryCode}
+                    />
                     
                     {/* Phone Number Input */}
                     <div className={`bg-white border rounded-2xl px-4 lg:px-5 py-3 lg:py-4 shadow-sm flex-1 ${
@@ -2895,25 +3286,17 @@ export default function UnifiedMatrimonialForm() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {/* Platform Dropdown */}
                             <div className="space-y-2">
-                              <label className="text-[12px] font-bold text-slate-500 tracking-tighter">Platform</label>
-                              <select
+                              <label className="text-[12px] font-bold text-slate-500 tracking-tighter ml-1">Platform</label>
+                              <SocialMediaPlatformDropdown
                                 value={link.platform}
-                                onChange={(e) => {
+                                onChange={(platform) => {
                                   const newLinks = [...formData.socialMediaLinks];
-                                  newLinks[index] = { ...link, platform: e.target.value as 'LinkedIn' | 'Instagram' | 'Facebook', url: '' };
+                                  newLinks[index] = { ...link, platform: platform as 'LinkedIn' | 'Instagram' | 'Facebook', url: '' };
                                   handleInputChange('socialMediaLinks', newLinks);
                                 }}
-                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
-                              >
-                                <option value="">Select Platform</option>
-                                {availablePlatforms.map(platform => (
-                                  <option key={platform} value={platform}>
-                                    {platform === 'LinkedIn' && '🔗 LinkedIn'}
-                                    {platform === 'Instagram' && '📷 Instagram'}
-                                    {platform === 'Facebook' && '📘 Facebook'}
-                                  </option>
-                                ))}
-                              </select>
+                                availablePlatforms={availablePlatforms}
+                                error={errors[`socialMediaLink_${index}_platform`]}
+                              />
                             </div>
 
                             {/* URL Input */}
@@ -3021,7 +3404,7 @@ export default function UnifiedMatrimonialForm() {
 
                 {/* First Gotra */}
                 <div>
-                  <CustomSelect
+                  <SearchableSelect
                     label="First Gotra"
                     value={formData.firstGotra}
                     options={dropdownOptions.gotra}
@@ -3039,7 +3422,7 @@ export default function UnifiedMatrimonialForm() {
 
                 {/* Second Gotra */}
                 <div>
-                  <CustomSelect
+                  <SearchableSelect
                     label="Second Gotra"
                     value={formData.secondGotra}
                     options={dropdownOptions.gotra}
@@ -3428,7 +3811,7 @@ export default function UnifiedMatrimonialForm() {
                         handleInputChange('aboutMe', value);
                       }}
                       className="w-full font-semibold text-black text-sm lg:text-base outline-none bg-transparent resize-none pr-16"
-                      placeholder="Tell us about yourself (max 200 characters)"
+                      placeholder="Tell us about yourself"
                       style={{ fontSize: '16px', minHeight: '80px' }}
                     />
                     <div className="absolute bottom-3 right-4 text-xs text-slate-400 font-medium">
@@ -3541,7 +3924,7 @@ export default function UnifiedMatrimonialForm() {
                 )}
 
                 {/* Job/Salaried Fields */}
-                {(formData.occupation === "Salaried (Private)" || formData.occupation === "Salaried (Government)") && (
+                {formData.occupation === "Salaried" && (
                   <>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 ml-1">
@@ -3834,20 +4217,11 @@ export default function UnifiedMatrimonialForm() {
                     </div>
                     <div className="flex gap-2">
                       {/* Country Code Dropdown */}
-                      <div className="w-32">
-                        <select
-                          value={formData.fathersCountryCode}
-                          onChange={(e) => handleInputChange('fathersCountryCode', e.target.value)}
-                          className="w-full bg-white border border-slate-100 rounded-2xl px-3 py-3 lg:py-4 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
-                          style={{ fontSize: '16px' }}
-                        >
-                          {countryCodes.map((country) => (
-                            <option key={country.code} value={country.code}>
-                              {country.flag} {country.code}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <CountryCodeDropdown
+                        value={formData.fathersCountryCode}
+                        onChange={(code) => handleInputChange('fathersCountryCode', code)}
+                        error={errors.fathersCountryCode}
+                      />
                       
                       {/* Phone Number Input */}
                       <div className="flex-1">
@@ -4045,20 +4419,11 @@ export default function UnifiedMatrimonialForm() {
                     </div>
                     <div className="flex gap-2">
                       {/* Country Code Dropdown */}
-                      <div className="w-32">
-                        <select
-                          value={formData.mothersCountryCode}
-                          onChange={(e) => handleInputChange('mothersCountryCode', e.target.value)}
-                          className="w-full bg-white border border-slate-100 rounded-2xl px-3 py-3 lg:py-4 font-bold text-black text-sm lg:text-base outline-none focus:border-[#9181EE] focus:ring-2 focus:ring-[#9181EE]/20 transition-all"
-                          style={{ fontSize: '16px' }}
-                        >
-                          {countryCodes.map((country) => (
-                            <option key={country.code} value={country.code}>
-                              {country.flag} {country.code}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <CountryCodeDropdown
+                        value={formData.mothersCountryCode}
+                        onChange={(code) => handleInputChange('mothersCountryCode', code)}
+                        error={errors.mothersCountryCode}
+                      />
                       
                       {/* Phone Number Input */}
                       <div className="flex-1">

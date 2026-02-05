@@ -284,7 +284,9 @@ export default function SignupPage() {
             <div className="grid grid-cols-1 gap-3">
               {/* First Name */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-600 ml-2">First Name</label>
+                <label className="text-xs font-semibold text-gray-600 ml-2">
+                  First Name <span className="text-red-500">*</span>
+                </label>
                 <input 
                   name="firstName" 
                   placeholder="Enter first name" 
@@ -296,6 +298,7 @@ export default function SignupPage() {
                       ? "border-red-500 focus:ring-red-200" 
                       : "border-black/10 focus:ring-blue-200"
                   } focus:outline-none focus:ring-2`}
+                  required
                 />
                 {errors.firstName && touched.firstName && (
                   <p className="text-xs text-red-500 ml-4">{errors.firstName}</p>
@@ -304,7 +307,9 @@ export default function SignupPage() {
 
               {/* Middle Name */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-600 ml-2">Middle Name </label>
+                <label className="text-xs font-semibold text-gray-600 ml-2">
+                  Middle Name 
+                </label>
                 <input 
                   name="middleName" 
                   placeholder="Enter middle name" 
@@ -324,7 +329,9 @@ export default function SignupPage() {
 
               {/* Last Name */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-600 ml-2">Last Name</label>
+                <label className="text-xs font-semibold text-gray-600 ml-2">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
                 <input 
                   name="lastName" 
                   placeholder="Enter last name" 
@@ -336,6 +343,7 @@ export default function SignupPage() {
                       ? "border-red-500 focus:ring-red-200" 
                       : "border-black/10 focus:ring-blue-200"
                   } focus:outline-none focus:ring-2`}
+                  required
                 />
                 {errors.lastName && touched.lastName && (
                   <p className="text-xs text-red-500 ml-4">{errors.lastName}</p>
@@ -345,11 +353,13 @@ export default function SignupPage() {
 
             {/* Email */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600 ml-2">Email Address</label>
+              <label className="text-xs font-semibold text-gray-600 ml-2">
+                Email Address <span className="text-red-500">*</span>
+              </label>
               <input 
                 name="email" 
                 type="email" 
-                placeholder="Enter your email address" 
+                placeholder="Enter email address" 
                 value={form.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -358,6 +368,7 @@ export default function SignupPage() {
                     ? "border-red-500 focus:ring-red-200" 
                     : "border-black/10 focus:ring-blue-200"
                 } focus:outline-none focus:ring-2`}
+                required
               />
               {errors.email && touched.email && (
                 <p className="text-xs text-red-500 ml-4">{errors.email}</p>
@@ -366,7 +377,9 @@ export default function SignupPage() {
 
             {/* Password */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600 ml-2">Password</label>
+              <label className="text-xs font-semibold text-gray-600 ml-2">
+                Password <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
                 <input
                   name="password"
@@ -381,6 +394,7 @@ export default function SignupPage() {
                       ? "border-red-500 focus:ring-red-200" 
                       : "border-black/10 focus:ring-blue-200"
                   } focus:outline-none focus:ring-2`}
+                  required
                 />
                 <button
                   type="button"
@@ -401,12 +415,14 @@ export default function SignupPage() {
 
             {/* Confirm Password */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600 ml-2">Confirm Password</label>
+              <label className="text-xs font-semibold text-gray-600 ml-2">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
                 <input
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Re-enter your password"
+                  placeholder="Re-enter password"
                   value={form.confirmPassword}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -415,6 +431,7 @@ export default function SignupPage() {
                       ? "border-red-500 focus:ring-red-200" 
                       : "border-black/10 focus:ring-blue-200"
                   } focus:outline-none focus:ring-2`}
+                  required
                 />
                 <button
                   type="button"

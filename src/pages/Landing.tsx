@@ -88,28 +88,7 @@ export default function Landing() {
       {/* Glow */}
       <div className="absolute inset-0 rounded-[40px] opacity-20 bg-brand-black-soft blur-lg group-focus-within:opacity-40 transition-opacity" />
 
-      <div className="relative bg-white rounded-[28px] sm:rounded-[40px] flex flex-row items-center px-2 sm:px-3 py-2 sm:py-0 gap-3 border border-slate-100 shadow-sm">
-        {/* Input */}
-        <div className="flex items-center w-full px-2">
-          <Mail className="w-5 h-5 text-brand-black-soft/30 mr-3 shrink-0" />
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full bg-transparent border-none outline-none text-brand-black-soft placeholder:text-brand-black-soft/30 text-sm sm:text-base"
-          />
-        </div>
-
-        {/* Button */}
-        <button
-          type="submit"
-          className="w-[60%] sm:w-auto bg-[#ED9B59] hover:bg-orange-500 active:scale-95 transition-all text-white font-bold text-sm sm:text-base px-6 sm:px-11 h-[44px] sm:h-[50px] rounded-full whitespace-nowrap"
-        >
-          Get Started
-        </button>
-      </div>
+      
 
       {submitted && (
         <div className="absolute -bottom-7 left-1/2 lg:left-6 -translate-x-1/2 lg:translate-x-0 text-[#ED9B59] font-medium text-xs sm:text-sm animate-fade-in">

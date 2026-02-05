@@ -214,216 +214,234 @@ export default function InboxListingPage() {
   };
 
   return (
-    <>
-      <Navbar />
+    <div className="min-h-screen bg-white font-jakarta selection:bg-pink-100 antialiased relative">
+      {/* Background Pattern Layer */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0" style={{ backgroundColor: "rgba(255, 238, 240, 0.1)" }} />
+        <BackgroundPatterns />
+      </div>
 
-      <section className="bg-white min-h-screen py-16 pt-24">
-        <div className="max-w-[1300px] mx-auto px-4">
+      <main className="relative z-10 max-w-[1512px] mx-auto px-2 md:px-9 pt-4">
+        <div className="rounded-[32px] bg-white overflow-hidden relative shadow-sm border border-slate-50 min-h-[calc(100vh-40px)]">
+          <Navbar />
 
-          {/* TITLE */}
-          <div className="text-center mb-8">
-            <h1 className="font-bold text-[28px] sm:text-[34px] lg:text-[42px] leading-tight tracking-tight text-slate-900 mb-2">
-              My <span className="text-[#ED9B59]">Inbox</span>
-            </h1>
-            <p className="text-slate-600 text-base lg:text-lg">
-              Manage your interests and connections
-            </p>
-          </div>
-
-          {/* TABS */}
-          <div className="flex justify-center mb-8">
-            <div className="flex bg-[#F4F5FF] rounded-full p-1 gap-1 flex-wrap">
-              {[
-                ["received", `📥 Received (${counts.received})`],
-                ["sent", `📤 Sent (${counts.sent})`],
-                ["my-accepted", `💚 My Accepted (${stats?.sent?.accepted || 0})`],
-                ["accepted", `✅ I Accepted (${counts.accepted})`],
-                ["declined", `❌ Declined (${counts.declined})`],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTab(key)}
-                  className={`px-4 py-2 text-sm rounded-full transition whitespace-nowrap ${
-                    activeTab === key
-                      ? "bg-white text-[#5B6CFF] shadow font-medium"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* PROFILE GRID */}
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-500">Loading interests...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-20">
-              <div className="text-red-500 text-4xl mb-4">⚠️</div>
-              <p className="text-red-600 mb-4">{error}</p>
-              <button 
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : interests.length === 0 ? (
-            <div className="text-center text-gray-400 py-20">
-              <div className="text-6xl mb-4">💌</div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                {activeTab === "received" ? "No interests received yet" :
-                 activeTab === "sent" ? "No interests sent yet" :
-                 activeTab === "my-accepted" ? "No one has accepted your requests yet" :
-                 activeTab === "accepted" ? "You haven't accepted any interests yet" :
-                 `No ${activeTab} interests`}
-              </h3>
-              <p className="text-gray-500">
-                {activeTab === "sent" 
-                  ? "Start browsing profiles and send interests to connect with potential matches!"
-                  : activeTab === "my-accepted"
-                  ? "When someone accepts your interest request, they will appear here."
-                  : activeTab === "received"
-                  ? "Interests will appear here when other members show interest in your profile."
-                  : "Interests will appear here based on your activity."
-                }
+          {/* Main Content */}
+          <div className="px-5 sm:px-8 md:px-12 lg:px-16 pt-32 pb-16">
+            {/* TITLE */}
+            <div className="mb-8">
+              <h1 className="font-bold text-[28px] sm:text-[34px] lg:text-[42px] leading-tight tracking-tight text-slate-900 mb-2">
+                My <span className="text-[#ED9B59]">Inbox</span>
+              </h1>
+              <p className="text-slate-600 text-base lg:text-lg">
+                Manage your interests and connections
               </p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {interests.map(interest => {
-                const profile = (activeTab === "sent" || activeTab === "my-accepted") ? interest.receiverProfileId : interest.senderProfileId;
-                const displayName = getDisplayName(profile);
-                const photoUrl = profile?.photos?.profilePhoto?.url ||
-                               profile?.photos?.traditional?.url || 
-                               profile?.photos?.western?.url || 
-                               "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200";
 
-                return (
-                  <div
-                    key={interest._id}
-                    className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+            {/* TABS */}
+            <div className="flex justify-center mb-8">
+              <div className="flex bg-[#F4F5FF] rounded-full p-1 gap-1 flex-wrap">
+                {[
+                  ["received", `📥 Received (${counts.received})`],
+                  ["sent", `📤 Sent (${counts.sent})`],
+                  ["my-accepted", `💚 My Accepted (${stats?.sent?.accepted || 0})`],
+                  ["accepted", `✅ I Accepted (${counts.accepted})`],
+                  ["declined", `❌ Declined (${counts.declined})`],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTab(key)}
+                    className={`px-4 py-2 text-sm rounded-full transition whitespace-nowrap ${
+                      activeTab === key
+                        ? "bg-white text-[#5B6CFF] shadow font-medium"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
                   >
-                    <div className="flex gap-3">
-                      <img
-                        src={photoUrl}
-                        alt="profile"
-                        className="w-12 h-12 rounded-xl object-cover"
-                      />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-[#111827] text-sm truncate">
-                          {displayName}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          {profile?.age && `${profile.age} years`} {profile?.jobLocation && `, ${profile.jobLocation}`}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1 truncate">
-                          {profile?.occupation || 'Occupation not specified'}
-                        </p>
-                        <p className="text-xs text-blue-500 mt-1">
-                          {formatTimeAgo(interest.sentAt)}
-                        </p>
+            {/* PROFILE GRID */}
+            {loading ? (
+              <div className="text-center py-20">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading interests...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-20">
+                <div className="text-red-500 text-4xl mb-4">⚠️</div>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : interests.length === 0 ? (
+              <div className="text-center text-gray-400 py-20">
+                <div className="text-6xl mb-4">💌</div>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  {activeTab === "received" ? "No interests received yet" :
+                   activeTab === "sent" ? "No interests sent yet" :
+                   activeTab === "my-accepted" ? "No one has accepted your requests yet" :
+                   activeTab === "accepted" ? "You haven't accepted any interests yet" :
+                   `No ${activeTab} interests`}
+                </h3>
+                <p className="text-gray-500">
+                  {activeTab === "sent" 
+                    ? "Start browsing profiles and send interests to connect with potential matches!"
+                    : activeTab === "my-accepted"
+                    ? "When someone accepts your interest request, they will appear here."
+                    : activeTab === "received"
+                    ? "Interests will appear here when other members show interest in your profile."
+                    : "Interests will appear here based on your activity."
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {interests.map(interest => {
+                  const profile = (activeTab === "sent" || activeTab === "my-accepted") ? interest.receiverProfileId : interest.senderProfileId;
+                  const displayName = getDisplayName(profile);
+                  const photoUrl = profile?.photos?.profilePhoto?.url ||
+                                 profile?.photos?.traditional?.url || 
+                                 profile?.photos?.western?.url || 
+                                 "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200";
+
+                  return (
+                    <div
+                      key={interest._id}
+                      className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                    >
+                      <div className="flex gap-3">
+                        <img
+                          src={photoUrl}
+                          alt="profile"
+                          className="w-12 h-12 rounded-xl object-cover"
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-[#111827] text-sm truncate">
+                            {displayName}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {profile?.age && `${profile.age} years`} {profile?.jobLocation && `, ${profile.jobLocation}`}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1 truncate">
+                            {profile?.occupation || 'Occupation not specified'}
+                          </p>
+                          <p className="text-xs text-blue-500 mt-1">
+                            {formatTimeAgo(interest.sentAt)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Status Badge */}
-                    <div className="mt-3">
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        interest.status === 'sent' ? 'bg-blue-100 text-blue-600' :
-                        interest.status === 'accepted' ? 'bg-green-100 text-green-600' :
-                        interest.status === 'declined' ? 'bg-red-100 text-red-600' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {interest.status === 'sent' ? 'Pending' : 
-                         interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
-                      </span>
-                    </div>
-
-                    {/* Message Preview */}
-                    {interest.message && (
-                      <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-600 italic line-clamp-2">
-                          "{interest.message.length > 80 ? 
-                            `${interest.message.substring(0, 80)}...` : 
-                            interest.message}"
-                        </p>
+                      {/* Status Badge */}
+                      <div className="mt-3">
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          interest.status === 'sent' ? 'bg-blue-100 text-blue-600' :
+                          interest.status === 'accepted' ? 'bg-green-100 text-green-600' :
+                          interest.status === 'declined' ? 'bg-red-100 text-red-600' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {interest.status === 'sent' ? 'Pending' : 
+                           interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
+                        </span>
                       </div>
-                    )}
 
-                    {/* Special message for my-accepted tab */}
-                    {activeTab === "my-accepted" && (
-                      <div className="mt-3 p-2 bg-green-50 rounded-lg border-l-2 border-green-300">
-                        <p className="text-xs text-green-700 font-medium">
-                          🎉 {displayName} accepted your interest!
-                        </p>
-                      </div>
-                    )}
-
-                    {/* ACTIONS */}
-                    <div className="flex gap-2 mt-4">
-                      {activeTab === "received" && interest.status === 'sent' && (
-                        <>
-                          <button
-                            onClick={() => handleInterestResponse(interest._id, 'accepted')}
-                            className="flex-1 bg-[#5B6CFF] text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-[#4A5AE8] transition-colors"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() => handleInterestResponse(interest._id, 'declined')}
-                            className="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
-                          >
-                            Decline
-                          </button>
-                        </>
+                      {/* Message Preview */}
+                      {interest.message && (
+                        <div className="mt-3 p-2 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-600 italic line-clamp-2">
+                            "{interest.message.length > 80 ? 
+                              `${interest.message.substring(0, 80)}...` : 
+                              interest.message}"
+                          </p>
+                        </div>
                       )}
 
-                      {activeTab === "sent" && interest.status === 'sent' && (
-                        <button
-                          onClick={() => handleWithdrawInterest(interest._id)}
-                          className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors"
-                        >
-                          Withdraw
-                        </button>
-                      )}
-
+                      {/* Special message for my-accepted tab */}
                       {activeTab === "my-accepted" && (
-                        <>
+                        <div className="mt-3 p-2 bg-green-50 rounded-lg border-l-2 border-green-300">
+                          <p className="text-xs text-green-700 font-medium">
+                            🎉 {displayName} accepted your interest!
+                          </p>
+                        </div>
+                      )}
+
+                      {/* ACTIONS */}
+                      <div className="flex gap-2 mt-4">
+                        {activeTab === "received" && interest.status === 'sent' && (
+                          <>
+                            <button
+                              onClick={() => handleInterestResponse(interest._id, 'accepted')}
+                              className="flex-1 bg-[#5B6CFF] text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-[#4A5AE8] transition-colors"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => handleInterestResponse(interest._id, 'declined')}
+                              className="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+                            >
+                              Decline
+                            </button>
+                          </>
+                        )}
+
+                        {activeTab === "sent" && interest.status === 'sent' && (
+                          <button
+                            onClick={() => handleWithdrawInterest(interest._id)}
+                            className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors"
+                          >
+                            Withdraw
+                          </button>
+                        )}
+
+                        {activeTab === "my-accepted" && (
+                          <>
+                            <button 
+                              onClick={() => navigate(`/profile/${profile?._id}`)}
+                              className="flex-1 bg-[#5B6CFF] text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-[#4A5AE8] transition-colors"
+                            >
+                              View Profile
+                            </button>
+                            <button 
+                              className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
+                            >
+                              Chat
+                            </button>
+                          </>
+                        )}
+
+                        {(activeTab === "accepted" || activeTab === "declined") && (
                           <button 
                             onClick={() => navigate(`/profile/${profile?._id}`)}
-                            className="flex-1 bg-[#5B6CFF] text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-[#4A5AE8] transition-colors"
+                            className="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
                           >
                             View Profile
                           </button>
-                          <button 
-                            className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
-                          >
-                            Chat
-                          </button>
-                        </>
-                      )}
-
-                      {(activeTab === "accepted" || activeTab === "declined") && (
-                        <button 
-                          onClick={() => navigate(`/profile/${profile?._id}`)}
-                          className="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
-                        >
-                          View Profile
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      </section>
-    </>
+      </main>
+    </div>
+  );
+}
+
+// Background Patterns Component (matching other pages)
+function BackgroundPatterns() {
+  return (
+    <svg className="absolute -left-[500px] -top-[50px] opacity-10" width="2384" height="1706" viewBox="0 0 2384 1706" fill="none">
+      <path d="M623.501 1118.65C597.168 1041.98 458.801 883.151 116.001 861.151" stroke="#ED9B59" strokeWidth="2"/>
+      <path d="M969.73 1086.65C964.137 1005.78 871.594 816.548 546.169 706.574" stroke="#ED9B59" strokeWidth="2"/>
+    </svg>
   );
 }

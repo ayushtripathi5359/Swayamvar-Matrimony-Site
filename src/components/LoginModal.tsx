@@ -106,7 +106,7 @@ const LoginModal = ({ isVisible, onClose }: LoginModalProps) => {
                 {/* EMAIL */}
                 <div>
                   <label className="block text-xs font-medium text-slate-600">
-                    Email address
+                    Email 
                   </label>
                   <input
                     type="email"

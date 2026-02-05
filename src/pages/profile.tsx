@@ -50,76 +50,91 @@ interface ProfileData {
   lastName?: string;
   fullName?: string; // Keep for backward compatibility
   age?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  maritalStatus?: string;
+  motherTongue?: string;
+  height?: string;
+  complexion?: string;
+  bloodGroup?: string;
+  aboutMe?: string;
   occupation?: string;
+  organization?: string;
+  designation?: string;
   jobLocation?: string;
+  education?: string;
+  collegeUniversity?: string;
+  currentEducation?: string;
+  annualIncome?: string;
   photos?: { 
     profilePhoto?: { url?: string };
     western?: { url?: string }; 
     traditional?: { url?: string }; 
   };
   profilePhotos?: { western?: string; traditional?: string };
-  aboutMe?: string;
-  dateOfBirth?: string;
-  maritalStatus?: string;
-  gender?: string;
-  motherTongue?: string;
-  complexion?: string;
-  height?: string;
-  bloodGroup?: string;
-  firstGotra?: string;
-  secondGotra?: string;
-  education?: string;
-  highestEducation?: string;
-  collegeUniversity?: string;
-  designation?: string;
-  organization?: string;
-  annualIncome?: string;
-  currentEducation?: string;
-  otherOccupation?: string;
   whatsappNumber?: string;
+  countryCode?: string;
   emailId?: string;
   linkedinHandle?: string;
   instagramHandle?: string;
   facebookHandle?: string;
   fathersFullName?: string;
   fathersOccupation?: string;
+  fathersDesignation?: string;
+  fathersCompanyName?: string;
+  fathersBusinessLocation?: string;
   fathersWhatsappNumber?: string;
   fathersCountryCode?: string;
   mothersFullName?: string;
   mothersOccupation?: string;
+  mothersDesignation?: string;
+  mothersCompanyName?: string;
+  mothersBusinessLocation?: string;
   mothersWhatsappNumber?: string;
   mothersCountryCode?: string;
   brothers?: Array<{
     name?: string;
+    maritalStatus?: string;
     occupation?: string;
+    spouseName?: string;
+    businessName?: string;
+    businessLocation?: string;
+    designation?: string;
     companyName?: string;
     currentEducation?: string;
-    otherOccupation?: string;
   }>;
   sisters?: Array<{
     name?: string;
+    maritalStatus?: string;
     occupation?: string;
+    spouseName?: string;
+    businessName?: string;
+    businessLocation?: string;
+    designation?: string;
     companyName?: string;
     currentEducation?: string;
-    otherOccupation?: string;
   }>;
   birthName?: string;
   birthTime?: string;
   birthPlace?: string;
-  currentAddress?: {
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
-  };
-  permanentAddress?: {
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
-  };
+  firstGotra?: string;
+  secondGotra?: string;
+  currentAddressLine1?: string;
+  currentAddressLine2?: string;
+  currentCity?: string;
+  currentState?: string;
+  currentPincode?: string;
+  permanentAddressLine1?: string;
+  permanentAddressLine2?: string;
+  permanentCity?: string;
+  permanentState?: string;
+  permanentPincode?: string;
+  sameAsPermanentAddress?: boolean;
+  partnerAgeFrom?: string;
+  partnerAgeTo?: string;
+  partnerQualification?: string[];
+  preferredLocation?: string[];
+  minAnnualIncome?: string;
   socialMedia?: Array<{
     platform?: string;
     url?: string;
@@ -268,116 +283,43 @@ export default function ProfilePage() {
     try {
       setDownloadingPDF(true);
       
-      // Create a temporary container for PDF content
-      const pdfContainer = document.createElement('div');
-      pdfContainer.style.position = 'absolute';
-      pdfContainer.style.left = '-9999px';
-      pdfContainer.style.top = '0';
-      pdfContainer.style.width = '210mm'; // A4 width
-      pdfContainer.style.backgroundColor = 'white';
-      pdfContainer.style.padding = '20px';
-      pdfContainer.style.fontFamily = 'Arial, sans-serif';
+      // Find the main profile content container
+      const profileContainer = document.querySelector('[data-profile-content]') || 
+                              document.querySelector('.profile-content') ||
+                              document.querySelector('main') ||
+                              document.body;
       
-      // Create PDF content
-      pdfContainer.innerHTML = `
-        <div style="max-width: 100%; margin: 0 auto;">
-          <!-- Header -->
-          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #9181EE; padding-bottom: 20px;">
-            <img src="${displayProfile.profilePhoto}" 
-                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid #f0f0f0;" 
-                 onerror="this.style.display='none'" />
-            <h1 style="margin: 0; font-size: 28px; color: #333; font-weight: bold;">${displayProfile.fullName}</h1>
-            <p style="margin: 5px 0; color: #9181EE; font-size: 16px; font-weight: 600;">${displayProfile.occupation}</p>
-            <p style="margin: 0; color: #666; font-size: 14px;">${displayProfile.jobLocation}</p>
-            <p style="margin: 5px 0; color: #999; font-size: 12px;">Profile ID: ${displayProfile.profileId}</p>
-          </div>
+      if (!profileContainer) {
+        throw new Error('Profile content not found');
+      }
 
-          <!-- Basic Information -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Personal Information</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
-              <div><strong>Age:</strong> ${displayProfile.age} years</div>
-              <div><strong>Height:</strong> ${displayProfile.height}</div>
-              <div><strong>Blood Group:</strong> ${displayProfile.bloodGroup}</div>
-              <div><strong>Mother Tongue:</strong> ${displayProfile.motherTongue}</div>
-              <div><strong>Marital Status:</strong> ${displayProfile.maritalStatus}</div>
-              <div><strong>Complexion:</strong> ${displayProfile.complexion}</div>
-            </div>
-          </div>
+      // Hide elements that shouldn't appear in PDF
+      const elementsToHide = [
+        'nav', 'navbar', '.navbar', '[data-navbar]',
+        'footer', '.footer', '[data-footer]',
+        '.share-button', '[data-share]',
+        '.download-button', '[data-download]',
+        '.edit-button', '[data-edit]',
+        '.interest-button', '[data-interest]',
+        '.back-button', '[data-back]',
+        'button[onclick*="downloadProfileAsPDF"]',
+        'button[onclick*="share"]',
+        '.fixed', '.sticky'
+      ];
 
-          ${displayProfile.aboutMe && displayProfile.aboutMe !== "About me information not available." ? `
-          <!-- About Me -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">About Me</h2>
-            <p style="font-size: 14px; line-height: 1.6; color: #555; font-style: italic;">${displayProfile.aboutMe}</p>
-          </div>
-          ` : ''}
+      const hiddenElements = [];
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          if (el && el.style.display !== 'none') {
+            hiddenElements.push({ element: el, originalDisplay: el.style.display });
+            el.style.display = 'none';
+          }
+        });
+      });
 
-          <!-- Education & Career -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Education & Career</h2>
-            <div style="font-size: 14px; line-height: 1.8;">
-              <div><strong>Education:</strong> ${displayProfile.education}</div>
-              <div><strong>College/University:</strong> ${displayProfile.collegeUniversity}</div>
-              <div><strong>Designation:</strong> ${displayProfile.designation}</div>
-              <div><strong>Organization:</strong> ${displayProfile.organization}</div>
-              <div><strong>Annual Income:</strong> ${displayProfile.annualIncome}</div>
-            </div>
-          </div>
-
-          ${(profile?.fathersFullName || profile?.mothersFullName || profile?.fathersWhatsappNumber || profile?.mothersWhatsappNumber) ? `
-          <!-- Family Details -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Family Details</h2>
-            <div style="font-size: 14px; line-height: 1.8;">
-              ${profile?.fathersFullName ? `<div><strong>Father:</strong> ${displayProfile.fathersFullName} - ${displayProfile.fathersOccupation}${profile?.fathersWhatsappNumber ? ` | 📱 ${displayProfile.fathersCountryCode} ${displayProfile.fathersWhatsappNumber}` : ''}</div>` : ''}
-              ${profile?.mothersFullName ? `<div><strong>Mother:</strong> ${displayProfile.mothersFullName} - ${displayProfile.mothersOccupation}${profile?.mothersWhatsappNumber ? ` | 📱 ${displayProfile.mothersCountryCode} ${displayProfile.mothersWhatsappNumber}` : ''}</div>` : ''}
-              ${profile?.brothers?.length ? `<div><strong>Brothers:</strong> ${profile.brothers.length}</div>` : ''}
-              ${profile?.sisters?.length ? `<div><strong>Sisters:</strong> ${profile.sisters.length}</div>` : ''}
-            </div>
-          </div>
-          ` : ''}
-
-          ${(profile?.birthName || profile?.birthTime || profile?.birthPlace) ? `
-          <!-- Kundali Details -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Kundali Details</h2>
-            <div style="font-size: 14px; line-height: 1.8;">
-              ${profile?.birthName ? `<div><strong>Birth Name:</strong> ${displayProfile.birthName}</div>` : ''}
-              ${profile?.birthTime ? `<div><strong>Birth Time:</strong> ${displayProfile.birthTime}</div>` : ''}
-              ${profile?.birthPlace ? `<div><strong>Birth Place:</strong> ${displayProfile.birthPlace}</div>` : ''}
-              ${profile?.firstGotra ? `<div><strong>First Gotra:</strong> ${displayProfile.firstGotra}</div>` : ''}
-              ${profile?.secondGotra ? `<div><strong>Second Gotra:</strong> ${displayProfile.secondGotra}</div>` : ''}
-            </div>
-          </div>
-          ` : ''}
-
-          <!-- Contact Information -->
-          ${isOwnProfile ? `
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #9181EE; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Contact Information</h2>
-            <div style="font-size: 14px; line-height: 1.8;">
-              ${profile?.emailId ? `<div><strong>Email:</strong> ${displayProfile.emailId}</div>` : ''}
-              ${profile?.whatsappNumber ? `<div><strong>WhatsApp:</strong> ${displayProfile.whatsappNumber}</div>` : ''}
-              ${profile?.linkedinHandle ? `<div><strong>LinkedIn:</strong> ${displayProfile.linkedinHandle}</div>` : ''}
-              ${profile?.instagramHandle ? `<div><strong>Instagram:</strong> ${displayProfile.instagramHandle}</div>` : ''}
-              ${profile?.facebookHandle ? `<div><strong>Facebook:</strong> ${displayProfile.facebookHandle}</div>` : ''}
-            </div>
-          </div>
-          ` : ''}
-
-          <!-- Footer -->
-          <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px;">
-            <p>Generated from Swayamvar Profile</p>
-            <p>Downloaded on ${new Date().toLocaleDateString()}</p>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(pdfContainer);
-      
-      // Wait for images to load
-      const images = pdfContainer.querySelectorAll('img');
+      // Wait for any images to load
+      const images = profileContainer.querySelectorAll('img');
       await Promise.all(Array.from(images).map(img => {
         return new Promise((resolve) => {
           if (img.complete) {
@@ -385,37 +327,94 @@ export default function ProfilePage() {
           } else {
             img.onload = () => resolve(true);
             img.onerror = () => resolve(true);
-            // Fallback timeout
             setTimeout(() => resolve(true), 3000);
           }
         });
       }));
-      
-      // Generate PDF
-      const canvas = await html2canvas(pdfContainer, {
+
+      // Create canvas from the actual profile content
+      const canvas = await html2canvas(profileContainer, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: pdfContainer.offsetWidth,
-        height: pdfContainer.offsetHeight
+        width: profileContainer.scrollWidth,
+        height: profileContainer.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        ignoreElements: (element) => {
+          // Additional check to ignore navigation and action elements
+          return element.tagName === 'NAV' || 
+                 element.classList.contains('navbar') ||
+                 element.classList.contains('share-button') ||
+                 element.classList.contains('download-button') ||
+                 element.classList.contains('interest-button') ||
+                 element.classList.contains('edit-button') ||
+                 element.classList.contains('back-button') ||
+                 element.hasAttribute('data-navbar') ||
+                 element.hasAttribute('data-share') ||
+                 element.hasAttribute('data-download') ||
+                 element.hasAttribute('data-interest') ||
+                 element.hasAttribute('data-edit') ||
+                 element.hasAttribute('data-back');
+        }
       });
-      
-      const imgData = canvas.toDataURL('image/png');
+
+      // Restore hidden elements
+      hiddenElements.forEach(({ element, originalDisplay }) => {
+        element.style.display = originalDisplay;
+      });
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
       
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      // Calculate scaling to fit the page while maintaining aspect ratio
+      const ratio = Math.min(pdfWidth / (imgWidth / 2), pdfHeight / (imgHeight / 2));
+      const scaledWidth = (imgWidth / 2) * ratio;
+      const scaledHeight = (imgHeight / 2) * ratio;
       
-      // Clean up
-      document.body.removeChild(pdfContainer);
+      // Center the image on the page
+      const imgX = (pdfWidth - scaledWidth) / 2;
+      const imgY = (pdfHeight - scaledHeight) / 2;
+      
+      // If content is too tall, we might need multiple pages
+      if (scaledHeight > pdfHeight) {
+        // Calculate how many pages we need
+        const pagesNeeded = Math.ceil(scaledHeight / pdfHeight);
+        const pageHeight = pdfHeight;
+        
+        for (let i = 0; i < pagesNeeded; i++) {
+          if (i > 0) {
+            pdf.addPage();
+          }
+          
+          // Calculate the portion of the image for this page
+          const sourceY = (imgHeight / pagesNeeded) * i;
+          const sourceHeight = imgHeight / pagesNeeded;
+          
+          // Create a temporary canvas for this page portion
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCanvas.width = imgWidth;
+          tempCanvas.height = sourceHeight;
+          
+          // Draw the portion of the original canvas
+          tempCtx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
+          
+          const pageImgData = tempCanvas.toDataURL('image/png', 1.0);
+          pdf.addImage(pageImgData, 'PNG', imgX, 0, scaledWidth, pageHeight);
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', imgX, imgY, scaledWidth, scaledHeight);
+      }
       
       // Download the PDF
       const fileName = `${displayProfile.fullName.replace(/\s+/g, '_')}_Profile.pdf`;
@@ -567,11 +566,11 @@ export default function ProfilePage() {
     fullName: profile?.fullName || 
               [profile?.firstName, profile?.middleName, profile?.lastName]
                 .filter(Boolean).join(" ") || 
-              "Profile Name Not Available",
+              "Name not available",
     profileId: profile?._id || "Unknown ID",
-    age: profile?.age || "Age not specified",
-    occupation: profile?.occupation || "Occupation not specified",
-    jobLocation: profile?.jobLocation || "Location not specified",
+    age: profile?.age || "",
+    occupation: profile?.occupation || "",
+    jobLocation: profile?.jobLocation || "",
     profilePhoto:
       profile?.photos?.profilePhoto?.url ||
       profile?.photos?.traditional?.url ||
@@ -579,41 +578,55 @@ export default function ProfilePage() {
       profile?.profilePhotos?.traditional ||
       profile?.profilePhotos?.western ||
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200",
-    aboutMe:
-      profile?.aboutMe ||
-      "About me information not available.",
-    dateOfBirth: profile?.dateOfBirth || "Date of birth not specified",
-    maritalStatus: profile?.maritalStatus || "Marital status not specified",
-    gender: profile?.gender || "Gender not specified",
-    motherTongue: profile?.motherTongue || "Mother tongue not specified",
-    complexion: profile?.complexion || "Complexion not specified",
-    height: profile?.height || "Height not specified",
-    bloodGroup: profile?.bloodGroup || "Blood group not specified",
-    firstGotra: profile?.firstGotra || "First gotra not specified",
-    secondGotra: profile?.secondGotra || "Second gotra not specified",
-    education: profile?.education || profile?.highestEducation || "Education not specified",
-    collegeUniversity: profile?.collegeUniversity || "College/University not specified",
-    designation: profile?.designation || "Designation not specified",
-    organization: profile?.organization || "Organization not specified",
-    annualIncome: profile?.annualIncome || "Annual income not specified",
-    currentEducation: profile?.currentEducation || "Current education not specified",
-    otherOccupation: profile?.otherOccupation || "Other occupation details not specified",
-    whatsappNumber: profile?.whatsappNumber || "WhatsApp number not available",
-    emailId: profile?.emailId || "Email not available",
-    linkedinHandle: profile?.linkedinHandle || "LinkedIn not available",
-    instagramHandle: profile?.instagramHandle || "Instagram not available",
-    facebookHandle: profile?.facebookHandle || "Facebook not available",
-    fathersFullName: profile?.fathersFullName || "Father's name not specified",
-    fathersOccupation: profile?.fathersOccupation || "Father's occupation not specified",
+    aboutMe: profile?.aboutMe || "",
+    dateOfBirth: profile?.dateOfBirth || "",
+    maritalStatus: profile?.maritalStatus || "",
+    gender: profile?.gender || "",
+    motherTongue: profile?.motherTongue || "",
+    complexion: profile?.complexion || "",
+    height: profile?.height || "",
+    bloodGroup: profile?.bloodGroup || "",
+    firstGotra: profile?.firstGotra || "",
+    secondGotra: profile?.secondGotra || "",
+    education: profile?.education || "",
+    collegeUniversity: profile?.collegeUniversity || "",
+    designation: profile?.designation || "",
+    organization: profile?.organization || "",
+    annualIncome: profile?.annualIncome || "",
+    currentEducation: profile?.currentEducation || "",
+    whatsappNumber: profile?.whatsappNumber || "",
+    countryCode: profile?.countryCode || "+91",
+    emailId: profile?.emailId || "",
+    linkedinHandle: profile?.linkedinHandle || "",
+    instagramHandle: profile?.instagramHandle || "",
+    facebookHandle: profile?.facebookHandle || "",
+    fathersFullName: profile?.fathersFullName || "",
+    fathersOccupation: profile?.fathersOccupation || "",
+    fathersDesignation: profile?.fathersDesignation || "",
+    fathersCompanyName: profile?.fathersCompanyName || "",
+    fathersBusinessLocation: profile?.fathersBusinessLocation || "",
     fathersWhatsappNumber: profile?.fathersWhatsappNumber || "",
     fathersCountryCode: profile?.fathersCountryCode || "+91",
-    mothersFullName: profile?.mothersFullName || "Mother's name not specified",
-    mothersOccupation: profile?.mothersOccupation || "Mother's occupation not specified",
+    mothersFullName: profile?.mothersFullName || "",
+    mothersOccupation: profile?.mothersOccupation || "",
+    mothersDesignation: profile?.mothersDesignation || "",
+    mothersCompanyName: profile?.mothersCompanyName || "",
+    mothersBusinessLocation: profile?.mothersBusinessLocation || "",
     mothersWhatsappNumber: profile?.mothersWhatsappNumber || "",
     mothersCountryCode: profile?.mothersCountryCode || "+91",
-    birthName: profile?.birthName || "Birth name not specified",
-    birthTime: profile?.birthTime || "Birth time not specified",
-    birthPlace: profile?.birthPlace || "Birth place not specified"
+    birthName: profile?.birthName || "",
+    birthTime: profile?.birthTime || "",
+    birthPlace: profile?.birthPlace || "",
+    currentAddressLine1: profile?.currentAddressLine1 || "",
+    currentAddressLine2: profile?.currentAddressLine2 || "",
+    currentCity: profile?.currentCity || "",
+    currentState: profile?.currentState || "",
+    currentPincode: profile?.currentPincode || "",
+    permanentAddressLine1: profile?.permanentAddressLine1 || "",
+    permanentAddressLine2: profile?.permanentAddressLine2 || "",
+    permanentCity: profile?.permanentCity || "",
+    permanentState: profile?.permanentState || "",
+    permanentPincode: profile?.permanentPincode || "",
   };
 
   // Debug logging
@@ -632,8 +645,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#FDF8FB] md:px-4 mb-20 lg:mb-0 py-6 text-[14px] text-slate-700 font-['Plus_Jakarta_Sans',_sans-serif]">
-      <Navbar />
-      <div className="max-w-5xl mt-14 sm:mt-20 mx-auto space-y-6">
+      <Navbar data-navbar />
+      <div className="max-w-5xl mt-14 sm:mt-20 mx-auto space-y-6" data-profile-content>
         {loadError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 text-red-600 px-4 py-3 text-sm font-semibold mb-4">
             <div className="flex items-center gap-2">
@@ -666,6 +679,7 @@ export default function ProfilePage() {
     <button
       onClick={() => navigate("/home")}
       className="absolute top-4 left-4 flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-[#9181EE] hover:bg-purple-50 rounded-lg transition-all"
+      data-back
     >
       <ChevronRight size={16} className="rotate-180" />
       Back to Browse
@@ -694,9 +708,11 @@ export default function ProfilePage() {
         </div>
 
         <p className="text-rose-600 font-semibold text-base mt-1">
-          {displayProfile.occupation}
-          <span className="text-slate-300 mx-1">|</span>
-          {displayProfile.jobLocation}
+          {[
+            displayProfile.designation || displayProfile.occupation,
+            displayProfile.organization,
+            displayProfile.jobLocation
+          ].filter(Boolean).join(' | ')}
         </p>
       </div>
 
@@ -714,6 +730,7 @@ export default function ProfilePage() {
                   ? 'bg-gray-400 text-white cursor-not-allowed'
                   : 'bg-[#9181EE] hover:bg-[#7b6fd6] text-white'
               }`}
+              data-interest
             >
               {interestSent ? (
                 <>
@@ -731,13 +748,14 @@ export default function ProfilePage() {
               )}
             </button>
 
-            <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all">
+            <button className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all" data-shortlist>
               <Star size={16} /> Shortlist
             </button>
 
             <button
               onClick={() => setShowShareModal(true)}
               className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-blue-100 bg-white text-slate-600 hover:bg-blue-50 transition-all"
+              data-share
             >
               <Share2 size={16} /> Share
             </button>
@@ -746,6 +764,7 @@ export default function ProfilePage() {
               onClick={downloadProfileAsPDF}
               disabled={downloadingPDF}
               className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-green-100 bg-white text-slate-600 hover:bg-green-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              data-download
             >
               {downloadingPDF ? (
                 <>
@@ -764,6 +783,7 @@ export default function ProfilePage() {
             <button
               onClick={() => navigate("/registration")}
               className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-purple-100 bg-white text-slate-600 hover:bg-purple-50 transition-all"
+              data-edit
             >
               <Edit3 size={16} /> Edit Profile
             </button>
@@ -771,6 +791,7 @@ export default function ProfilePage() {
             <button
               onClick={() => setShowShareModal(true)}
               className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full border border-blue-100 bg-white text-slate-600 hover:bg-blue-50 transition-all"
+              data-share
             >
               <Share2 size={16} /> Share
             </button>
@@ -779,6 +800,7 @@ export default function ProfilePage() {
               onClick={downloadProfileAsPDF}
               disabled={downloadingPDF}
               className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full bg-[#9181EE] hover:bg-[#7b6fd6] text-white font-medium transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              data-download
             >
               {downloadingPDF ? (
                 <>
@@ -873,7 +895,7 @@ export default function ProfilePage() {
           {/* LEFT COLUMN */}
           <div className="lg:col-span-8 space-y-6">
 
-            {displayProfile.aboutMe && displayProfile.aboutMe !== "About me information not available." && (
+            {displayProfile.aboutMe && (
               <Section title="About Me" glow={glowStyle}>
                 <p className="leading-relaxed text-slate-600 italic font-medium">
                   {displayProfile.aboutMe}
@@ -921,7 +943,7 @@ export default function ProfilePage() {
               />
             </div>
 
-            {(profile?.designation || profile?.organization || profile?.annualIncome || profile?.jobLocation || profile?.currentEducation || profile?.otherOccupation) && (
+            {(profile?.designation || profile?.organization || profile?.annualIncome || profile?.jobLocation || profile?.currentEducation) && (
               <Section title="Job Details" glow={glowStyle}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {profile?.designation && <Info label="Designation" value={displayProfile.designation} icon={<Award size={14}/>} />}
@@ -929,7 +951,6 @@ export default function ProfilePage() {
                   {profile?.annualIncome && <Info label="Annual Income" value={displayProfile.annualIncome} icon={<DollarSign size={14}/>} />}
                   {profile?.jobLocation && <Info label="Job Location" value={displayProfile.jobLocation} icon={<MapPin size={14}/>} />}
                   {profile?.currentEducation && <Info label="Current Education" value={displayProfile.currentEducation} icon={<BookOpen size={14}/>} />}
-                  {profile?.otherOccupation && <Info label="Other Details" value={displayProfile.otherOccupation} icon={<MessageCircle size={14}/>} />}
                 </div>
               </Section>
             )}
@@ -944,18 +965,20 @@ export default function ProfilePage() {
                         <p className="font-bold text-slate-800 text-base uppercase tracking-tight">
                           {displayProfile.fathersFullName}
                         </p>
-                        <p className="text-xs text-slate-600 leading-relaxed mt-2">
-                          {displayProfile.fathersOccupation}
-                        </p>
+                        {/* Father's professional info in pattern: occupation | company | location */}
+                        {(profile?.fathersOccupation || profile?.fathersDesignation || profile?.fathersCompanyName || profile?.fathersBusinessLocation) && (
+                          <p className="text-xs text-slate-600 leading-relaxed mt-2">
+                            {[
+                              profile?.fathersDesignation || profile?.fathersOccupation,
+                              profile?.fathersCompanyName,
+                              profile?.fathersBusinessLocation
+                            ].filter(Boolean).join(' | ')}
+                          </p>
+                        )}
                         {profile?.fathersWhatsappNumber && (
                           <p className="text-xs text-slate-600 mt-1">
                             📱 {displayProfile.fathersCountryCode} {displayProfile.fathersWhatsappNumber}
                           </p>
-                        )}
-                        {profile?.fathersOccupation && (
-                          <div className="mt-2 grid grid-cols-2 gap-2">
-                            <Info label="Occupation" value={displayProfile.fathersOccupation} icon={<Briefcase size={10}/>} />
-                          </div>
                         )}
                       </div>
                     )}
@@ -965,18 +988,20 @@ export default function ProfilePage() {
                         <p className="font-bold text-slate-800 text-base uppercase tracking-tight">
                           {displayProfile.mothersFullName}
                         </p>
-                        <p className="text-xs text-slate-600 mt-2 font-medium italic tracking-tight">
-                          {displayProfile.mothersOccupation}
-                        </p>
+                        {/* Mother's professional info in pattern: occupation | company | location */}
+                        {(profile?.mothersOccupation || profile?.mothersDesignation || profile?.mothersCompanyName || profile?.mothersBusinessLocation) && (
+                          <p className="text-xs text-slate-600 mt-2 font-medium italic tracking-tight">
+                            {[
+                              profile?.mothersDesignation || profile?.mothersOccupation,
+                              profile?.mothersCompanyName,
+                              profile?.mothersBusinessLocation
+                            ].filter(Boolean).join(' | ')}
+                          </p>
+                        )}
                         {profile?.mothersWhatsappNumber && (
                           <p className="text-xs text-slate-600 mt-1">
                             📱 {displayProfile.mothersCountryCode} {displayProfile.mothersWhatsappNumber}
                           </p>
-                        )}
-                        {profile?.mothersOccupation && (
-                          <div className="mt-2 grid grid-cols-2 gap-2">
-                            <Info label="Occupation" value={displayProfile.mothersOccupation} icon={<Briefcase size={10}/>} />
-                          </div>
                         )}
                       </div>
                     )}
@@ -985,33 +1010,65 @@ export default function ProfilePage() {
                   {(profile?.brothers?.length || profile?.sisters?.length) && (
                     <div className="border-t border-slate-100 pt-4">
                       <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 mb-3 uppercase tracking-widest">
-                        <span>Brothers: <b className="text-slate-700">{profile?.brothers?.length || 0}</b></span>
-                        <span>Sisters: <b className="text-slate-700">{profile?.sisters?.length || 0}</b></span>
+                        {profile?.brothers?.length > 0 && (
+                          <span>Brothers: <b className="text-slate-700">{profile.brothers.length}</b></span>
+                        )}
+                        {profile?.sisters?.length > 0 && (
+                          <span>Sisters: <b className="text-slate-700">{profile.sisters.length}</b></span>
+                        )}
                       </div>
                       
                       {profile?.brothers?.map((brother, index) => (
                         <div key={index} className="bg-[#F8F7FF] p-4 rounded-xl border border-rose-50 shadow-sm mb-3">
                           <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Brother {index + 1} Details</p>
-                          <p className="text-xs text-slate-600 leading-relaxed tracking-tight">
-                            <b>{brother.name}:</b> {brother.occupation} {brother.companyName && `at ${brother.companyName}`}
+                          <p className="font-bold text-slate-800 text-sm uppercase tracking-tight mb-1">
+                            {brother.name}
                           </p>
-                          <div className="mt-2 grid grid-cols-2 gap-2">
-                            <Info label="Occupation" value={brother.occupation} icon={<Briefcase size={10}/>} />
-                            {brother.companyName && <Info label="Company" value={brother.companyName} icon={<Building size={10}/>} />}
-                          </div>
+                          {brother.maritalStatus && (
+                            <p className="text-xs text-slate-500 mb-1">
+                              <strong>Status:</strong> {brother.maritalStatus}
+                              {brother.spouseName && ` (Spouse: ${brother.spouseName})`}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-600 leading-relaxed tracking-tight">
+                            {[
+                              brother.designation || brother.occupation,
+                              brother.companyName || brother.businessName,
+                              brother.businessLocation
+                            ].filter(Boolean).join(' | ')}
+                          </p>
+                          {brother.currentEducation && (
+                            <p className="text-xs text-slate-500 mt-1">
+                              <strong>Education:</strong> {brother.currentEducation}
+                            </p>
+                          )}
                         </div>
                       ))}
 
                       {profile?.sisters?.map((sister, index) => (
                         <div key={index} className="bg-[#F8F7FF] p-4 rounded-xl border border-rose-50 shadow-sm mb-3">
                           <p className="text-[10px] font-bold text-rose-400 uppercase mb-1">Sister {index + 1} Details</p>
-                          <p className="text-xs text-slate-600 leading-relaxed tracking-tight">
-                            <b>{sister.name}:</b> {sister.occupation} {sister.companyName && `at ${sister.companyName}`}
+                          <p className="font-bold text-slate-800 text-sm uppercase tracking-tight mb-1">
+                            {sister.name}
                           </p>
-                          <div className="mt-2 grid grid-cols-2 gap-2">
-                            <Info label="Occupation" value={sister.occupation} icon={<Briefcase size={10}/>} />
-                            {sister.companyName && <Info label="Company" value={sister.companyName} icon={<Building size={10}/>} />}
-                          </div>
+                          {sister.maritalStatus && (
+                            <p className="text-xs text-slate-500 mb-1">
+                              <strong>Status:</strong> {sister.maritalStatus}
+                              {sister.spouseName && ` (Spouse: ${sister.spouseName})`}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-600 leading-relaxed tracking-tight">
+                            {[
+                              sister.designation || sister.occupation,
+                              sister.companyName || sister.businessName,
+                              sister.businessLocation
+                            ].filter(Boolean).join(' | ')}
+                          </p>
+                          {sister.currentEducation && (
+                            <p className="text-xs text-slate-500 mt-1">
+                              <strong>Education:</strong> {sister.currentEducation}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1044,7 +1101,7 @@ export default function ProfilePage() {
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">WhatsApp No</p>
                         <p className="text-xs font-semibold">
-                          {isOwnProfile ? displayProfile.whatsappNumber : displayProfile.whatsappNumber.replace(/(.{6}).*/, '$1••••')}
+                          {isOwnProfile ? `${displayProfile.countryCode} ${displayProfile.whatsappNumber}` : displayProfile.whatsappNumber.replace(/(.{6}).*/, '$1••••')}
                         </p>
                       </div>
                     </div>
@@ -1073,48 +1130,89 @@ export default function ProfilePage() {
               </Section>
             )}
 
-            <Section title="Ideal Partner Expectations" glow={glowStyle}>
-              <div className="space-y-3">
-                <ExpectItem label="Age Range" value="26 to 29 years" />
-                <ExpectItem label="Education" value="IIM/IIT/IISc Postgraduates Preferred (CA/CS/MBA/Engineers)" />
-                <ExpectItem label="Location" value="Bangalore / Hyderabad / Pune / Mumbai" />
-                <ExpectItem label="Minimum Annual Income" value="₹25 LPA +" />
-                <ExpectItem label="Height" value="Above 5' 8''" />
-                <ExpectItem label="Marital Status" value="Never Married" />
-                <ExpectItem label="Mother Tongue" value="Marathi Preferred" />
-                <ExpectItem label="Interests" value="Travel, Fitness, Fine Arts, Technology" />
-              </div>
-            </Section>
+            {(profile?.partnerAgeFrom || profile?.partnerAgeTo || profile?.partnerQualification?.length || profile?.preferredLocation?.length || profile?.minAnnualIncome) && (
+              <Section title="Partner Preferences" glow={glowStyle}>
+                <div className="space-y-3">
+                  {(profile?.partnerAgeFrom || profile?.partnerAgeTo) && (
+                    <ExpectItem 
+                      label="Age Range" 
+                      value={`${profile?.partnerAgeFrom || 'Any'} to ${profile?.partnerAgeTo || 'Any'} years`} 
+                    />
+                  )}
+                  {profile?.partnerQualification?.length > 0 && (
+                    <ExpectItem 
+                      label="Education" 
+                      value={profile.partnerQualification.join(', ')} 
+                    />
+                  )}
+                  {profile?.preferredLocation?.length > 0 && (
+                    <ExpectItem 
+                      label="Preferred Locations" 
+                      value={profile.preferredLocation.join(', ')} 
+                    />
+                  )}
+                  {profile?.minAnnualIncome && (
+                    <ExpectItem 
+                      label="Minimum Annual Income" 
+                      value={profile.minAnnualIncome} 
+                    />
+                  )}
+                </div>
+              </Section>
+            )}
 
             <Section title="Location & Lifestyle" glow={glowStyle}>
               <div className="space-y-3">
-                <div className="flex items-start gap-2">
-                  <MapPin size={16} className="text-rose-400 mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Current Location</p>
-                    <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
-                      Prestige Shantiniketan, ITPL Main Road, Whitefield, Bangalore, Karnataka - 560066
-                    </p>
+                {/* Current Address */}
+                {(profile?.currentAddressLine1 || profile?.currentCity || profile?.currentState) && (
+                  <div className="flex items-start gap-2">
+                    <MapPin size={16} className="text-rose-400 mt-1 flex-shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Current Address</p>
+                      <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
+                        {[
+                          displayProfile.currentAddressLine1,
+                          displayProfile.currentAddressLine2,
+                          displayProfile.currentCity,
+                          displayProfile.currentState,
+                          displayProfile.currentPincode
+                        ].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Home size={16} className="text-indigo-400 mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Hometown</p>
-                    <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
-                      Nashik, Maharashtra
-                    </p>
+                )}
+                
+                {/* Permanent Address */}
+                {(profile?.permanentAddressLine1 || profile?.permanentCity || profile?.permanentState) && (
+                  <div className="flex items-start gap-2">
+                    <Home size={16} className="text-indigo-400 mt-1 flex-shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Permanent Address</p>
+                      <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
+                        {[
+                          displayProfile.permanentAddressLine1,
+                          displayProfile.permanentAddressLine2,
+                          displayProfile.permanentCity,
+                          displayProfile.permanentState,
+                          displayProfile.permanentPincode
+                        ].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Globe size={16} className="text-green-400 mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Willing to Relocate</p>
-                    <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
-                      Yes, anywhere in India for the right partner
-                    </p>
+                )}
+                
+                {/* Job Location if different from current address */}
+                {profile?.jobLocation && (
+                  <div className="flex items-start gap-2">
+                    <Building size={16} className="text-purple-400 mt-1 flex-shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Work Location</p>
+                      <p className="text-xs leading-relaxed text-slate-500 font-semibold tracking-tight">
+                        {displayProfile.jobLocation}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </Section>
           </div>
