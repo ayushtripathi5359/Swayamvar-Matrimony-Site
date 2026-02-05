@@ -16,7 +16,7 @@ import Navbar from "./components/Navbar";
 import SignupPage from "./pages/SignupPage";
 import Pricing from "./pages/Pricing";
 import AboutUsPage from "./pages/AboutUsPage";
-import AuthCallback from "./pages/AuthCallback";
+import AuthCallback from "./pages/AuthCallback"; 
 import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
