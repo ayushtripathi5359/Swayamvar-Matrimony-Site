@@ -65,7 +65,7 @@ export default function Landing() {
 
     {/* Tagline */}
     <p className="text-[#ED9B59] font-bold text-xs sm:text-sm my-3 sm:mb-4 tracking-wide">
-      Because you deserve better!
+      you deserve better!
     </p>
 
     {/* Heading */}
