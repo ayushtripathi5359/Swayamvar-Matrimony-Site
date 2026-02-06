@@ -5,7 +5,7 @@ async function testProfileFetch() {
     console.log('Testing profile fetch...');
     
     // First, let's try to browse profiles to see what IDs exist
-    const browseResponse = await fetch('http://localhost:5002/api/profiles/browse?limit=5', {
+    const browseResponse = await fetch('http://3.109.4.243/api/profiles/browse?limit=5', {
       headers: {
         'Content-Type': 'application/json',
       }
@@ -22,7 +22,7 @@ async function testProfileFetch() {
         const firstProfileId = browseData.profiles[0]._id;
         console.log('\nTrying to fetch profile by ID:', firstProfileId);
         
-        const profileResponse = await fetch(`http://localhost:5002/api/profiles/${firstProfileId}`, {
+        const profileResponse = await fetch(`http://3.109.4.243/api/profiles/${firstProfileId}`, {
           headers: {
             'Content-Type': 'application/json',
           }

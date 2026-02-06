@@ -16,7 +16,7 @@
             try {
                 // First test browse to get a profile ID
                 console.log('Testing browse profiles...');
-                const browseResponse = await fetch('http://localhost:5002/api/profiles/browse?limit=1', {
+                const browseResponse = await fetch('http://3.109.4.243/api/profiles/browse?limit=1', {
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
@@ -34,7 +34,7 @@
                         console.log('Testing profile fetch for ID:', profileId);
                         
                         // Now test individual profile fetch
-                        const profileResponse = await fetch(`http://localhost:5002/api/profiles/${profileId}`, {
+                        const profileResponse = await fetch(`http://3.109.4.243/api/profiles/${profileId}`, {
                             credentials: 'include',
                             headers: {
                                 'Content-Type': 'application/json'

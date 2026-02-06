@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-const BASE_URL = 'http://localhost:5002/api/auth';
+const BASE_URL = 'http://3.109.4.243/api/auth';
 
 async function debugAuthentication() {
   console.log('=== AUTHENTICATION DEBUG SCRIPT ===\n');

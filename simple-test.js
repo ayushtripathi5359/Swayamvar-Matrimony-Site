@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 
 const testValidation = async () => {
   try {
-    const response = await fetch('http://localhost:5002/api/auth/register', {
+    const response = await fetch('http://3.109.4.243/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

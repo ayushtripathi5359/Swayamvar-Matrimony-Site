@@ -14,7 +14,7 @@ To enable Google OAuth authentication, you need to set up Google OAuth credentia
 ## 2. Configure Redirect URIs
 
 Add these authorized redirect URIs:
-- `http://localhost:5002/api/auth/google/callback` (for development)
+- `http://3.109.4.243/api/auth/google/callback` (for development)
 - `https://yourdomain.com/api/auth/google/callback` (for production)
 
 ## 3. Update Environment Variables
@@ -24,7 +24,7 @@ Update your `backend/.env` file with the credentials:
 ```env
 GOOGLE_CLIENT_ID=your-actual-google-client-id
 GOOGLE_CLIENT_SECRET=your-actual-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:5002/api/auth/google/callback
+GOOGLE_CALLBACK_URL=http://3.109.4.243/api/auth/google/callback
 ```
 
 ## 4. Test the Integration

@@ -14,7 +14,7 @@ async function testLogin() {
     for (const creds of testCredentials) {
       console.log(`\nTesting login with: ${creds.email}`);
       
-      const response = await fetch('http://localhost:5002/api/auth/login', {
+      const response = await fetch('http://3.109.4.243/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -39,7 +39,7 @@ async function testLogin() {
       }
     };
     
-    const regResponse = await fetch('http://localhost:5002/api/auth/register', {
+    const regResponse = await fetch('http://3.109.4.243/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -54,7 +54,7 @@ async function testLogin() {
     // Now test login with the new user
     if (regResponse.status === 201) {
       console.log('\n--- Testing Login with New User ---');
-      const loginResponse = await fetch('http://localhost:5002/api/auth/login', {
+      const loginResponse = await fetch('http://3.109.4.243/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
