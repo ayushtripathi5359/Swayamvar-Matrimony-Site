@@ -9,8 +9,9 @@ interface GoogleAuthButtonProps {
 const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ mode, className = '' }) => {
   const handleGoogleAuth = () => {
     // Redirect to backend Google OAuth endpoint
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5002'}/api/auth/google`;
-  };
+    window.location.href =
+  `${import.meta.env.VITE_API_URL}/api/auth/google`;
+
 
   return (
     <Button
