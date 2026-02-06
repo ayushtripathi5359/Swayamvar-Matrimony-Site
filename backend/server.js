@@ -45,7 +45,7 @@ if (process.env.NODE_ENV === 'development') {
         styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "https://myswayamwar.com"]
+        connectSrc: ["'self'", "https://myswayamwar.com", "http://3.109.4.243", "http://3.109.4.243:*"]
       },
     },
   }));
