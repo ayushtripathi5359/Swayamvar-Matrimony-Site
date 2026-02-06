@@ -45,13 +45,13 @@ if (process.env.NODE_ENV === 'development') {
         styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"]
+        connectSrc: ["'self'", "https://myswayamwar.com"]
       },
     },
   }));
 }
 app.use(cors({
-  origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:8080'],
+  origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:8080', 'http://localhost:5173', 'https://myswayamwar.com'],
   credentials: true
 }));
 
