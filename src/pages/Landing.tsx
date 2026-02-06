@@ -77,7 +77,7 @@ export default function Landing() {
     {/* Description */}
     <p className="text-brand-black-soft/70 text-sm sm:text-base lg:text-xl leading-[1.6] mb-6 sm:mb-10">
       You're more than just a photo. You have stories to tell, and passions to share.
-      Because you deserve what dating deserves: better.
+      Because you deserve what dating deserves: .
     </p>
 
     {/* Email Form */}
